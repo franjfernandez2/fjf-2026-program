@@ -44,7 +44,7 @@
       <CodeListItem CodedValue="TOT" def:Rank="1">
         <Decode><TranslatedText xml:lang="en">Total Score</TranslatedText></Decode>
       </CodeListItem>
-      <CodeListItem CodedValue="ITM1" def:Rank="2">
+      <CodeListItem CodedValue="ITM1&#160;" def:Rank="2">
         <Decode><TranslatedText xml:lang="en">Item 1</TranslatedText></Decode>
       </CodeListItem>
     </CodeList>

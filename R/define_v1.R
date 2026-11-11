@@ -5,9 +5,13 @@
 # define.xml. This reader keeps the specification tied to the official file, instead of
 # retyping it by hand.
 
+# The pilot's file pads some values with non-breaking spaces (U+00A0), e.g. the SEX code
+# "F\u00a0". SAS ignores trailing blanks, so they are removed here, with ordinary spaces.
+trim_text <- function(x) trimws(x, whitespace = "[\\h\\v]")
+
 xml_attr_or_na <- function(nodes, attr, ns) {
   value <- xml2::xml_attr(nodes, attr, ns = ns)
-  value <- trimws(value)
+  value <- trim_text(value)
   value[value == ""] <- NA_character_
   value
 }
@@ -104,13 +108,13 @@ read_define_v1 <- function(path) {
     }
     decode <- vapply(codes, function(code) {
       text <- xml2::xml_find_first(code, "d1:Decode/d1:TranslatedText", ns)
-      if (inherits(text, "xml_missing")) NA_character_ else trimws(xml2::xml_text(text))
+      if (inherits(text, "xml_missing")) NA_character_ else trim_text(xml2::xml_text(text))
     }, character(1))
     data.frame(
       code_id = xml2::xml_attr(cl, "OID"),
       name = xml2::xml_attr(cl, "Name"),
       data_type = xml2::xml_attr(cl, "DataType"),
-      code = trimws(xml2::xml_attr(codes, "CodedValue")),
+      code = trim_text(xml2::xml_attr(codes, "CodedValue")),
       decode = decode,
       rank = as.integer(xml2::xml_attr(codes, "def:Rank", ns = ns))
     )
@@ -134,7 +138,7 @@ read_analysis_results <- function(doc, ns) {
     if (length(found) == 0) {
       return(NA_character_)
     }
-    paste(trimws(xml2::xml_text(found)), collapse = "; ")
+    paste(trim_text(xml2::xml_text(found)), collapse = "; ")
   }
   attr_of <- function(node, xpath, attr) {
     found <- xml2::xml_find_all(node, xpath, ns)

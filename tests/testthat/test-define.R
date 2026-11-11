@@ -38,6 +38,7 @@ test_that("value-level metadata take the parameter from the item OID", {
 test_that("codelists are read, external ones as a single empty row", {
   spec <- read_define_v1(fixture)
   paramcd <- spec$codelists[spec$codelists$code_id == "PARAMCD", ]
+  # The fixture pads "ITM1" with a non-breaking space, as the pilot's file does.
   expect_equal(paramcd$code, c("TOT", "ITM1"))
   expect_equal(paramcd$decode, c("Total Score", "Item 1"))
   meddra <- spec$codelists[spec$codelists$code_id == "MEDDRA", ]
@@ -82,13 +83,13 @@ test_that("each kind of mismatch is reported", {
   data$EXTRA <- 1 # unexpected variable
   attr(data$AVAL, "label") <- "Value" # label
   data$USUBJID <- structure(1:2, label = "Unique Subject Identifier") # type
-  data$PARAMCD[2] <- "NEW" # unlisted PARAMCD, and ITM1 now absent
+  data$PARAMCD[2] <- "NEW" # unlisted PARAMCD and value not in codelist; ITM1 now absent
   data <- data[, c("PARAMCD", "USUBJID", "AVAL", "EXTRA")] # variable order
 
   checks <- check_against_spec(data, spec, "ADXX")$check
   expect_setequal(checks, c(
     "missing variable", "unexpected variable", "label", "type", "variable order",
-    "PARAMCD not in value-level metadata", "PARAMCD in value-level metadata but not in data"
+    "value not in codelist", "PARAMCD not in value-level metadata", "PARAMCD in value-level metadata but not in data"
   ))
 })
 
@@ -109,10 +110,12 @@ test_that("the pilot's specification is read in full and matches its official AD
   expect_equal(sum(spec$variables$dataset == "ADSL"), 48)
   expect_equal(nrow(spec$displays), 18)
 
-  for (ds in c("ADSL", "ADAE", "ADTTE", "ADQSADAS")) {
-    official <- haven::read_xpt(pilot_file(local, sprintf("adam/%s.xpt", tolower(ds))))
-    expect_equal(nrow(check_against_spec(official, spec, ds)), 0, info = ds)
-  }
+  findings <- do.call(rbind, lapply(c("ADSL", "ADAE", "ADTTE", "ADQSADAS"), function(ds) {
+    check_against_spec(haven::read_xpt(pilot_file(local, sprintf("adam/%s.xpt", tolower(ds)))), spec, ds)
+  }))
+  # Discrepancy D-003: the only finding is a BMIBLGR1 value that its codelist does not list.
+  expect_equal(findings$variable, "BMIBLGR1")
+  expect_equal(findings$found, ">=30")
 
   # Discrepancy D-001: the primary analysis selects PARAMCD="ATOT", but declares ACTOT.
   arm <- check_analysis_results(spec)
