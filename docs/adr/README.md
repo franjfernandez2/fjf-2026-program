@@ -18,3 +18,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0010](0010-ai-disclosure.md) | AI assistance is declared clearly | Accepted |
 | [0011](0011-naming.md) | Naming: compound FJF-2026 | Accepted |
 | [0012](0012-reproducible-environment.md) | Reproducible environment: pinned image, dated package snapshot, renv | Accepted |
+| [0013](0013-database-roles-and-audit-trail.md) | Database roles and audit trail | Accepted |

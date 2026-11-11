@@ -52,14 +52,15 @@ fjf-2026-program/
 
 ## Running it
 
-Requires Docker. The full setup (database plus pipeline) arrives during phase F0; for now the analysis environment can be built and checked:
+Requires Docker.
 
 ```sh
-docker build -t fjf-2026-analysis:dev .
-docker run --rm -v "$PWD":/project fjf-2026-analysis:dev Rscript -e 'renv::status()'
+cp .env.example .env              # then set your own local passwords
+docker compose up -d db           # start the clinical database (PostgreSQL 18)
+docker compose run --rm analysis Rscript tests/run-tests.R
 ```
 
-The image pins R 4.6.1, the system libraries and every R package (see [ADR 0012](docs/adr/0012-reproducible-environment.md)).
+`compose.yaml` starts the database and the analysis environment together. The analysis image pins R 4.6.1, the system libraries and every R package ([ADR 0012](docs/adr/0012-reproducible-environment.md)). The database has separate roles for loading and reading raw data and an append-only audit trail ([ADR 0013](docs/adr/0013-database-roles-and-audit-trail.md)). The full pipeline command arrives with phase F0 day 4.
 
 ## How this project is made
 

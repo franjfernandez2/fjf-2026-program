@@ -1,0 +1,46 @@
+# Local stack for the FJF-2026 programme: the clinical database and the analysis environment.
+#
+#   docker compose up -d db                     start the database
+#   docker compose run --rm analysis Rscript …  run R code against it
+#   docker compose down                         stop (data are kept in the fjf_pgdata volume)
+#   docker compose down -v                      stop and delete the database
+#
+# Credentials come from .env (copy .env.example). The database is reachable from the host
+# only on 127.0.0.1:55432, so it is never exposed to the network.
+
+name: fjf-2026
+
+services:
+  db:
+    # PostgreSQL 18, pinned by multi-architecture digest.
+    image: postgres:18@sha256:e3d24f6906d0760bf4da0dae872415391ededefad23fd471c47dc53b0ddf3c42
+    env_file: .env
+    volumes:
+      - fjf_pgdata:/var/lib/postgresql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  analysis:
+    build: .
+    image: fjf-2026-analysis:dev
+    env_file: .env
+    environment:
+      FJF_DB_HOST: db
+      FJF_DB_PORT: "5432"
+    volumes:
+      - .:/project
+    working_dir: /project
+    depends_on:
+      db:
+        condition: service_healthy
+    stdin_open: true
+    tty: true
+
+volumes:
+  fjf_pgdata:
