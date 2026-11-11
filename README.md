@@ -52,7 +52,14 @@ fjf-2026-program/
 
 ## Running it
 
-Instructions arrive with phase F0. The target is two commands on any machine with Docker: one to start the database and analysis environment, one to rebuild everything.
+Requires Docker. The full setup (database plus pipeline) arrives during phase F0; for now the analysis environment can be built and checked:
+
+```sh
+docker build -t fjf-2026-analysis:dev .
+docker run --rm -v "$PWD":/project fjf-2026-analysis:dev Rscript -e 'renv::status()'
+```
+
+The image pins R 4.6.1, the system libraries and every R package (see [ADR 0012](docs/adr/0012-reproducible-environment.md)).
 
 ## How this project is made
 

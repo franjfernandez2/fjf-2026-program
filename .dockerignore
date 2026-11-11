@@ -1,0 +1,7 @@
+# The image only needs renv.lock, .Rprofile and renv/activate.R + settings.json.
+# Everything else is mounted at run time, so keep the build context small.
+*
+!renv.lock
+!.Rprofile
+!renv/activate.R
+!renv/settings.json
