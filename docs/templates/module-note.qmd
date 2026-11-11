@@ -1,0 +1,37 @@
+---
+title: "Nota explicativa: [fase o módulo]"
+subtitle: "PLANTILLA · una nota por fase; copia en docs/notes/"
+author: "Francisco Fernández"
+date: today
+lang: es-ES
+---
+
+# Qué se ha hecho
+
+[Lista corta de lo que existe al final del módulo y dónde vive en el repositorio.]
+
+# Por qué se ha hecho así
+
+[Las decisiones del módulo, con enlace a su ADR. Para cada una: qué se eligió, qué se descartó y por qué.]
+
+# Cómo comprobarlo
+
+[Los comandos que demuestran que funciona y el resultado esperado.]
+
+# Lo que salió mal y cómo se resolvió
+
+[Problemas encontrados durante el trabajo. En una entrevista son las mejores anécdotas.]
+
+# Preguntas de control
+
+Respóndelas sin mirar las respuestas. La puerta del módulo no se cruza hasta que puedas hacerlo.
+
+1. [Pregunta]
+
+# Respuestas
+
+::: {.callout-note collapse="true"}
+## Pulsa para ver las respuestas
+
+1. [Respuesta]
+:::

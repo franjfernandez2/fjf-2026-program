@@ -28,7 +28,7 @@ data/adam/*
 simulator/truth/
 
 # --- Rendered documents ---
-/.quarto/
+.quarto/
 *_files/
 reports/**/*.html
 reports/**/*.pdf
@@ -42,3 +42,6 @@ reports/**/*.pdf
 .DS_Store
 .vscode/
 .idea/
+
+# --- Quarto render output ---
+_output/

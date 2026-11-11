@@ -1,0 +1,82 @@
+---
+title: "Protocol synopsis: FJF-2026-NNN"
+subtitle: "TEMPLATE · copy to docs/protocols/ and replace every [bracketed] item"
+author: "Francisco Fernández"
+date: today
+---
+
+# Document control
+
+| Version | Date | Author | Change |
+|---|---|---|---|
+| 0.1 | [YYYY-MM-DD] | [Name] | First draft |
+
+# Study identification
+
+| Item | Value |
+|---|---|
+| Study number | FJF-2026-[NNN] |
+| Title | [Full scientific title] |
+| Phase | [II / III] |
+| Indication | Type 2 diabetes inadequately controlled on metformin |
+| Investigational product | FJF-2026, oral, [dose(s)] |
+| Comparator | Placebo, added to stable metformin |
+| Duration of treatment | [N] weeks |
+
+# Rationale
+
+[Why the study is needed, in two or three short paragraphs. Cite the previous study where relevant.]
+
+# Objectives and endpoints
+
+| Type | Objective | Endpoint |
+|---|---|---|
+| Primary | [Objective] | Change from baseline in HbA1c at week [N] |
+| Key secondary | [Objective] | [Endpoint] |
+| Secondary | [Objective] | [Endpoint] |
+| Safety | [Objective] | Adverse events, hypoglycaemia, laboratory values, vital signs |
+
+# Estimands
+
+One table per estimand (ICH E9(R1)). The primary estimand drives the sample size.
+
+| Attribute | Primary estimand |
+|---|---|
+| Population | [Defined by inclusion and exclusion criteria] |
+| Treatment condition | [FJF-2026 versus placebo, both added to metformin] |
+| Variable | [Endpoint] |
+| Intercurrent events and strategies | [Rescue medication: strategy; treatment discontinuation: strategy] |
+| Population-level summary | [Difference in means between arms] |
+
+# Design
+
+[Randomised, double-blind, parallel-group design. Randomisation ratio, stratification factors, blinding, visit schedule. A diagram is welcome.]
+
+# Population
+
+**Key inclusion criteria**
+
+1. [Criterion]
+
+**Key exclusion criteria**
+
+1. [Criterion]
+
+# Treatments and rescue
+
+[Doses, titration, permitted and prohibited medication. The rescue rule: the HbA1c or fasting glucose threshold that triggers rescue, and from which visit.]
+
+# Sample size
+
+[Assumed effect, standard deviation, dropout, alpha, power, and the resulting N per arm. Phase II and III sample sizes are justified by simulation; reference the simulation report.]
+
+# Statistical analysis overview
+
+[Primary analysis for each estimand, key sensitivity analyses and multiplicity strategy. Full detail lives in the SAP.]
+
+# Schedule of assessments
+
+| Assessment | Screening | Baseline | Week [n] | Week [n] | End of treatment |
+|---|---|---|---|---|---|
+| HbA1c | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Assessment] | | | | | |

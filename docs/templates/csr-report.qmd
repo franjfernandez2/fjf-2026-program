@@ -1,0 +1,57 @@
+---
+title: "Clinical study report (abridged): FJF-2026-NNN"
+subtitle: "TEMPLATE · structure follows ICH E3, shortened for a portfolio"
+author: "Francisco Fernández"
+date: today
+---
+
+# Synopsis
+
+[One page: design, population, results of the primary estimand with its estimate and 95% CI, key safety findings, conclusion.]
+
+# Study design and conduct
+
+[Summary of the protocol and any amendments. Reference the protocol and the frozen SAP by git tag.]
+
+# Study participants
+
+[Disposition (a CONSORT-style flow diagram), protocol deviations, demographics and baseline characteristics.]
+
+# Efficacy results
+
+## Primary estimand
+
+[Main table and figure. The estimate, its 95% CI and p-value, stated in one sentence.]
+
+## Sensitivity and supplementary analyses
+
+[Do the conclusions hold under other assumptions?]
+
+## Secondary endpoints
+
+[Results in the order of the multiplicity procedure.]
+
+# Safety results
+
+[Exposure, adverse events, hypoglycaemia, laboratory values, vital signs.]
+
+# Discussion and conclusions
+
+[What the results mean, limitations, and whether the methods recovered the sealed simulation truth.]
+
+# Appendix: computational environment
+
+This report was produced by the project pipeline in the pinned environment below.
+
+```{r}
+#| echo: true
+# The project root is the folder holding renv.lock. (here::here() would stop at the
+# Quarto project in this folder instead.)
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+lock <- jsonlite::read_json(file.path(root, "renv.lock"))
+cat(
+  "R version:       ", R.version.string, "\n",
+  "Locked packages: ", length(lock$Packages), "\n",
+  "Package snapshot:", lock$R$Repositories[[1]]$URL, "\n"
+)
+```

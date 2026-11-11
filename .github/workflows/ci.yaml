@@ -5,7 +5,7 @@
 # Compose stack as local work, so "it passes in CI" means "it passes on any machine".
 #
 # Steps: build the analysis image (with layer cache) -> start PostgreSQL ->
-#        lint and format checks -> test suite -> full pipeline.
+#        lint and format checks -> test suite -> full pipeline -> document templates.
 
 name: CI
 
@@ -60,6 +60,10 @@ jobs:
       - name: Start the clinical database
         run: docker compose up -d --wait db
 
+      # Fails if the code uses a package that renv.lock does not record, or vice versa.
+      - name: Lockfile in sync with the code
+        run: docker compose run --rm -T --no-deps analysis Rscript -e 'stopifnot(renv::status()$synchronized)'
+
       - name: Lint and format checks
         run: docker compose run --rm -T analysis Rscript tests/check-style.R
 
@@ -68,6 +72,9 @@ jobs:
 
       - name: Pipeline
         run: docker compose run --rm -T analysis Rscript -e 'targets::tar_make(reporter = "verbose")'
+
+      - name: Render document templates (HTML and PDF) and explanatory notes
+        run: docker compose run --rm -T --no-deps analysis bash -c 'cd docs/templates && quarto render && cd ../notes && quarto render'
 
       - name: Database logs (only if something failed)
         if: failure()

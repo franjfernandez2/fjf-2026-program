@@ -1,0 +1,93 @@
+---
+title: "Nota explicativa: fase F0, cimientos"
+author: "Francisco Fernández"
+date: 2026-11-11
+---
+
+# Qué se ha hecho
+
+La fase F0 deja montado el esqueleto del programa FJF-2026. Todavía no hay datos ni análisis.
+
+| Pieza | Dónde vive | Pull request |
+|---|---|---|
+| Estructura, README, convenciones y ADR 0001–0011 | raíz, `docs/` | 1 |
+| Entorno fijado: R 4.6.1, librerías del sistema y paquetes de R | `Dockerfile`, `renv.lock` | 2 |
+| Base de datos clínica con roles y auditoría | `compose.yaml`, `db/init/`, `R/db.R` | 3 |
+| Pruebas de la base de datos (25) | `tests/` | 3 |
+| Pipeline con prueba de humo | `_targets.R`, `R/smoke.R` | 4 |
+| Lint, formato e integración continua | `.lintr`, `tests/check-style.R`, `.github/workflows/ci.yaml` | 4 |
+| Quarto en la imagen; plantillas de protocolo, SAP, informe y nota | `docs/templates/` | 5 |
+| Matriz de trazabilidad | `docs/traceability-matrix.csv` | 5 |
+
+# Por qué se ha hecho así
+
+- **Docker y renv a la vez** ([ADR 0012](../adr/0012-reproducible-environment.md)). Docker fija el sistema operativo, R y las librerías del sistema. renv fija los paquetes de R en un fichero que se revisa en cada pull request.
+- **Paquetes de un día concreto de CRAN** (10 de noviembre de 2026). Todas las versiones salen del mismo día, así que son compatibles entre sí y no cambian con el tiempo.
+- **PostgreSQL como un EDC** ([ADR 0006](../adr/0006-raw-data-database.md), [ADR 0013](../adr/0013-database-roles-and-audit-trail.md)). Las tablas son del administrador, el rol de carga solo escribe filas y el de lectura solo lee. Toda modificación queda registrada con su motivo.
+- **Las pruebas usan una copia desechable de la base de datos**, para no dejar nunca filas de prueba en un registro de auditoría que no se puede borrar.
+- **La integración continua usa la misma imagen de Docker** que el trabajo local. Si pasa en GitHub, pasa en cualquier ordenador.
+
+# Cómo comprobarlo
+
+```sh
+cp .env.example .env                                              # contraseñas locales
+docker compose up -d db                                           # base de datos
+docker compose run --rm analysis Rscript tests/run-tests.R        # 25 pruebas
+docker compose run --rm analysis Rscript tests/check-style.R      # lint y formato
+docker compose run --rm analysis Rscript -e 'targets::tar_make()' # pipeline
+docker compose run --rm analysis bash -c 'cd docs/templates && quarto render'
+```
+
+# Lo que salió mal y cómo se resolvió
+
+1. **Faltaban librerías del sistema** (`libuv`, `libglpk`). En lugar de añadirlas una a una tras cada error, se pidió la lista completa a la API de Posit Package Manager.
+2. **La comprobación de versiones daba un falso error.** Comparaba texto, y `1.7-5` y `1.7.5` son la misma versión. Ahora compara versiones.
+3. **Los paquetes desaparecían de la imagen.** renv los instalaba como enlaces a su caché, y la caché se borraba para ahorrar espacio. Ahora se copian, y la comprobación se hace después del borrado.
+4. **El dueño de una tabla puede desactivar su auditoría.** Por eso el rol de carga ya no es dueño de las tablas. Hay una prueba que lo demuestra.
+5. **lintr marcaba como inexistentes funciones de otros ficheros.** Es una limitación conocida fuera de un paquete de R. Se desactivó esa regla con el motivo escrito; las pruebas detectan las funciones que no existen.
+6. **Quarto no encontraba los paquetes.** Renderiza desde la carpeta de plantillas, donde no se activa renv. La librería fijada se hizo visible para cualquier proceso de R de la imagen.
+7. **`here::here()` apuntaba a la carpeta equivocada**, porque toma como raíz la carpeta con `_quarto.yml`. La plantilla busca la raíz por `renv.lock`.
+8. **El pipeline no vio que `renv.lock` había cambiado.** Pasó de 75 a 88 paquetes, pero `environment_info` seguía diciendo 75: `targets` vigila el código de las funciones, no los ficheros que leen por dentro. Ahora `renv.lock` es un objetivo de tipo fichero (`format = "file"`), y cualquier cambio en él rehace todo lo que depende de él. Es la lección más importante de la fase: **todo fichero de entrada debe declararse en el pipeline**.
+
+# Preguntas de control
+
+Respóndelas en voz alta, sin mirar, como en una entrevista. La puerta 0 no se cruza hasta que puedas hacerlo.
+
+1. ¿Por qué usamos renv y Docker a la vez, si los dos fijan versiones?
+2. ¿Qué pasa si alguien instala un paquete nuevo y no actualiza `renv.lock`? ¿Cómo lo detectaríamos?
+3. ¿Para qué sirve un registro de auditoría en la base de datos de un ensayo, y qué norma lo exige?
+4. ¿Por qué separamos un rol de carga y otro de lectura en lugar de usar un solo usuario?
+5. ¿Qué hace `targets` cuando cambias una función y vuelves a ejecutar el pipeline?
+6. ¿Qué comprueba la integración continua en cada pull request, y qué no comprueba?
+7. ¿Por qué el SAP se congela con una etiqueta de git antes de generar datos?
+8. Un revisor te pregunta qué parte del proyecto hiciste tú y qué parte la IA. ¿Qué respondes?
+
+# Respuestas
+
+::: {.callout-note collapse="true"}
+## Pulsa para ver las respuestas
+
+1. **Fijan cosas distintas.** renv fija la versión de cada paquete de R. Docker fija todo lo que hay debajo: sistema operativo, versión de R y librerías del sistema, de las que dependen paquetes como `RPostgres` o `arrow`. Con solo renv, otro ordenador podría tener otra versión de R o de una librería y comportarse distinto. Con solo Docker, la lista de paquetes quedaría escondida dentro de la imagen. Con `renv.lock`, cada cambio de versión aparece en una pull request y se puede revisar.
+
+2. **En su ordenador funcionaría, pero en ningún otro.** La imagen se construye desde `renv.lock`, así que el paquete no estaría y el código fallaría. Lo detectan dos cosas. `renv::status()` avisa de que el proyecto usa un paquete que no está registrado. La integración continua ejecuta esa misma comprobación y falla; se probó a propósito con `ggplot2`.
+
+3. **Sirve para reconstruir la historia de cada dato:** quién lo cambió, cuándo, qué valor tenía, cuál tiene ahora y por qué. Garantiza la integridad de los datos (los principios ALCOA+): ningún cambio puede pasar desapercibido ni borrar el valor original. Lo exige la FDA en 21 CFR Part 11 (registros electrónicos), con registros de auditoría seguros, generados por el sistema y con fecha y hora. En Europa lo exige el Anexo 11 de las GMP, y las buenas prácticas clínicas de ICH E6 lo esperan de los sistemas informáticos de un ensayo.
+
+4. **Por mínimo privilegio y separación de funciones.** Quien analiza no debe poder modificar los datos de origen, ni siquiera por error. El rol de lectura lo garantiza a nivel de base de datos, no por buena voluntad. El de carga puede escribir filas, pero no cambiar la estructura ni tocar el registro de auditoría. El registro anota qué rol hizo cada cambio. Es la misma separación que en un ensayo real entre quien introduce datos, quien los gestiona y el estadístico.
+
+5. **Solo rehace lo que depende de ese cambio.** `targets` guarda una huella del código de cada función y de cada resultado. Al cambiar una función, marca como desactualizados los objetivos que la usan, directa o indirectamente, y los vuelve a calcular. Los demás se saltan. Ojo: solo ve lo que se le declara. Un fichero leído dentro de una función (como `renv.lock`) debe ser un objetivo con `format = "file"`, o sus cambios pasarán desapercibidos (error 8). La excepción a lo anterior es `database_check`, que se repite siempre (`cue = "always"`) porque la base de datos puede cambiar fuera del pipeline.
+
+6. **Comprueba:**
+    - que la imagen se construye con las versiones fijadas;
+    - que el código no usa paquetes fuera de `renv.lock`;
+    - lint y formato;
+    - las 25 pruebas de roles y auditoría;
+    - que el pipeline se ejecuta;
+    - que las plantillas generan HTML y PDF.
+
+    **No comprueba** que los resultados estadísticos sean correctos (todavía no hay análisis; eso lo harán la doble programación y el benchmark). Tampoco que el código haga lo que dice el SAP (eso es tu revisión), ni que hayas aprobado la pull request. Corre en amd64, mientras que tu Mac es arm64.
+
+7. **Para demostrar que las decisiones de análisis se tomaron antes de ver los datos.** Si el plan se escribe después, existe la tentación, consciente o no, de elegir el análisis que da el resultado más favorable. Una etiqueta de git apunta a un commit exacto, con fecha, y no se mueve. Cualquiera puede comparar el análisis final con el plan congelado. En un ensayo real, el SAP se finaliza antes de cerrar la base de datos y desenmascarar.
+
+8. **Respuesta propuesta**, coherente con `docs/ai-assistance.md` (adáptala a tus palabras): «El diseño es mío. Elegí la indicación, los estimandos, los métodos, la base de datos y el orden del trabajo, y cada decisión está registrada en un ADR. El código lo escribió un asistente de IA bajo mi dirección. Yo revisé y aprobé cada cambio en una pull request, y cada fase tiene preguntas de control que respondí antes de seguir. Puedo explicarte cualquier decisión y por qué se descartaron las alternativas.» Solo funciona si es verdad; por eso existen estas preguntas.
+:::

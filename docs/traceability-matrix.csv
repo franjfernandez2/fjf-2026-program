@@ -1,0 +1,2 @@
+output_id,study,type,title,sap_section,population,adam_datasets,key_variables,program,qc_program,qc_status,shell_id
+EXAMPLE-T-14.2.1,FJF-2026-301,table,"Change from baseline in HbA1c at week 26: primary estimand",9.2,FAS,ADSL; ADLB,"PARAMCD=HBA1C; AVISITN=26; CHG",studies/301/tlf/t_14_2_1.R,qc/301/t_14_2_1_qc.R,not started,T-14.2.1

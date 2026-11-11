@@ -33,6 +33,17 @@ RUN apt-get update \
        zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Quarto, pinned, for protocols, SAPs and reports. Bundles Pandoc and Typst, so PDFs need no LaTeX.
+ARG QUARTO_VERSION=1.11.9
+ARG TARGETARCH
+RUN arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
+    && curl -fsSL -o /tmp/quarto.deb \
+       "https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-linux-${arch}.deb" \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/quarto.deb \
+    && rm -rf /tmp/quarto.deb /var/lib/apt/lists/* \
+    && quarto --version
+
 # Keep the package library outside /project, so mounting the project does not hide it.
 # Packages are copied into the library (not symlinked to the cache), so the cache can be
 # deleted afterwards to keep the image small.
@@ -55,6 +66,11 @@ RUN R -q -e "renv::restore(prompt = FALSE)" \
                 want <- vapply(lock, function(p) p\$Version, ''); \
                 bad <- names(want)[vapply(names(want), function(p) packageVersion(p) != package_version(want[[p]]), TRUE)]; \
                 if (length(bad)) stop('Version mismatch: ', paste(bad, collapse = ', ')); \
-                cat(length(want), 'packages match renv.lock\n')"
+                cat(length(want), 'packages match renv.lock\n')" \
+    && R -q -e "cat('R_LIBS_USER=', renv::paths\$library(), '\n', sep = '', \
+                    file = file.path(R.home('etc'), 'Renviron.site'), append = TRUE)"
+
+# The line above makes the locked library visible to every R process, including those
+# started outside /project (for example by Quarto when it renders a document in a subfolder).
 
 CMD ["R"]
