@@ -50,3 +50,6 @@ reports/**/*.pdf
 
 # --- Quarto render output ---
 _output/
+
+# --- Benchmark outputs: rebuilt by the pipeline; the rendered report page is CDISC material ---
+studies/*/output/

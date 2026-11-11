@@ -58,3 +58,25 @@ test_that("the tables match the study report except D-011 and D-012", {
   expect_equal(round_sas(exact, 3), c(0.208, 0.057, 0.002))
   expect_equal(round_sas(round_sas(exact, 4), 3), c(0.209, 0.058, 0.003))
 })
+
+test_that("Table 14-3.01 and Figure 14-1 match the study report", {
+  manifest <- read_pilot_manifest(here::here("data", "external", "cdiscpilot01-manifest.csv"))
+  local <- here::here(pilot_dir(), manifest$file)
+  skip_if_not(all(file.exists(local)), "pilot files not downloaded yet")
+  spec <- read_define_v1(pilot_file(local, "adam/define.xml"))
+  sdtm <- read_sdtm(local, c("ae", "dm", "ds", "ex", "mh", "qs", "sc", "sv", "vs"))
+  adsl <- derive_adsl(sdtm, spec)
+  adqsadas <- derive_adqsadas(sdtm, adsl, spec)
+
+  fit <- fit_t_14_3_01(adqsadas)
+  expect_equal(nrow(compare_t_14_3_01(make_t_14_3_01(fit), pilot_file(local, "csr/cdiscpilot01.pdf"))), 0)
+  # D-013: the code in the metadata, without baseline, would not give the printed 0.245.
+  week24 <- fit$data[fit$data$AVISIT == "Week 24", ]
+  without_base <- stats::drop1(stats::lm(CHG ~ TRTPN + SITEGR1, data = week24), test = "F")["TRTPN", "Pr(>F)"]
+  expect_equal(round_sas(c(fit$dose_p, without_base), 3), c(0.245, 0.253))
+
+  km <- fit_f_14_1(derive_adtte(adsl, derive_adae(sdtm, adsl, spec), spec))
+  expect_equal(unname(km$summary$events), c(29, 62, 61))
+  expect_equal(unname(km$summary$median[2:3]), c(33, 36))
+  expect_lt(km$logrank_p, 0.0001)
+})

@@ -94,5 +94,29 @@ list(
   tar_target(t_14_2_01, make_t_14_2_01(adsl)),
   tar_target(t_14_2_01_vs_csr, compare_t_14_2_01(t_14_2_01, pilot_csr)),
   tar_target(t_14_5_01, make_t_14_5_01(adsl, adae)),
-  tar_target(t_14_5_01_vs_csr, compare_t_14_5_01(t_14_5_01, pilot_csr))
+  tar_target(t_14_5_01_vs_csr, compare_t_14_5_01(t_14_5_01, pilot_csr)),
+  tar_target(t_14_3_01_fit, fit_t_14_3_01(adqsadas)),
+  tar_target(t_14_3_01, make_t_14_3_01(t_14_3_01_fit)),
+  tar_target(t_14_3_01_vs_csr, compare_t_14_3_01(t_14_3_01, pilot_csr)),
+  # Figure 14-1 is an image in the report: it is reviewed next to the rendered page.
+  tar_target(f_14_1_km, fit_f_14_1(adtte)),
+  tar_target(f_14_1, make_f_14_1(f_14_1_km, "studies/benchmark/output/f_14_1.png"), format = "file"),
+  tar_target(
+    f_14_1_csr_page,
+    render_csr_f_14_1(pilot_csr, "studies/benchmark/output/f_14_1_csr.png"),
+    format = "file"
+  ),
+
+  # SAS transport files, written from the specification with xportr, then read back.
+  tar_target(
+    adam_xpt,
+    c(
+      write_adam_xpt(adsl, benchmark_metacore, "ADSL", "data/adam/cdiscpilot01"),
+      write_adam_xpt(adae, benchmark_metacore, "ADAE", "data/adam/cdiscpilot01"),
+      write_adam_xpt(adtte, benchmark_metacore, "ADTTE", "data/adam/cdiscpilot01"),
+      write_adam_xpt(adqsadas, benchmark_metacore, "ADQSADAS", "data/adam/cdiscpilot01")
+    ),
+    format = "file"
+  ),
+  tar_target(adam_xpt_vs_official, compare_xpt_with_official(adam_xpt, pilot_files))
 )
