@@ -24,12 +24,15 @@ RUN apt-get update \
        libcurl4-openssl-dev \
        libglpk-dev \
        libicu-dev \
+       libjpeg-dev \
+       libpoppler-cpp-dev \
        libpq-dev \
        libssl-dev \
        libuv1-dev \
        libxml2-dev \
        make \
        pandoc \
+       poppler-data \
        zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 

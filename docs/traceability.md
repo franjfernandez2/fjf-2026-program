@@ -16,7 +16,7 @@ The first rows are the four outputs of the benchmark (phase F1). Their "shell" i
 | `key_variables` | Parameters, visits and variables used | `PARAMCD=HBA1C; AVISITN=26; CHG` |
 | `program` | Primary program | `studies/301/tlf/t_14_2_1.R` |
 | `qc_program` | Independent QC program; for the benchmark, the program that compares the output with the published table | `qc/301/t_14_2_1_qc.R` |
-| `qc_status` | `not started`, `in progress`, `match` or `mismatch` | `match` |
+| `qc_status` | `not started`, `in progress`, `match`, `explained` or `mismatch` | `match` |
 | `shell_id` | Table shell in `docs/shells/`; for the benchmark, the pages of the published table in the pilot's report | `T-14.2.1` |
 
-An output is final only when `qc_status` is `match`.
+An output is final only when `qc_status` is `match`, or `explained`: every remaining difference has an explained row in the study's discrepancy log. A benchmark output can be `explained` when the difference is the reference's error.
