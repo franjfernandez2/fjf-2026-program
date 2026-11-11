@@ -13,7 +13,11 @@ This study checks the pipeline against a study whose answer is already published
 | Tables 14-2.01 and 14-5.01 compared with the study report | `tlf/`, `compare/`, targets `t_14_*` | Done (PR 11) |
 | Table 14-3.01 and Figure 14-1 compared with the study report | `tlf/`, `compare/`, targets `t_14_3_01*`, `f_14_1*` | Done (PR 12) |
 | XPT files from the specification (xportr) | `adam/xpt.R`, targets `adam_xpt*` | Done (PR 12) |
-| Conformance check with CDISC CORE (draft ADaM rules) | [`conformance.md`](conformance.md), `tools/run-core-adam.sh` | Run; no usable result yet (PR 12) |
+| Conformance check with CDISC CORE (draft ADaM rules) | [`conformance.md`](conformance.md), `tools/run-core-adam.sh` | Run; no usable result (PR 12) |
+| Conformance check with Pinnacle 21 Community (ADaM-IG 1.0) | [`conformance.md`](conformance.md), `tools/run-p21-adam.sh` | Done: same issues as the official files, all explained (PR 13) |
+| Every finding linked to the discrepancy log | `R/benchmark_findings.R`, target `benchmark_findings` | Done (PR 13) |
+| Benchmark report | [`report/`](report/benchmark-report.qmd), rendered to `output/report/` | Done (PR 13) |
+| Acceptance criteria and gate 1 | [ADR 0017](../../docs/adr/0017-benchmark-acceptance-criteria.md), [F1 note](../../docs/notes/F1-benchmark.qmd) | Awaiting review |
 
 ## Discrepancy log
 

@@ -1,0 +1,242 @@
+---
+title: "Benchmark report: replication of the CDISC pilot study (CDISCPILOT01)"
+subtitle: "Phase F1 of the FJF-2026 programme"
+author: "Francisco Fernández"
+date: today
+execute:
+  echo: false
+  warning: false
+---
+
+```{r}
+#| include: false
+# Everything below is read from the pipeline's results (targets), not typed in. The project
+# root is the folder holding renv.lock; the pipeline's paths are relative to it.
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+knitr::opts_knit$set(root.dir = root)
+options(knitr.kable.NA = "")
+```
+
+```{r}
+#| include: false
+targets::tar_load_globals()
+findings <- targets::tar_read(benchmark_findings)
+log <- read_discrepancy_log("studies/benchmark/discrepancy-log.csv")
+inventory <- targets::tar_read(pilot_inventory)
+pilot_files <- targets::tar_read(pilot_files)
+km <- targets::tar_read(f_14_1_km)
+matrix <- utils::read.csv("docs/traceability-matrix.csv", colClasses = "character")
+unexplained <- findings[findings$explained_by == "", ]
+qc <- targets::tar_read(adsl_qc_vs_production)
+```
+
+::: {.callout-note}
+**Data source.** This report uses the CDISC SDTM/ADaM Pilot Project (CDISCPILOT01), © CDISC, from [cdisc-org/sdtm-adam-pilot-project](https://github.com/cdisc-org/sdtm-adam-pilot-project), under the CDISC Terms of Use. The pilot data are de-identified legacy data from a real trial of transdermal xanomeline in Alzheimer's disease, provided by Eli Lilly and Company. They are not simulated. They were not modified, and they are not redistributed with this project ([ADR 0015](../../../docs/adr/0015-third-party-pilot-data.md)).
+:::
+
+# Summary
+
+The question is whether the FJF-2026 pipeline gets the right answer where the answer is already known. Starting from the pilot's published SDTM, it derives four ADaM datasets and compares them with the official ones. It then rebuilds four outputs and compares them with the pilot's study report.
+
+- **ADaM datasets.** ADTTE matches the official dataset exactly. ADSL, ADAE and ADQSADAS differ in `r sum(findings$comparison == "ADaM vs official")` findings, and each one is explained in the discrepancy log.
+- **Independent programming.** The second ADSL, written without admiral, matches ours with `r nrow(qc)` differences.
+- **Outputs.** Table 14-3.01 (the primary efficacy analysis) matches the study report cell by cell. Figure 14-1 matches on review. Tables 14-2.01 and 14-5.01 differ in `r sum(findings$dataset %in% c("Table 14-2.01", "Table 14-5.01"))` printed rows, and the cause lies in the pilot in every one.
+- **Overall.** Of `r nrow(findings)` findings, `r nrow(unexplained)` are unexplained. The discrepancy log has `r nrow(log)` entries; `r sum(log$status == "open")` are open.
+- **Conformance.** Pinnacle 21 reports the same issues for our XPT files as for the official ones, all caused by the pilot's `define.xml` and all explained. CDISC CORE could not check ADaM data (@sec-conformance).
+
+The acceptance criteria are those of [ADR 0017](../../../docs/adr/0017-benchmark-acceptance-criteria.md).
+
+# Data and method
+
+The pipeline downloads `r length(pilot_files)` files from a pinned commit of the pilot repository and checks each one against its SHA-256 in a manifest kept in git. The SDTM domains used, and the official ADaM datasets used as the known answer:
+
+```{r}
+knitr::kable(inventory, col.names = c("Layer", "Dataset", "Rows", "Columns", "Subjects"))
+```
+
+| Step | How | Where |
+| --- | --- | --- |
+| Specification | The pilot's ADaM `define.xml` (Define-XML 1.0), read by our own reader | `R/define_v1.R`, [ADR 0016](../../../docs/adr/0016-specifications-from-define-xml.md) |
+| Derivation | admiral 1.5.0, from SDTM only; official values are never copied | `studies/benchmark/adam/` |
+| Comparison with the official ADaM | diffdf by key: text must be identical, numbers within 1e-8 | `compare_with_reference()` |
+| Independent programming of ADSL | base R and dplyr, without admiral and without the production helpers | `qc/benchmark/adsl_qc.R` |
+| Outputs | R; numbers rounded as SAS does (halves away from zero) | `studies/benchmark/tlf/` |
+| Comparison with the study report | The report's PDF is read at run time and compared row by row, at printed precision | `studies/benchmark/compare/` |
+| Transport files | xportr 0.6.1, from the specification; read back and compared again | `studies/benchmark/adam/xpt.R` |
+| Explanation of each finding | Each finding is linked to the discrepancy-log row that explains it | target `benchmark_findings` |
+
+# ADaM datasets against the official datasets
+
+```{r}
+adam <- findings[findings$comparison == "ADaM vs official", ]
+by_dataset <- lapply(c("ADSL", "ADAE", "ADTTE", "ADQSADAS"), function(ds) {
+  f <- adam[adam$dataset == ds, ]
+  data.frame(
+    Dataset = ds,
+    Findings = nrow(f),
+    `Variables or records affected` = if (nrow(f) == 0) "none" else {
+      paste(unique(ifelse(is.na(f$item), "records", f$item)), collapse = ", ")
+    },
+    `Explained by` = if (nrow(f) == 0) "" else paste(unique(f$explained_by), collapse = ", "),
+    check.names = FALSE
+  )
+})
+knitr::kable(do.call(rbind, by_dataset))
+```
+
+Every finding, with the number of records it affects:
+
+```{r}
+shown <- findings[findings$comparison %in% c("ADaM vs official", "ADaM vs define.xml"), ]
+shown$item[is.na(shown$item)] <- "(whole records)"
+knitr::kable(
+  shown[, c("comparison", "dataset", "item", "issue", "n", "explained_by")],
+  col.names = c("Comparison", "Dataset", "Variable", "Issue", "Records", "Explained by")
+)
+```
+
+The XPT files written with xportr, read back, give exactly the same `r sum(findings$comparison == "XPT vs official")` findings: writing to XPT changes nothing.
+
+# Independent programming of ADSL
+
+The second ADSL was written in base R and dplyr from the SDTM and the specification, without admiral and without the production helpers. Compared with the production ADSL on every variable, it has **`r nrow(qc)` differences**. It also reproduces the production ADSL's difference from the official dataset (D-004): the two programs read the specification the same way, independently.
+
+# Outputs against the study report
+
+```{r}
+outputs <- data.frame(
+  Output = c("Table 14-2.01", "Table 14-5.01", "Table 14-3.01", "Figure 14-1"),
+  Content = c(
+    "Demographic and baseline characteristics", "Treatment-emergent adverse events",
+    "ADAS-Cog (11), change to week 24, LOCF (primary analysis)", "Time to first dermatologic event"
+  ),
+  `Report pages` = c("46-48", "63-78", "49", "151"),
+  `Our rows` = c(
+    nrow(targets::tar_read(t_14_2_01)), nrow(targets::tar_read(t_14_5_01)),
+    nrow(targets::tar_read(t_14_3_01)), NA
+  ),
+  check.names = FALSE
+)
+outputs$`Rows that differ` <- vapply(outputs$Output, function(o) sum(findings$dataset == o), integer(1))
+outputs$`Rows that differ`[4] <- NA
+outputs$`Explained by` <- vapply(outputs$Output, function(o) {
+  paste(unique(findings$explained_by[findings$dataset == o]), collapse = ", ")
+}, "")
+outputs$`Explained by`[4] <- "compared on review"
+knitr::kable(outputs)
+```
+
+- **Table 14-2.01.** Two rows of the baseline BMI groups differ. The report counts the one subject with no baseline weight in "<25" (D-004). Counted that way, every number and the p-value of the report are reproduced (D-011).
+- **Table 14-5.01.** Four Fisher's exact p-values differ in the third decimal. The report rounded them twice. Rounding ours twice gives the four printed values (D-012).
+- **Table 14-3.01.** Every printed number matches: n, means, the dose-response p-value, adjusted mean differences, standard errors and confidence intervals. To get there, the model had to be fitted with baseline, as the report's footnote says, not without it, as the SAS code in the pilot's metadata does (D-013).
+- **Figure 14-1.** The figure is printed as an image with no numbers, so it cannot be compared cell by cell. Two checks remain: our ADTTE matches the official dataset exactly, and the pipeline renders the report's page next to ours for review (below). The medians and their 95% limits printed in the figure's box were checked by hand against ours.
+
+Our Kaplan-Meier summary for Figure 14-1 (95% limits with the linear transformation, the default of SAS PROC LIFETEST in 2006):
+
+```{r}
+s <- km$summary
+s$median <- ifelse(is.na(s$median), "not reached", fmt_num(s$median, 0))
+s$limits <- ifelse(is.na(s$lower), "", sprintf("%s; %s", fmt_num(s$lower, 0), fmt_num(s$upper, 0)))
+knitr::kable(
+  s[, c("group", "subjects", "events", "median", "limits")],
+  col.names = c("Group", "Subjects", "Events", "Median (days)", "95% limits")
+)
+```
+
+Log-rank test across the three groups: p = `r format.pval(km$logrank_p, digits = 3)`.
+
+::: {layout-ncol="2"}
+![Ours](../output/f_14_1.png)
+
+![Study report, page 151 (© CDISC)](../output/f_14_1_csr.png)
+:::
+
+# Conformance check {#sec-conformance}
+
+**Pinnacle 21 Community** (ADaM-IG 1.0, FDA engine 2204.1) validated our four XPT files and then the four official ones. Both runs used the pilot's SDTM and its ADaM `define.xml`. The two reports are identical, rule by rule and count by count, so no issue is ours alone. Each issue has its cause in the pilot's `define.xml`, which the benchmark follows by design:
+
+- codes padded with a non-breaking space;
+- a codelist with ">30" instead of ">=30";
+- a derivation that sets TRTEMFL to "N";
+- three wrong labels and a non-standard dataset label.
+
+They are D-014 to D-018 in the log. The report carries two caveats of the tool: a legacy engine (the only FDA engine with ADaM-IG 1.0 rules) and an old command-line client (the latest Mac build).
+
+**CDISC CORE** could not check ADaM data. Version 1.0.0 has no published ADaM rules, and its draft ADaM rules report variables as missing even on their own test data.
+
+Both runs are documented in [`conformance.md`](../conformance.md) and can be repeated with `tools/run-p21-adam.sh` and `tools/run-core-adam.sh`.
+
+# Discrepancy log
+
+Every difference found is in [`discrepancy-log.csv`](../discrepancy-log.csv) with its evidence, cause and decision. None was resolved by copying an official value.
+
+```{r}
+knitr::kable(log[, c("id", "dataset", "variable", "cause", "decision", "status")])
+```
+
+# Deviations from the phase plan
+
+The phase plan named some tools that were not used. None of these choices was recorded in an ADR at the time; they are listed here so that none goes unnoticed. The reviewer accepted them at the gate 1 review on 2026-11-12.
+
+| Plan | What was done |
+| --- | --- |
+| Tables with rtables and tern | Tables built with dplyr and the formatting helpers of `R/tlf.R`, which reproduce the report's printed formats |
+| metatools to check variables, labels and values | Our own `check_against_spec()`, run on every dataset against the `define.xml` |
+| ANCOVA checked also with emmeans | Fitted with `lm`; contrasts computed from the model, without emmeans |
+| A Parquet copy of each ADaM with arrow | Not done |
+| logrx run logs for each ADaM program | Not done; the pipeline (targets) records what was run, and `renv.lock` the versions |
+| CDISC CORE in Docker | The native macOS build was used outside Docker, since the Linux build is for x86 and the container is arm64. It had no ADaM rules, so Pinnacle 21 Community (the plan's fallback) was used, outside Docker too |
+
+# Gate 1
+
+The eight criteria of the phase plan, and how each one stands. The ones marked "for the reviewer" are decisions or actions that only the reviewer can take.
+
+```{r}
+outputs_in_matrix <- all(c("T-14-2.01", "T-14-5.01", "T-14-3.01", "F-14-1") %in% matrix$output_id) &&
+  all(file.exists(matrix$program), file.exists(matrix$qc_program))
+gate <- data.frame(
+  Criterion = c(
+    "1. A clean clone downloads the pilot files and every SHA-256 matches; git holds no pilot file",
+    "2. Each ADaM matches the official one; every difference is explained",
+    "3. The independent ADSL matches the production ADSL with no difference",
+    "4. The four outputs match the study report at printed precision",
+    "5. The XPT files pass CDISC CORE (or Pinnacle 21) with no unexplained issue",
+    "6. Each output is in the traceability matrix with its report table, ADaM variables and program",
+    "7. Continuous integration passes on PR 13 with the full benchmark",
+    "8. The reviewer has answered the control questions and approved the eight pull requests"
+  ),
+  Check = c(
+    sprintf("%d files verified by the pipeline; clean clone in CI; `git ls-files data/external`", length(pilot_files)),
+    sprintf("%d findings, %d unexplained (target `benchmark_findings`)", nrow(findings), nrow(unexplained)),
+    sprintf("%d differences (target `adsl_qc_vs_production`)", nrow(qc)),
+    "14-3.01 matches; F-14-1 on review; 14-2.01 and 14-5.01 differ by errors of the report (D-011, D-012)",
+    "Pinnacle 21 (ADR 0017, option A): same issues as the official files, all explained (D-014 to D-018)",
+    if (outputs_in_matrix) "4 of 4 outputs, programs present" else "incomplete",
+    "CI passed on PR 13",
+    "Pull requests 6 to 13"
+  ),
+  Status = c(
+    "Met",
+    if (nrow(unexplained) == 0) "Met" else "Not met",
+    if (nrow(qc) == 0) "Met" else "Not met",
+    "Met (ADR 0017, accepted)",
+    "Met, with the tool's caveats (conformance.md)",
+    if (outputs_in_matrix) "Met" else "Not met",
+    "Met",
+    "Pull requests approved 2026-11-12; control questions pending"
+  )
+)
+knitr::kable(gate)
+```
+
+# Appendix: computational environment
+
+```{r}
+lock <- jsonlite::read_json("renv.lock")
+cat(
+  "R version:       ", R.version.string, "\n",
+  "Locked packages: ", length(lock$Packages), "\n",
+  "Package snapshot:", lock$R$Repositories[[1]]$URL, "\n",
+  "Pipeline targets:", nrow(targets::tar_manifest()), "\n"
+)
+```

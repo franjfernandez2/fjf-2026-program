@@ -1,0 +1,118 @@
+---
+title: "Nota explicativa: fase F1, benchmark con el piloto de CDISC"
+author: "Francisco Fernández"
+date: 2026-11-11
+---
+
+# Qué se ha hecho
+
+La fase F1 comprueba que el pipeline acierta donde la respuesta ya se conoce. Partimos del SDTM público del piloto de CDISC (CDISCPILOT01). Derivamos cuatro ADaM, los comparamos con los oficiales y reconstruimos cuatro salidas de su informe (CSR). Todo sale de un solo comando, `targets::tar_make()`.
+
+| Pieza | Dónde vive | Pull request |
+|---|---|---|
+| Descarga verificada: commit fijo y SHA-256 por fichero; nada del piloto en git | `R/pilot_data.R`, `data/external/cdiscpilot01-manifest.csv`, ADR 0015 | 6 |
+| Especificaciones leídas del `define.xml` 1.0 del piloto | `R/define_v1.R`, `R/spec_checks.R`, ADR 0016 | 7 |
+| ADSL con admiral y su comparación con el oficial | `studies/benchmark/adam/adsl.R` | 8 |
+| Segunda programación de ADSL, sin admiral; ADAE | `qc/benchmark/adsl_qc.R`, `studies/benchmark/adam/adae.R` | 9 |
+| ADTTE y ADQSADAS (ADAS-Cog con ventanas y LOCF) | `studies/benchmark/adam/` | 10 |
+| Tablas 14-2.01 (demografía) y 14-5.01 (acontecimientos adversos) frente al CSR | `studies/benchmark/tlf/`, `studies/benchmark/compare/` | 11 |
+| ANCOVA de la 14-3.01, curva KM 14-1, XPT con xportr, prueba de CDISC CORE | ídem, `studies/benchmark/conformance.md` | 12 |
+| Enlace de cada hallazgo con el registro, informe del benchmark, ADR 0017 y esta nota | `R/benchmark_findings.R`, `studies/benchmark/report/` | 13 |
+
+**Resultado:**
+
+- **ADaM:**
+  - ADTTE coincide exactamente con el oficial.
+  - ADSL, ADAE y ADQSADAS tienen 10 diferencias, todas explicadas.
+- **Doble programación:** la segunda ADSL coincide con la primera sin ninguna diferencia.
+- **Salidas frente al CSR:**
+  - La tabla 14-3.01 (el análisis primario) coincide celda a celda.
+  - La figura 14-1 coincide al revisarla.
+  - Las tablas 14-2.01 y 14-5.01 difieren en 6 filas, y la causa está en el informe del piloto.
+- **Registro de discrepancias:** 18 entradas (D-001 a D-018), ninguna abierta.
+- **Conformidad:**
+  - Pinnacle 21 Community (ADaM-IG 1.0) da exactamente las mismas incidencias con nuestros XPT que con los oficiales. Todas vienen del `define.xml` del piloto (D-014 a D-018).
+  - CDISC CORE no pudo comprobar los ADaM: no trae reglas ADaM publicadas.
+
+# Por qué se ha hecho así
+
+- **El paquete original del piloto, no las copias de pharmaverse** ([ADR 0015](../adr/0015-third-party-pilot-data.md)). Solo el original trae a la vez el SDTM, los ADaM oficiales, los `define.xml` y el CSR. No lo guardamos en git porque las condiciones de CDISC prohíben modificarlo. El pipeline lo descarga y comprueba la huella de cada fichero.
+- **La especificación manda sobre el código** ([ADR 0016](../adr/0016-specifications-from-define-xml.md)). `metacore` solo lee Define-XML 2.0, y el del piloto es 1.0. En lugar de copiar la especificación a mano, escribimos un lector, para no tener una copia que pueda desviarse del original sin que nadie lo note.
+- **Nunca se copia un valor oficial para cuadrar.** Cada diferencia va al registro con su prueba, su causa y su decisión. Si el piloto se equivoca, se documenta el error y no se reproduce en nuestros datos.
+- **El CSR se lee del PDF al ejecutar.** Así no guardamos números del informe en git, y la comparación es automática y fila a fila, a la precisión impresa.
+- **«Explicado» se comprueba ejecutando algo** ([ADR 0017](../adr/0017-benchmark-acceptance-criteria.md)). El objetivo `benchmark_findings` enlaza cada hallazgo con la fila del registro que lo explica. Si alguno queda sin enlazar, una prueba falla.
+
+# Cómo comprobarlo
+
+```sh
+docker compose run --rm analysis Rscript -e 'targets::tar_make()'   # descarga, deriva, compara (43 objetivos)
+docker compose run --rm analysis Rscript tests/run-tests.R          # pruebas, incluida la de hallazgos sin explicar
+docker compose run --rm --no-deps analysis bash -c 'cd studies/benchmark/report && quarto render'
+# Informe: studies/benchmark/output/report/benchmark-report.html (fuera de git: muestra una página del CSR)
+docker compose run --rm analysis Rscript -e 'print(targets::tar_read(benchmark_findings), n = Inf)'
+```
+
+# Lo que salió mal y cómo se resolvió
+
+1. **`metacore` no lee Define-XML 1.0.** Era el riesgo previsto. En lugar de copiar la especificación a mano desde el `define.pdf`, se escribió un lector propio, de unas pocas funciones.
+2. **Códigos con espacios invisibles.** Algunos códigos del `define.xml` acaban en un espacio de no separación (U+00A0), que `trimws()` no quita por defecto. Se usa `trimws(x, whitespace = "[\\h\\v]")`.
+3. **El redondeo de SAS no es el de R.** R redondea las mitades al par (`round(0.5) = 0`), y SAS las aleja del cero. Además, el piloto calcula el IMC y sus grupos a partir de los valores ya redondeados. `round_sas()` reproduce las dos cosas (D-002).
+4. **Leer tablas de un PDF.** Hubo que distinguir etiquetas de valores («<25» no es un número), unir las etiquetas largas partidas en dos líneas sin unir los títulos de sección, y respetar los recortes de las etiquetas a 40 y 38 caracteres.
+5. **El informe redondeó dos veces.** Cuatro valores p de la 14-5.01 difieren en el tercer decimal. Redondeando primero a cuatro decimales y luego a tres salen los cuatro valores impresos (D-012).
+6. **El código SAS de los metadatos no es el del informe.** En la 14-3.01, el código ajusta la dosis-respuesta sin la basal, pero la nota al pie la incluye. Solo con la basal sale el valor p impreso (D-013).
+7. **El intervalo de la mediana de Kaplan-Meier.** R usa por defecto la transformación logarítmica, y SAS en 2006 usaba la lineal. Con `conf.type = "plain"` los límites coinciden con la figura.
+8. **Un error de lectura del asistente.** Al principio, el asistente leyó mal la especificación de AOCC01FL, que además tiene una errata (D-007). Se corrigió y se dijo abiertamente en la revisión.
+9. **CDISC CORE no comprueba ADaM.** La versión publicada no trae reglas ADaM. Las reglas en borrador fallan incluso con sus propios datos de prueba: dicen «STUDYID is not present» en un fichero que lo tiene. Está documentado en `studies/benchmark/conformance.md`, Para el criterio 5 de la puerta elegiste Pinnacle 21 Community (ADR 0017, opción A).
+10. **Pinnacle 21 en Mac.**
+    - La versión para Mac es la 4.1.0 (2024) y su cliente se negaba a arrancar («expired»). Funcionó tras configurar la aplicación una vez desde su ventana, que descargó los motores.
+    - Crear el Pinnacle ID exige un correo de trabajo, así que se saltó: el validador no lo necesita.
+    - El cliente envía sus registros a Pinnacle 21; se ejecutó con registros solo locales.
+    - Al principio, nuestros ficheros se validaron sin `define.xml` y los oficiales con él, porque el validador encontró el del piloto en la misma carpeta. Se repitieron los dos con el mismo `define.xml` y con el SDTM.
+11. **Herramientas del plan que no se usaron.** No se usaron rtables, tern, metatools, emmeans, la copia en Parquet ni logrx. No se decidió en un ADR en su momento. La lista está en el informe del benchmark, sección «Deviations from the phase plan». Las aceptaste en la revisión de la puerta 1, el 12 de noviembre.
+
+# Puerta 1
+
+Estado de los ocho criterios. El informe del benchmark lo calcula a partir del pipeline, en su sección «Gate 1».
+
+| Criterio | Estado |
+|---|---|
+| 1. Descarga verificada en un clon limpio; nada del piloto en git | Cumplido |
+| 2. Cada ADaM coincide o su diferencia está explicada | Cumplido: 27 hallazgos, 0 sin explicar |
+| 3. La segunda ADSL coincide sin ninguna diferencia | Cumplido |
+| 4. Las cuatro salidas coinciden con el CSR a la precisión impresa | Cumplido: aceptaste el ADR 0017 |
+| 5. Los XPT pasan CORE o Pinnacle 21 sin incidencias sin explicar | Cumplido con Pinnacle 21 (opción A): las mismas incidencias que los oficiales, todas explicadas (D-014 a D-018) |
+| 6. Cada salida está en la matriz de trazabilidad | Cumplido |
+| 7. Integración continua en verde en la PR 13 | Cumplido |
+| 8. Has respondido las preguntas de control y aprobado las ocho PR | PR aprobadas el 12 de noviembre; **faltan tus respuestas** |
+
+La etiqueta `gate-1` no se pone hasta que los ocho estén cumplidos.
+
+# Preguntas de control
+
+Respóndelas en voz alta, sin mirar, como en una entrevista. Esta vez las respuestas son tuyas: escríbelas abajo con tus palabras.
+
+1. ¿Qué diferencia hay entre SDTM y ADaM, y por qué no se analiza directamente el SDTM?
+2. ¿Qué es el `define.xml` y para qué lo usa un revisor de la FDA?
+3. ADSL tiene una fila por paciente. ¿Qué estructura tiene ADQSADAS, y qué son PARAMCD, AVAL, BASE, CHG y ABLFL?
+4. ¿Por qué la segunda programación no puede usar admiral ni mirar el primer programa?
+5. ¿Cuándo es un acontecimiento adverso «emergente del tratamiento», y qué variable lo marca en ADAE?
+6. En ADTTE, ¿qué es una censura y qué valor toma CNSR en un paciente sin acontecimiento?
+7. El análisis primario del piloto imputa con LOCF. ¿A qué pregunta responde, y por qué hoy no se aceptaría sin más?
+8. Tu ADSL difiere del oficial en un paciente (D-004). ¿Cómo decides si el error es tuyo o del piloto?
+
+# Respuestas
+
+::: {.callout-note collapse="true"}
+## Pulsa para ver las respuestas
+
+Pendientes: las escribes tú.
+
+1.
+2.
+3.
+4.
+5.
+6.
+7.
+8.
+:::

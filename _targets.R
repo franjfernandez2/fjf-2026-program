@@ -56,7 +56,7 @@ list(
   tar_target(adsl_spec_findings, check_against_spec(adsl, adam_spec, "ADSL")),
   tar_target(
     adsl_vs_official,
-    compare_with_reference(adsl, haven::read_xpt(pilot_file(pilot_files, "adam/adsl.xpt")), keys = "USUBJID")
+    compare_with_reference(adsl, haven::read_xpt(pilot_file(pilot_files, "adam/adsl.xpt")), keys = adam_keys()$ADSL)
   ),
   # Double programming: the QC ADSL must match production with no difference at all.
   tar_target(adsl_qc, qc_adsl(pilot_files, adam_spec)),
@@ -67,7 +67,7 @@ list(
     adae_vs_official,
     compare_with_reference(
       adae, haven::read_xpt(pilot_file(pilot_files, "adam/adae.xpt")),
-      keys = c("USUBJID", "AESEQ")
+      keys = adam_keys()$ADAE
     )
   ),
   tar_target(adtte, derive_adtte(adsl, adae, adam_spec)),
@@ -76,7 +76,7 @@ list(
     adtte_vs_official,
     compare_with_reference(
       adtte, haven::read_xpt(pilot_file(pilot_files, "adam/adtte.xpt")),
-      keys = c("USUBJID", "PARAMCD")
+      keys = adam_keys()$ADTTE
     )
   ),
   tar_target(adqsadas, derive_adqsadas(benchmark_sdtm, adsl, adam_spec)),
@@ -85,7 +85,7 @@ list(
     adqsadas_vs_official,
     compare_with_reference(
       adqsadas, haven::read_xpt(pilot_file(pilot_files, "adam/adqsadas.xpt")),
-      keys = c("USUBJID", "PARAMCD", "AVISIT", "ADT")
+      keys = adam_keys()$ADQSADAS
     )
   ),
 
@@ -118,5 +118,24 @@ list(
     ),
     format = "file"
   ),
-  tar_target(adam_xpt_vs_official, compare_xpt_with_official(adam_xpt, pilot_files))
+  tar_target(adam_xpt_vs_official, compare_xpt_with_official(adam_xpt, pilot_files)),
+
+  # Gate 1: every finding above, linked to the discrepancy-log rows that explain it.
+  # An empty explained_by is a finding nobody has explained yet (ADR 0017).
+  tar_target(discrepancy_log_file, "studies/benchmark/discrepancy-log.csv", format = "file"),
+  tar_target(
+    benchmark_findings,
+    collect_benchmark_findings(
+      adam = list(
+        ADSL = adsl_vs_official, ADAE = adae_vs_official, ADTTE = adtte_vs_official,
+        ADQSADAS = adqsadas_vs_official
+      ),
+      keys = adam_keys(),
+      xpt = adam_xpt_vs_official,
+      spec = rbind(adsl_spec_findings, adae_spec_findings, adtte_spec_findings, adqsadas_spec_findings),
+      csr = list(`14-2.01` = t_14_2_01_vs_csr, `14-5.01` = t_14_5_01_vs_csr, `14-3.01` = t_14_3_01_vs_csr),
+      qc = adsl_qc_vs_production,
+      log = read_discrepancy_log(discrepancy_log_file)
+    )
+  )
 )
