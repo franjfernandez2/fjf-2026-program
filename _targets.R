@@ -13,6 +13,8 @@ tar_source(setdiff(list.files("R", pattern = "[.]R$", full.names = TRUE), "R/_de
 tar_source("studies/benchmark/adam")
 # Independent QC programs (double programming).
 tar_source("qc/benchmark")
+# Tables, figures and their comparison with the pilot's study report.
+tar_source(c("studies/benchmark/tlf", "studies/benchmark/compare"))
 
 list(
   # --- F0: environment smoke test ---
@@ -85,5 +87,12 @@ list(
       adqsadas, haven::read_xpt(pilot_file(pilot_files, "adam/adqsadas.xpt")),
       keys = c("USUBJID", "PARAMCD", "AVISIT", "ADT")
     )
-  )
+  ),
+
+  # Outputs, each compared with the table printed in the study report (cell by cell).
+  tar_target(pilot_csr, pilot_file(pilot_files, "csr/cdiscpilot01.pdf"), format = "file"),
+  tar_target(t_14_2_01, make_t_14_2_01(adsl)),
+  tar_target(t_14_2_01_vs_csr, compare_t_14_2_01(t_14_2_01, pilot_csr)),
+  tar_target(t_14_5_01, make_t_14_5_01(adsl, adae)),
+  tar_target(t_14_5_01_vs_csr, compare_t_14_5_01(t_14_5_01, pilot_csr))
 )

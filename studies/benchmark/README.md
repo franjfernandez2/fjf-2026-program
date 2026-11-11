@@ -10,7 +10,8 @@ This study checks the pipeline against a study whose answer is already published
 | ADAE from SDTM, compared with the official dataset | `adam/`, targets `adae*` | Done (PR 9) |
 | ADTTE and ADQSADAS, compared with the official datasets | `adam/`, targets `adtte*`, `adqsadas*` | Done (PR 10) |
 | Independent QC of ADSL | `qc/benchmark/`, targets `adsl_qc*` | Done (PR 9) |
-| Four outputs compared with the study report | `studies/benchmark/tlf/`, `studies/benchmark/compare/` | Planned |
+| Tables 14-2.01 and 14-5.01 compared with the study report | `tlf/`, `compare/`, targets `t_14_*` | Done (PR 11) |
+| Table 14-3.01 and Figure 14-1 compared with the study report | `tlf/`, `compare/` | Planned |
 
 ## Discrepancy log
 

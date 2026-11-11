@@ -23,5 +23,5 @@ test_that("the traceability matrix is well formed", {
   ))
   expect_false(anyDuplicated(matrix$output_id) > 0)
   expect_true(all(matrix$type %in% c("table", "listing", "figure")))
-  expect_true(all(matrix$qc_status %in% c("not started", "in progress", "match", "mismatch")))
+  expect_true(all(matrix$qc_status %in% c("not started", "in progress", "match", "explained", "mismatch")))
 })
