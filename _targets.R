@@ -11,6 +11,8 @@ tar_option_set(packages = c("DBI", "RPostgres", "cli"))
 tar_source(setdiff(list.files("R", pattern = "[.]R$", full.names = TRUE), "R/_dependencies.R"))
 # Study programs: the benchmark's ADaM derivations.
 tar_source("studies/benchmark/adam")
+# Independent QC programs (double programming).
+tar_source("qc/benchmark")
 
 list(
   # --- F0: environment smoke test ---
@@ -53,5 +55,8 @@ list(
   tar_target(
     adsl_vs_official,
     compare_with_reference(adsl, haven::read_xpt(pilot_file(pilot_files, "adam/adsl.xpt")), keys = "USUBJID")
-  )
+  ),
+  # Double programming: the QC ADSL must match production with no difference at all.
+  tar_target(adsl_qc, qc_adsl(pilot_files, adam_spec)),
+  tar_target(adsl_qc_vs_production, compare_with_reference(adsl_qc, adsl, keys = "USUBJID"))
 )
