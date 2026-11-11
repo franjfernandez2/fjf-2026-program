@@ -29,8 +29,10 @@ La fase F1 comprueba que el pipeline acierta donde la respuesta ya se conoce. Pa
   - La tabla 14-3.01 (el análisis primario) coincide celda a celda.
   - La figura 14-1 coincide al revisarla.
   - Las tablas 14-2.01 y 14-5.01 difieren en 6 filas, y la causa está en el informe del piloto.
-- **Registro de discrepancias:** 13 entradas (D-001 a D-013), ninguna abierta.
-- **CDISC CORE:** no pudo comprobar los ADaM. La versión publicada no trae reglas ADaM, y las reglas en borrador no funcionan.
+- **Registro de discrepancias:** 18 entradas (D-001 a D-018), ninguna abierta.
+- **Conformidad:**
+  - Pinnacle 21 Community (ADaM-IG 1.0) da exactamente las mismas incidencias con nuestros XPT que con los oficiales. Todas vienen del `define.xml` del piloto (D-014 a D-018).
+  - CDISC CORE no pudo comprobar los ADaM: no trae reglas ADaM publicadas.
 
 # Por qué se ha hecho así
 
@@ -61,7 +63,12 @@ docker compose run --rm analysis Rscript -e 'print(targets::tar_read(benchmark_f
 7. **El intervalo de la mediana de Kaplan-Meier.** R usa por defecto la transformación logarítmica, y SAS en 2006 usaba la lineal. Con `conf.type = "plain"` los límites coinciden con la figura.
 8. **Un error de lectura del asistente.** Al principio, el asistente leyó mal la especificación de AOCC01FL, que además tiene una errata (D-007). Se corrigió y se dijo abiertamente en la revisión.
 9. **CDISC CORE no comprueba ADaM.** La versión publicada no trae reglas ADaM. Las reglas en borrador fallan incluso con sus propios datos de prueba: dicen «STUDYID is not present» en un fichero que lo tiene. Está documentado en `studies/benchmark/conformance.md`, Para el criterio 5 de la puerta elegiste Pinnacle 21 Community (ADR 0017, opción A).
-10. **Herramientas del plan que no se usaron.** No se usaron rtables, tern, metatools, emmeans, la copia en Parquet ni logrx. No se decidió en un ADR en su momento. La lista está en el informe del benchmark, sección «Deviations from the phase plan», para que la revises.
+10. **Pinnacle 21 en Mac.**
+    - La versión para Mac es la 4.1.0 (2024) y su cliente se negaba a arrancar («expired»). Funcionó tras configurar la aplicación una vez desde su ventana, que descargó los motores.
+    - Crear el Pinnacle ID exige un correo de trabajo, así que se saltó: el validador no lo necesita.
+    - El cliente envía sus registros a Pinnacle 21; se ejecutó con registros solo locales.
+    - Al principio, nuestros ficheros se validaron sin `define.xml` y los oficiales con él, porque el validador encontró el del piloto en la misma carpeta. Se repitieron los dos con el mismo `define.xml` y con el SDTM.
+11. **Herramientas del plan que no se usaron.** No se usaron rtables, tern, metatools, emmeans, la copia en Parquet ni logrx. No se decidió en un ADR en su momento. La lista está en el informe del benchmark, sección «Deviations from the phase plan», para que la revises.
 
 # Puerta 1
 
@@ -73,7 +80,7 @@ Estado de los ocho criterios. El informe del benchmark lo calcula a partir del p
 | 2. Cada ADaM coincide o su diferencia está explicada | Cumplido: 27 hallazgos, 0 sin explicar |
 | 3. La segunda ADSL coincide sin ninguna diferencia | Cumplido |
 | 4. Las cuatro salidas coinciden con el CSR a la precisión impresa | Cumplido si aceptas el ADR 0017 |
-| 5. Los XPT pasan CORE o Pinnacle 21 sin incidencias sin explicar | **Pendiente.** Elegiste la opción A del ADR 0017: pasas tú Pinnacle 21 Community |
+| 5. Los XPT pasan CORE o Pinnacle 21 sin incidencias sin explicar | Cumplido con Pinnacle 21 (opción A): las mismas incidencias que los oficiales, todas explicadas (D-014 a D-018) |
 | 6. Cada salida está en la matriz de trazabilidad | Cumplido |
 | 7. Integración continua en verde en la PR 13 | Ver la PR 13 |
 | 8. Has respondido las preguntas de control y aprobado las ocho PR | Pendiente de ti |

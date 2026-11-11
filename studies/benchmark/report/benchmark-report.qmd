@@ -42,7 +42,7 @@ The question is whether the FJF-2026 pipeline gets the right answer where the an
 - **Independent programming.** The second ADSL, written without admiral, matches ours with `r nrow(qc)` differences.
 - **Outputs.** Table 14-3.01 (the primary efficacy analysis) matches the study report cell by cell. Figure 14-1 matches on review. Tables 14-2.01 and 14-5.01 differ in `r sum(findings$dataset %in% c("Table 14-2.01", "Table 14-5.01"))` printed rows, and the cause lies in the pilot in every one.
 - **Overall.** Of `r nrow(findings)` findings, `r nrow(unexplained)` are unexplained. The discrepancy log has `r nrow(log)` entries; `r sum(log$status == "open")` are open.
-- **Conformance.** The CDISC CORE check could not be completed: the published engine has no ADaM rules (@sec-conformance).
+- **Conformance.** Pinnacle 21 reports the same issues for our XPT files as for the official ones, all caused by the pilot's `define.xml` and all explained. CDISC CORE could not check ADaM data (@sec-conformance).
 
 The acceptance criteria are those of [ADR 0017](../../../docs/adr/0017-benchmark-acceptance-criteria.md).
 
@@ -153,9 +153,18 @@ Log-rank test across the three groups: p = `r format.pval(km$logrank_p, digits =
 
 # Conformance check {#sec-conformance}
 
-The plan was to check the XPT files with CDISC CORE. CORE v1.0.0 has no published ADaM rules. The draft ADaM rules from CDISC's rules repository run on it, but they report variables as missing even on their own test data, so they produce no usable result. The run is documented in [`conformance.md`](../conformance.md) and can be repeated with `tools/run-core-adam.sh`.
+**Pinnacle 21 Community** (ADaM-IG 1.0, FDA engine 2204.1) validated our four XPT files and then the four official ones. Both runs used the pilot's SDTM and its ADaM `define.xml`. The two reports are identical, rule by rule and count by count, so no issue is ours alone. Each issue has its cause in the pilot's `define.xml`, which the benchmark follows by design:
 
-Until a validator that covers ADaM is run, conformance rests on three checks. Each dataset is checked against the `define.xml` (variables, order, labels, types and codelists). The XPT files are written from the same specification. They are then read back and compared with the official XPT files. For gate 1, the reviewer chose to run Pinnacle 21 Community on our XPT files and on the official ones (ADR 0017, option A). Its result will be added here.
+- codes padded with a non-breaking space;
+- a codelist with ">30" instead of ">=30";
+- a derivation that sets TRTEMFL to "N";
+- three wrong labels and a non-standard dataset label.
+
+They are D-014 to D-018 in the log. The report carries two caveats of the tool: a legacy engine (the only FDA engine with ADaM-IG 1.0 rules) and an old command-line client (the latest Mac build).
+
+**CDISC CORE** could not check ADaM data. Version 1.0.0 has no published ADaM rules, and its draft ADaM rules report variables as missing even on their own test data.
+
+Both runs are documented in [`conformance.md`](../conformance.md) and can be repeated with `tools/run-p21-adam.sh` and `tools/run-core-adam.sh`.
 
 # Discrepancy log
 
@@ -176,7 +185,7 @@ The phase plan named some tools that were not used. None of these choices was re
 | ANCOVA checked also with emmeans | Fitted with `lm`; contrasts computed from the model, without emmeans |
 | A Parquet copy of each ADaM with arrow | Not done |
 | logrx run logs for each ADaM program | Not done; the pipeline (targets) records what was run, and `renv.lock` the versions |
-| CDISC CORE in Docker | The native macOS build was used outside Docker, since the Linux build is for x86 and the container is arm64 |
+| CDISC CORE in Docker | The native macOS build was used outside Docker, since the Linux build is for x86 and the container is arm64. It had no ADaM rules, so Pinnacle 21 Community (the plan's fallback) was used, outside Docker too |
 
 # Gate 1
 
@@ -201,7 +210,7 @@ gate <- data.frame(
     sprintf("%d findings, %d unexplained (target `benchmark_findings`)", nrow(findings), nrow(unexplained)),
     sprintf("%d differences (target `adsl_qc_vs_production`)", nrow(qc)),
     "14-3.01 matches; F-14-1 on review; 14-2.01 and 14-5.01 differ by errors of the report (D-011, D-012)",
-    "CORE has no published ADaM rules (conformance.md); Pinnacle 21 chosen instead (ADR 0017, option A)",
+    "Pinnacle 21 (ADR 0017, option A): same issues as the official files, all explained (D-014 to D-018)",
     if (outputs_in_matrix) "4 of 4 outputs, programs present" else "incomplete",
     "CI on PR 13",
     "Pull requests 6 to 13"
@@ -211,7 +220,7 @@ gate <- data.frame(
     if (nrow(unexplained) == 0) "Met" else "Not met",
     if (nrow(qc) == 0) "Met" else "Not met",
     "Met if ADR 0017 is accepted",
-    "Pending: Pinnacle 21 run by the reviewer",
+    "Met, with the tool's caveats (conformance.md)",
     if (outputs_in_matrix) "Met" else "Not met",
     "See PR 13",
     "For the reviewer"

@@ -52,5 +52,6 @@ So the plan's words "matches" and "passes" need a precise meaning before the gat
 
 - Gate 1 is judged by running the pipeline and its tests, not by reading the log: the benchmark report shows every finding with the row that explains it.
 - Every explained difference is a documented error or ambiguity of the pilot. The log is part of the benchmark's result.
-- Criterion 4 is met under this ADR. Criterion 5 waits for the Pinnacle 21 run (option A).
+- Criterion 4 is met under this ADR.
+- Criterion 5 was met on 2026-11-11 by the Pinnacle 21 run (option A). Our files and the official ones give identical reports. Every issue is caused by the pilot's define.xml and explained (D-014 to D-018); see [`conformance.md`](../../studies/benchmark/conformance.md) for the tool's caveats.
 - Phases F3 and F4 reuse the same rules: double programming with no exceptions, every difference logged, explained and linked.
