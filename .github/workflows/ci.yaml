@@ -4,8 +4,9 @@
 # checked too) and on every push to main. It uses exactly the same Docker image and
 # Compose stack as local work, so "it passes in CI" means "it passes on any machine".
 #
-# Steps: build the analysis image (with layer cache) -> start PostgreSQL ->
-#        lint and format checks -> test suite -> full pipeline -> document templates.
+# Steps: build the analysis image (with layer cache) -> restore the cached pilot data ->
+#        start PostgreSQL -> lockfile check -> lint and format checks -> test suite ->
+#        full pipeline (downloads and verifies the pilot data on a cache miss) -> documents.
 
 name: CI
 
@@ -56,6 +57,14 @@ jobs:
             echo "FJF_LOADER_PASSWORD=$(openssl rand -hex 16)"
             echo "FJF_READER_PASSWORD=$(openssl rand -hex 16)"
           } > .env
+
+      # Third-party benchmark data (ADR 0015). The key is the manifest's hash, so the cache is
+      # reused until the pinned files change. On a miss the pipeline downloads and verifies them.
+      - name: Restore the CDISC pilot files
+        uses: actions/cache@v4
+        with:
+          path: data/external/cdiscpilot01
+          key: cdiscpilot01-${{ hashFiles('data/external/cdiscpilot01-manifest.csv') }}
 
       - name: Start the clinical database
         run: docker compose up -d --wait db

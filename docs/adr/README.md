@@ -20,3 +20,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0012](0012-reproducible-environment.md) | Reproducible environment: pinned image, dated package snapshot, renv | Accepted |
 | [0013](0013-database-roles-and-audit-trail.md) | Database roles and audit trail | Accepted |
 | [0014](0014-documents-with-quarto.md) | Documents with Quarto, PDF through Typst | Accepted |
+| [0015](0015-third-party-pilot-data.md) | Third-party data for the benchmark: the CDISC pilot, downloaded and verified | Accepted |
