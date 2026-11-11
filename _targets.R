@@ -24,5 +24,22 @@ list(
   # targets too, so a deleted or edited file is noticed, downloaded again and re-verified.
   tar_target(pilot_manifest, "data/external/cdiscpilot01-manifest.csv", format = "file"),
   tar_target(pilot_files, fetch_pilot_files(pilot_manifest), format = "file"),
-  tar_target(pilot_inventory, inventory_xpt(pilot_files))
+  tar_target(pilot_inventory, inventory_xpt(pilot_files)),
+
+  # Specifications (ADR 0016): read from the pilot's own ADaM define.xml (Define-XML 1.0).
+  tar_target(pilot_adam_define, pilot_file(pilot_files, "adam/define.xml"), format = "file"),
+  tar_target(adam_spec, read_define_v1(pilot_adam_define)),
+  tar_target(benchmark_datasets, c("ADSL", "ADAE", "ADTTE", "ADQSADAS")),
+  tar_target(benchmark_metacore, define_v1_to_metacore(adam_spec, benchmark_datasets)),
+
+  # Is the pilot consistent with itself? Its official ADaM against its own specification,
+  # and its analysis results metadata against its own parameter lists.
+  tar_target(
+    pilot_spec_findings,
+    do.call(rbind, lapply(benchmark_datasets, function(ds) {
+      official <- haven::read_xpt(pilot_file(pilot_files, sprintf("adam/%s.xpt", tolower(ds))))
+      check_against_spec(official, adam_spec, ds)
+    }))
+  ),
+  tar_target(pilot_arm_findings, check_analysis_results(adam_spec))
 )

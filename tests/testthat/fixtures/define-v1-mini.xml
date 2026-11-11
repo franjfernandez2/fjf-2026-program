@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- A minimal Define-XML 1.0 file written for the tests. It is not CDISC data. -->
+<ODM xmlns="http://www.cdisc.org/ns/odm/v1.2"
+  xmlns:def="http://www.cdisc.org/ns/def/v1.0"
+  xmlns:adamref="http://www.cdisc.org/ns/ADaMRes/DRAFT"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  FileOID="TEST" ODMVersion="1.2" FileType="Snapshot">
+<Study OID="TEST">
+  <GlobalVariables>
+    <StudyName>TEST</StudyName>
+    <StudyDescription>Test</StudyDescription>
+    <ProtocolName>TEST</ProtocolName>
+  </GlobalVariables>
+  <MetaDataVersion OID="TEST.1" Name="Test" def:DefineVersion="1.0.0">
+    <ItemGroupDef OID="ADXX" Name="ADXX" Repeating="Yes" Purpose="Analysis"
+      def:Label="Test Analysis Dataset" def:Structure="one record per subject per parameter"
+      def:DomainKeys="USUBJID, PARAMCD" def:Class="BDS" Comment=" ">
+      <ItemRef ItemOID="ADXX.USUBJID" OrderNumber="1" Mandatory="Yes"/>
+      <ItemRef ItemOID="ADXX.PARAMCD" OrderNumber="2" Mandatory="No"/>
+      <ItemRef ItemOID="ADXX.AVAL" OrderNumber="3" Mandatory="No"/>
+      <ItemRef ItemOID="ADXX.ADT" OrderNumber="4" Mandatory="No"/>
+    </ItemGroupDef>
+    <ItemDef OID="ADXX.USUBJID" Name="USUBJID" DataType="text" Length="11" Origin="Derived"
+      Comment="DM.USUBJID" def:Label="Unique Subject Identifier"/>
+    <ItemDef OID="ADXX.PARAMCD" Name="PARAMCD" DataType="text" Length="8" Origin="Derived"
+      Comment=" " def:Label="Parameter Code">
+      <CodeListRef CodeListOID="PARAMCD"/>
+    </ItemDef>
+    <ItemDef OID="ADXX.AVAL" Name="AVAL" DataType="float" Length="8" Origin="Derived"
+      Comment=" " def:Label="Analysis Value">
+      <def:ValueListRef ValueListOID="ValueList.ADXX.AVAL"/>
+    </ItemDef>
+    <ItemDef OID="ADXX.ADT" Name="ADT" DataType="integer" Length="8" Origin="Derived"
+      Comment="SAS date from XX.XXDTC" def:Label="Analysis Date" def:DisplayFormat="DATE9."/>
+    <def:ValueListDef OID="ValueList.ADXX.AVAL">
+      <ItemRef ItemOID="ADXX.AVAL.TOT" OrderNumber="1" Mandatory="No"/>
+      <ItemRef ItemOID="ADXX.AVAL.ITM1" OrderNumber="2" Mandatory="No"/>
+    </def:ValueListDef>
+    <ItemDef OID="ADXX.AVAL.TOT" Name="TOT" DataType="integer" Length="8" Origin="Derived"
+      Comment="Sum of items" def:Label="Total Score"/>
+    <ItemDef OID="ADXX.AVAL.ITM1" Name="ITM1" DataType="integer" Length="8" Origin="Derived"
+      Comment="XX.XXSTRESN where XXTESTCD=PARAMCD" def:Label="Item 1"/>
+    <CodeList OID="PARAMCD" Name="PARAMCD" DataType="text">
+      <CodeListItem CodedValue="TOT" def:Rank="1">
+        <Decode><TranslatedText xml:lang="en">Total Score</TranslatedText></Decode>
+      </CodeListItem>
+      <CodeListItem CodedValue="ITM1" def:Rank="2">
+        <Decode><TranslatedText xml:lang="en">Item 1</TranslatedText></Decode>
+      </CodeListItem>
+    </CodeList>
+    <CodeList OID="MEDDRA" Name="MedDRA" DataType="text">
+      <ExternalCodeList Dictionary="MedDRA" Version="8.0"/>
+    </CodeList>
+    <adamref:AnalysisResultDisplays>
+      <adamref:ResultDisplay DisplayIdentifier="Table_1" OID="Table_1" DisplayLabel="Total score at week 4">
+        <adamref:AnalysisResults OID="Table_1.R.1" ResultIdentifier="mean total score" Reason="Primary">
+          <adamref:ParameterList>
+            <adamref:Parameter ParamCD="TOT" Param="Total Score"/>
+          </adamref:ParameterList>
+          <adamref:AnalysisVariable ItemOID="ADXX.AVAL"/>
+          <adamref:AnalysisDataset>
+            <ItemGroupRef ItemGroupOID="ADXX" Mandatory="No"/>
+            <adamref:SelectionCriteria>
+              <def:ComputationMethod OID="Table_1.R.1.SC1" Name="Selection Criteria">[ PARAMCD="TTL" ]</def:ComputationMethod>
+            </adamref:SelectionCriteria>
+          </adamref:AnalysisDataset>
+          <adamref:Documentation leafID="SAP_SEC_1">
+            <TranslatedText xml:lang="en">Mean of AVAL.</TranslatedText>
+          </adamref:Documentation>
+          <adamref:ProgrammingCode>
+            <def:ComputationMethod OID="Table_1.R.1">proc means data = ADXX; var aval; run;</def:ComputationMethod>
+          </adamref:ProgrammingCode>
+        </adamref:AnalysisResults>
+      </adamref:ResultDisplay>
+    </adamref:AnalysisResultDisplays>
+  </MetaDataVersion>
+</Study>
+</ODM>
