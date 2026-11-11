@@ -4,8 +4,9 @@ Each program derives one ADaM dataset of the CDISC pilot from its SDTM, with [ad
 
 | Dataset | Program | Target | Result against the official dataset |
 | --- | --- | --- | --- |
+| ADSL (independent QC) | [`qc/benchmark/adsl_qc.R`](../../../qc/benchmark/adsl_qc.R) | `adsl_qc`, `adsl_qc_vs_production` | Matches our ADSL with no difference |
 | ADSL | [`adsl.R`](adsl.R) | `adsl`, `adsl_spec_findings`, `adsl_vs_official` | 254 subjects, 48 variables: one difference, [D-004](../discrepancy-log.csv) |
-| ADAE | planned | | |
+| ADAE | [`adae.R`](adae.R) | `adae`, `adae_spec_findings`, `adae_vs_official` | 1191 events, 55 variables: 4 records differ in ADURN and ADURU, [D-008](../discrepancy-log.csv) |
 | ADTTE | planned | | |
 | ADQSADAS | planned | | |
 
@@ -35,4 +36,6 @@ The specification is sometimes silent or ambiguous. Where the reading taken here
 | DCREASCD | a grouping of DCDECOD | Each DSDECOD maps to the DISCREAS term of the same meaning. The exception is PROTOCOL VIOLATION with the term PROTOCOL ENTRY CRITERIA NOT MET, which maps to `I/E Not Met`. |
 | VISNUMEN | `DSTERM='PROTCOL COMPLETED'` | This is a typing error. The visit of the disposition event is used, and visit 13 counts as 12. |
 | DURDIS | months between VISIT1DT and DISONSDT | `admiral::derive_vars_duration()` in months, counting both days. This equals (days + 1) / 30.4375. |
+| ASTDT | partial start dates | Only a missing day is imputed, as the 1st. A date with no month stays missing, and the event is not treatment emergent. |
+| ASTDY, AENDY | the day relative to TRTSDT | There is no day 0: dates before TRTSDT give negative days. |
 | SITEGR1 | SAP 7.1: pool sites with fewer than 3 patients in any group | The pooled site 900 has at least 3 patients per group. The SAP's further step, adding the next smallest site, is not needed. `pool_sites()` stops if it ever would be. |
