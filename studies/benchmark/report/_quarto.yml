@@ -1,0 +1,19 @@
+# The benchmark report (phase F1). It reads the pipeline's results, so run the pipeline first:
+#   docker compose run --rm analysis Rscript -e 'targets::tar_make()'
+#   docker compose run --rm --no-deps analysis bash -c 'cd studies/benchmark/report && quarto render'
+# The rendered page shows the study report's Figure 14-1 page, which is CDISC material, so it
+# is written to studies/benchmark/output/, which git ignores (ADR 0015).
+
+project:
+  type: default
+  output-dir: ../output/report
+
+lang: en-GB
+toc: true
+number-sections: true
+
+format:
+  html:
+    embed-resources: true
+    theme: cosmo
+    df-print: kable

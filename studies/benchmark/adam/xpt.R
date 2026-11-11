@@ -23,6 +23,15 @@ write_adam_xpt <- function(data, metacore, dataset, dir) {
   path
 }
 
+#' Keys that identify a record in each benchmark ADaM dataset, for the comparisons with
+#' the official datasets.
+adam_keys <- function() {
+  list(
+    ADSL = "USUBJID", ADAE = c("USUBJID", "AESEQ"), ADTTE = c("USUBJID", "PARAMCD"),
+    ADQSADAS = c("USUBJID", "PARAMCD", "AVISIT", "ADT")
+  )
+}
+
 #' Read our XPT files back and compare each with the official XPT of the pilot.
 #'
 #' Shows that writing to XPT changes nothing: the differences are the ones already logged
@@ -31,15 +40,11 @@ write_adam_xpt <- function(data, metacore, dataset, dir) {
 #' @param pilot_files Paths of the downloaded pilot files.
 #' @return The findings of `compare_with_reference()`, with a `dataset` column.
 compare_xpt_with_official <- function(paths, pilot_files) {
-  keys <- list(
-    adsl = "USUBJID", adae = c("USUBJID", "AESEQ"), adtte = c("USUBJID", "PARAMCD"),
-    adqsadas = c("USUBJID", "PARAMCD", "AVISIT", "ADT")
-  )
   rows <- lapply(paths, function(path) {
     name <- sub("[.]xpt$", "", basename(path))
     ours <- admiral::convert_blanks_to_na(haven::read_xpt(path))
     official <- haven::read_xpt(pilot_file(pilot_files, sprintf("adam/%s.xpt", name)))
-    findings <- compare_with_reference(ours, official, keys = keys[[name]])
+    findings <- compare_with_reference(ours, official, keys = adam_keys()[[toupper(name)]])
     tibble::add_column(findings, dataset = toupper(name), .before = 1)
   })
   do.call(rbind, rows)

@@ -22,3 +22,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0014](0014-documents-with-quarto.md) | Documents with Quarto, PDF through Typst | Accepted |
 | [0015](0015-third-party-pilot-data.md) | Third-party data for the benchmark: the CDISC pilot, downloaded and verified | Accepted |
 | [0016](0016-specifications-from-define-xml.md) | Benchmark specifications read from the pilot's Define-XML 1.0 | Accepted |
+| [0017](0017-benchmark-acceptance-criteria.md) | Acceptance criteria of the benchmark (gate 1) | Proposed |

@@ -82,8 +82,16 @@ jobs:
       - name: Pipeline
         run: docker compose run --rm -T analysis Rscript -e 'targets::tar_make(reporter = "verbose")'
 
-      - name: Render document templates (HTML and PDF) and explanatory notes
-        run: docker compose run --rm -T --no-deps analysis bash -c 'cd docs/templates && quarto render && cd ../notes && quarto render'
+      # Some tests read the pipeline's results (e.g. every benchmark finding must be explained,
+      # ADR 0017). Before the pipeline has run they are skipped, so the suite runs again here.
+      - name: Test suite on the pipeline's results
+        run: docker compose run --rm -T analysis Rscript tests/run-tests.R
+
+      - name: Render document templates (HTML and PDF), explanatory notes and the benchmark report
+        run: >-
+          docker compose run --rm -T --no-deps analysis bash -c
+          'cd docs/templates && quarto render && cd ../notes && quarto render
+          && cd ../../studies/benchmark/report && quarto render'
 
       - name: Database logs (only if something failed)
         if: failure()
