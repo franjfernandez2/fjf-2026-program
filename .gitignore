@@ -24,6 +24,11 @@ data/adam/*
 !data/*/.gitkeep
 !data/*/README.md
 
+# --- Third-party data: downloaded and verified by the pipeline, never redistributed (ADR 0015) ---
+data/external/*
+!data/external/README.md
+!data/external/*-manifest.csv
+
 # --- Sealed simulation truth: never committed, never read by analysis code ---
 simulator/truth/
 
