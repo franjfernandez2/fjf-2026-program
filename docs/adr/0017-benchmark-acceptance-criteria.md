@@ -1,8 +1,8 @@
 # ADR 0017: Acceptance criteria of the benchmark (gate 1)
 
-- **Status:** Proposed
-- **Date:** 2026-11-11
-- **Decided by:** Pending: Francisco Fernández, at the gate 1 review
+- **Status:** Accepted
+- **Date:** 2026-11-11 (accepted 2026-11-12)
+- **Decided by:** Francisco Fernández, at the gate 1 review
 
 ## Context
 

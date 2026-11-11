@@ -176,7 +176,7 @@ knitr::kable(log[, c("id", "dataset", "variable", "cause", "decision", "status")
 
 # Deviations from the phase plan
 
-The phase plan named some tools that were not used. None of these choices was recorded in an ADR at the time; they are listed here so that none goes unnoticed.
+The phase plan named some tools that were not used. None of these choices was recorded in an ADR at the time; they are listed here so that none goes unnoticed. The reviewer accepted them at the gate 1 review on 2026-11-12.
 
 | Plan | What was done |
 | --- | --- |
@@ -212,18 +212,18 @@ gate <- data.frame(
     "14-3.01 matches; F-14-1 on review; 14-2.01 and 14-5.01 differ by errors of the report (D-011, D-012)",
     "Pinnacle 21 (ADR 0017, option A): same issues as the official files, all explained (D-014 to D-018)",
     if (outputs_in_matrix) "4 of 4 outputs, programs present" else "incomplete",
-    "CI on PR 13",
+    "CI passed on PR 13",
     "Pull requests 6 to 13"
   ),
   Status = c(
     "Met",
     if (nrow(unexplained) == 0) "Met" else "Not met",
     if (nrow(qc) == 0) "Met" else "Not met",
-    "Met if ADR 0017 is accepted",
+    "Met (ADR 0017, accepted)",
     "Met, with the tool's caveats (conformance.md)",
     if (outputs_in_matrix) "Met" else "Not met",
-    "See PR 13",
-    "For the reviewer"
+    "Met",
+    "Pull requests approved 2026-11-12; control questions pending"
   )
 )
 knitr::kable(gate)

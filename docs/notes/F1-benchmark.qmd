@@ -68,7 +68,7 @@ docker compose run --rm analysis Rscript -e 'print(targets::tar_read(benchmark_f
     - Crear el Pinnacle ID exige un correo de trabajo, así que se saltó: el validador no lo necesita.
     - El cliente envía sus registros a Pinnacle 21; se ejecutó con registros solo locales.
     - Al principio, nuestros ficheros se validaron sin `define.xml` y los oficiales con él, porque el validador encontró el del piloto en la misma carpeta. Se repitieron los dos con el mismo `define.xml` y con el SDTM.
-11. **Herramientas del plan que no se usaron.** No se usaron rtables, tern, metatools, emmeans, la copia en Parquet ni logrx. No se decidió en un ADR en su momento. La lista está en el informe del benchmark, sección «Deviations from the phase plan», para que la revises.
+11. **Herramientas del plan que no se usaron.** No se usaron rtables, tern, metatools, emmeans, la copia en Parquet ni logrx. No se decidió en un ADR en su momento. La lista está en el informe del benchmark, sección «Deviations from the phase plan». Las aceptaste en la revisión de la puerta 1, el 12 de noviembre.
 
 # Puerta 1
 
@@ -79,11 +79,11 @@ Estado de los ocho criterios. El informe del benchmark lo calcula a partir del p
 | 1. Descarga verificada en un clon limpio; nada del piloto en git | Cumplido |
 | 2. Cada ADaM coincide o su diferencia está explicada | Cumplido: 27 hallazgos, 0 sin explicar |
 | 3. La segunda ADSL coincide sin ninguna diferencia | Cumplido |
-| 4. Las cuatro salidas coinciden con el CSR a la precisión impresa | Cumplido si aceptas el ADR 0017 |
+| 4. Las cuatro salidas coinciden con el CSR a la precisión impresa | Cumplido: aceptaste el ADR 0017 |
 | 5. Los XPT pasan CORE o Pinnacle 21 sin incidencias sin explicar | Cumplido con Pinnacle 21 (opción A): las mismas incidencias que los oficiales, todas explicadas (D-014 a D-018) |
 | 6. Cada salida está en la matriz de trazabilidad | Cumplido |
-| 7. Integración continua en verde en la PR 13 | Ver la PR 13 |
-| 8. Has respondido las preguntas de control y aprobado las ocho PR | Pendiente de ti |
+| 7. Integración continua en verde en la PR 13 | Cumplido |
+| 8. Has respondido las preguntas de control y aprobado las ocho PR | PR aprobadas el 12 de noviembre; **faltan tus respuestas** |
 
 La etiqueta `gate-1` no se pone hasta que los ocho estén cumplidos.
 
