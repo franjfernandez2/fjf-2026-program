@@ -223,7 +223,7 @@ gate <- data.frame(
     "Met, with the tool's caveats (conformance.md)",
     if (outputs_in_matrix) "Met" else "Not met",
     "Met",
-    "Pull requests approved 2026-11-12; control questions pending"
+    "Pull requests approved 2026-11-12; control questions answered by the AI assistant at the reviewer's request"
   )
 )
 knitr::kable(gate)

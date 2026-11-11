@@ -83,13 +83,13 @@ Estado de los ocho criterios. El informe del benchmark lo calcula a partir del p
 | 5. Los XPT pasan CORE o Pinnacle 21 sin incidencias sin explicar | Cumplido con Pinnacle 21 (opción A): las mismas incidencias que los oficiales, todas explicadas (D-014 a D-018) |
 | 6. Cada salida está en la matriz de trazabilidad | Cumplido |
 | 7. Integración continua en verde en la PR 13 | Cumplido |
-| 8. Has respondido las preguntas de control y aprobado las ocho PR | PR aprobadas el 12 de noviembre; **faltan tus respuestas** |
+| 8. Has respondido las preguntas de control y aprobado las ocho PR | PR aprobadas el 12 de noviembre. Respuestas escritas por el asistente a petición de Francisco, como en F0: es una desviación de la regla de `docs/ai-assistance.md` y queda registrada |
 
-La etiqueta `gate-1` no se pone hasta que los ocho estén cumplidos.
+La etiqueta `gate-1` no se pone hasta que los ocho estén cumplidos. Si se pone, su mensaje dice quién respondió las preguntas.
 
 # Preguntas de control
 
-Respóndelas en voz alta, sin mirar, como en una entrevista. Esta vez las respuestas son tuyas: escríbelas abajo con tus palabras.
+Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas de abajo las escribió el asistente a petición de Francisco: sirven para estudiarlas, no como prueba de que se respondieron sin mirar.
 
 1. ¿Qué diferencia hay entre SDTM y ADaM, y por qué no se analiza directamente el SDTM?
 2. ¿Qué es el `define.xml` y para qué lo usa un revisor de la FDA?
@@ -105,14 +105,14 @@ Respóndelas en voz alta, sin mirar, como en una entrevista. Esta vez las respue
 ::: {.callout-note collapse="true"}
 ## Pulsa para ver las respuestas
 
-Pendientes: las escribes tú.
+Las ha escrito el asistente de IA a petición de Francisco, el 12 de noviembre de 2026, igual que en F0. No son respuestas dadas sin mirar; véase «Puerta 1».
 
-1.
-2.
-3.
-4.
-5.
-6.
-7.
-8.
+1. **SDTM y ADaM.** SDTM recoge los datos tal como se obtuvieron: un dominio por tipo de información (DM, AE, QS, VS…), sin derivar nada. ADaM es la capa de análisis. Cada conjunto está hecho para un análisis concreto: con la población, las fechas relativas, la basal, el cambio y los indicadores ya calculados. No se analiza el SDTM directamente porque cada programa de tablas tendría que repetir esas derivaciones, y cada repetición es una ocasión de que dos salidas usen reglas distintas. ADaM las hace una sola vez, documentadas, y es *analysis-ready*: la salida debe salir de ADaM con un procedimiento y poco más. La trazabilidad hacia atrás (de ADaM a SDTM) la exige la FDA.
+2. **El `define.xml`** son los metadatos del envío, legibles por máquina: qué conjuntos hay, qué variables tienen, su tipo, longitud y etiqueta, sus listas de códigos y, en ADaM, cómo se deriva cada variable. El revisor de la FDA lo usa como mapa: para entender una variable sin leer el programa, comprobar que los datos cumplen lo declarado (Pinnacle 21 lo hace, de ahí D-014 a D-018) y seguir un resultado hasta su origen. En este benchmark ha hecho también de especificación: nuestros ADaM se derivan y se comprueban contra él.
+3. **ADQSADAS** sigue la estructura BDS (*Basic Data Structure*): una fila por paciente, parámetro y visita analizada. **PARAMCD** es el código corto del parámetro (por ejemplo, la puntuación total del ADAS-Cog). **AVAL**, su valor en esa visita. **BASE**, el valor basal de ese paciente y parámetro, repetido en todas sus filas. **CHG** = AVAL − BASE, el cambio desde la basal. **ABLFL** = «Y» marca la fila que es la basal. El análisis primario modeliza CHG en la semana 24, ajustado por BASE.
+4. **Por qué la QC es independiente.** La doble programación sirve porque dos caminos distintos difícilmente cometen el mismo error. Si la segunda programación mira el primer programa, copia sus interpretaciones y sus errores, y coincidir ya no demuestra nada. Si usa admiral, comparte con la primera el código de las funciones y su forma de interpretar las reglas: un fallo de admiral, o un argumento mal entendido, aparecería en las dos. Por eso `adsl_qc.R` parte solo de la especificación y del SDTM, en R base. Su límite queda declarado: el mismo asistente escribió los dos programas.
+5. **Emergente del tratamiento** (TEAE): un acontecimiento que empieza el día de la primera dosis o después, o uno previo que empeora tras empezar el tratamiento. En el piloto, la especificación lo reduce a la fecha: ASTDT ≥ TRTSDT. Lo marca **TRTEMFL** = «Y». El piloto pone «N» en los demás, como dice su `define.xml`, pero el ADaM-IG solo admite «Y» o vacío (D-016). Por eso nuestro ADaM propio de la fase F3 dejará vacíos los demás.
+6. **Censura** en ADTTE: el paciente sale de la observación sin haber tenido el acontecimiento, así que solo se sabe que su tiempo hasta él es mayor que el observado. **CNSR** = 0 indica acontecimiento, y un valor positivo, censura. En el piloto, un paciente sin acontecimiento dermatológico tiene CNSR = 1 y se censura en la fecha de fin de estudio (RFENDT), con EVNTDESC = «Study Completion Date».
+7. **LOCF** (*last observation carried forward*) rellena una visita perdida con la última observada. Responde, aproximadamente, a qué habría pasado si el paciente se hubiera quedado congelado en su último valor al abandonar. Es una pregunta poco creíble en alzhéimer, que empeora con el tiempo. Hoy no se acepta sin más por tres motivos. Supone que el valor no cambia tras el abandono, algo que no se defiende clínicamente. Puede sesgar a favor o en contra según quién abandona y por qué. Y no corresponde a ningún estimando definido. Desde la guía ICH E9(R1), primero se define el estimando, incluida la estrategia para los acontecimientos intercurrentes (abandono, cambio de tratamiento). Después se elige un método coherente con él (por ejemplo, MMRM bajo MAR o imputación múltiple de referencia, como en la fase F3), con análisis de sensibilidad. Nuestro ADQSADAS reproduce el LOCF solo porque es el benchmark, y en D-009 aplica la regla del SAP, no la del programa oficial.
+8. **D-004: ¿error mío o del piloto?** El criterio es la especificación, no el fichero oficial. El paciente 01-702-1082 no tiene peso basal, así que su IMC falta. La derivación del `define.xml` dice `. < BMIBL < 25`, es decir, excluye el valor que falta. El ADSL oficial lo pone en «<25». La causa se reproduce: en SAS un número que falta es menor que cualquier número, y `BMIBL < 25` es cierto para él si no se excluye. Además, contándolo como «<25» se reproduce exactamente la tabla 14-2.01 del CSR (D-011). Así que el error es del programa del piloto: lo que dice la especificación es correcto, y en lo clínico no se puede contar como peso normal a quien no tiene IMC. La decisión queda en el registro, y no se copia el valor oficial para cuadrar. Si la especificación hubiera sido ambigua, la decisión habría que tomarla y justificarla en el registro igualmente, pero sin poder decir que el piloto se equivoca.
 :::
