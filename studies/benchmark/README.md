@@ -11,7 +11,9 @@ This study checks the pipeline against a study whose answer is already published
 | ADTTE and ADQSADAS, compared with the official datasets | `adam/`, targets `adtte*`, `adqsadas*` | Done (PR 10) |
 | Independent QC of ADSL | `qc/benchmark/`, targets `adsl_qc*` | Done (PR 9) |
 | Tables 14-2.01 and 14-5.01 compared with the study report | `tlf/`, `compare/`, targets `t_14_*` | Done (PR 11) |
-| Table 14-3.01 and Figure 14-1 compared with the study report | `tlf/`, `compare/` | Planned |
+| Table 14-3.01 and Figure 14-1 compared with the study report | `tlf/`, `compare/`, targets `t_14_3_01*`, `f_14_1*` | Done (PR 12) |
+| XPT files from the specification (xportr) | `adam/xpt.R`, targets `adam_xpt*` | Done (PR 12) |
+| Conformance check (CDISC CORE or Pinnacle 21) | | Planned |
 
 ## Discrepancy log
 

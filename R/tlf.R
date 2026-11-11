@@ -43,13 +43,19 @@ fmt_p <- function(p, digits = 4) {
 #' Lines before the column header (`header_end`) and from the footnotes on are ignored.
 #' @param text Page texts, e.g. from `pdftools::pdf_text()`.
 #' @param header_end Regular expression matching the last line of the column header.
+#' @param value_pattern Regular expression a value field matches. The default matches
+#'   counts, numbers, "n (%)" and "n (%) [events]" cells, and p-values such as ">0.99".
+#' @param join_wrapped Whether a line with a label and no values continues the row above.
+#'   FALSE for tables whose section headings ("Week 24") stand on their own line.
 #' @return A tibble with one row per printed row: `page`, `indent` (leading spaces),
 #'   `labels` (a list of label fields) and `values` (a list of value fields).
-read_printed_table <- function(text, header_end) {
-  value_pattern <- paste0(
-    "^(", "\\d+(\\.\\d+)?\\*?", "|", "\\d+ \\( *<?\\d+(\\.\\d+)?%\\)( \\[\\d+\\])?",
-    "|", "[<>]\\d*\\.\\d+\\*?", ")$"
-  )
+read_printed_table <- function(text, header_end, value_pattern = NULL, join_wrapped = TRUE) {
+  if (is.null(value_pattern)) {
+    value_pattern <- paste0(
+      "^(", "\\d+(\\.\\d+)?\\*?", "|", "\\d+ \\( *<?\\d+(\\.\\d+)?%\\)( \\[\\d+\\])?",
+      "|", "[<>]\\d*\\.\\d+\\*?", ")$"
+    )
+  }
   rows <- list()
   for (page in seq_along(text)) {
     lines <- strsplit(text[[page]], "\n", fixed = TRUE)[[1]]
@@ -65,7 +71,7 @@ read_printed_table <- function(text, header_end) {
       first_value <- if (any(is_value)) which(is_value)[1] else length(fields) + 1
       labels <- fields[seq_len(first_value - 1)]
       values <- if (first_value <= length(fields)) fields[first_value:length(fields)] else character()
-      if (length(values) == 0 && length(rows) > 0 && length(labels) == 1) {
+      if (join_wrapped && length(values) == 0 && length(rows) > 0 && length(labels) == 1) {
         last <- rows[[length(rows)]]
         n <- length(last$labels[[1]])
         last$labels[[1]][n] <- paste(last$labels[[1]][n], labels)
