@@ -8,7 +8,7 @@ This study checks the pipeline against a study whose answer is already published
 | Specifications from the pilot's `define.xml` | `R/define_v1.R`, `R/spec_checks.R`, targets `adam_spec`, `benchmark_metacore` | Done (PR 7) |
 | ADSL from SDTM, compared with the official dataset | [`adam/`](adam/README.md), targets `adsl*` | Done (PR 8) |
 | ADAE from SDTM, compared with the official dataset | `adam/`, targets `adae*` | Done (PR 9) |
-| ADTTE, ADQSADAS from SDTM, compared with the official datasets | `studies/benchmark/adam/` | Planned |
+| ADTTE and ADQSADAS, compared with the official datasets | `adam/`, targets `adtte*`, `adqsadas*` | Done (PR 10) |
 | Independent QC of ADSL | `qc/benchmark/`, targets `adsl_qc*` | Done (PR 9) |
 | Four outputs compared with the study report | `studies/benchmark/tlf/`, `studies/benchmark/compare/` | Planned |
 

@@ -7,8 +7,8 @@ Each program derives one ADaM dataset of the CDISC pilot from its SDTM, with [ad
 | ADSL (independent QC) | [`qc/benchmark/adsl_qc.R`](../../../qc/benchmark/adsl_qc.R) | `adsl_qc`, `adsl_qc_vs_production` | Matches our ADSL with no difference |
 | ADSL | [`adsl.R`](adsl.R) | `adsl`, `adsl_spec_findings`, `adsl_vs_official` | 254 subjects, 48 variables: one difference, [D-004](../discrepancy-log.csv) |
 | ADAE | [`adae.R`](adae.R) | `adae`, `adae_spec_findings`, `adae_vs_official` | 1191 events, 55 variables: 4 records differ in ADURN and ADURU, [D-008](../discrepancy-log.csv) |
-| ADTTE | planned | | |
-| ADQSADAS | planned | | |
+| ADTTE | [`adtte.R`](adtte.R) | `adtte`, `adtte_spec_findings`, `adtte_vs_official` | 254 subjects, 26 variables: no difference |
+| ADQSADAS | [`adqsadas.R`](adqsadas.R) | `adqsadas`, `adqsadas_spec_findings`, `adqsadas_vs_official` | 12463 records, 40 variables. The 1016 analysed totals match. The differences come from the official LOCF ([D-009](../discrepancy-log.csv)) and from QSSEQ ([D-010](../discrepancy-log.csv)). |
 
 The official datasets are used only for the comparison. No value is copied from them. Each difference has a row in the [discrepancy log](../discrepancy-log.csv).
 
@@ -38,4 +38,9 @@ The specification is sometimes silent or ambiguous. Where the reading taken here
 | DURDIS | months between VISIT1DT and DISONSDT | `admiral::derive_vars_duration()` in months, counting both days. This equals (days + 1) / 30.4375. |
 | ASTDT | partial start dates | Only a missing day is imputed, as the 1st. A date with no month stays missing, and the event is not treatment emergent. |
 | ASTDY, AENDY | the day relative to TRTSDT | There is no day 0: dates before TRTSDT give negative days. |
+| ADQSADAS.EFFFL | `ADSL.FASFL` | ADSL has no FASFL; ADSL.EFFFL is used. |
+| ACTOT | sum of the 11 items, adjusted for missing items (SAP 14.2) | Derived from the items, not copied from QS's own total. The item maxima are 10, 5, 5, 5, 5, 8, 12, 5, 5, 5 and 5 (total 70). |
+| AVISIT | windows of SAP 8.2 | By study day from TRTSDT, with the retrieval visit 201 included. The analysed record is the one closest to the target day, and the earlier one on a tie. |
+| DTYPE = LOCF | LOCF at week 24 (SAP 10.1.1) | Only for the total, and only for a window with no assessment. The record carries the analysed assessment of the last earlier window, baseline included. |
+| ADTTE.ADT | first dermatologic TEAE, else RFENDT | The event is ADAE's AOCC01FL record. Censored subjects have CNSR = 1 at RFENDT. |
 | SITEGR1 | SAP 7.1: pool sites with fewer than 3 patients in any group | The pooled site 900 has at least 3 patients per group. The SAP's further step, adding the next smallest site, is not needed. `pool_sites()` stops if it ever would be. |

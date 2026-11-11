@@ -67,5 +67,23 @@ list(
       adae, haven::read_xpt(pilot_file(pilot_files, "adam/adae.xpt")),
       keys = c("USUBJID", "AESEQ")
     )
+  ),
+  tar_target(adtte, derive_adtte(adsl, adae, adam_spec)),
+  tar_target(adtte_spec_findings, check_against_spec(adtte, adam_spec, "ADTTE")),
+  tar_target(
+    adtte_vs_official,
+    compare_with_reference(
+      adtte, haven::read_xpt(pilot_file(pilot_files, "adam/adtte.xpt")),
+      keys = c("USUBJID", "PARAMCD")
+    )
+  ),
+  tar_target(adqsadas, derive_adqsadas(benchmark_sdtm, adsl, adam_spec)),
+  tar_target(adqsadas_spec_findings, check_against_spec(adqsadas, adam_spec, "ADQSADAS")),
+  tar_target(
+    adqsadas_vs_official,
+    compare_with_reference(
+      adqsadas, haven::read_xpt(pilot_file(pilot_files, "adam/adqsadas.xpt")),
+      keys = c("USUBJID", "PARAMCD", "AVISIT", "ADT")
+    )
   )
 )
