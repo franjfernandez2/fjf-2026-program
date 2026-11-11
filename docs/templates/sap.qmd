@@ -1,0 +1,91 @@
+---
+title: "Statistical analysis plan: FJF-2026-NNN"
+subtitle: "TEMPLATE · copy to docs/sap/ and replace every [bracketed] item"
+author: "Francisco Fernández"
+date: today
+---
+
+# Document control
+
+| Version | Date | Author | Change |
+|---|---|---|---|
+| 0.1 | [YYYY-MM-DD] | [Name] | First draft |
+| 1.0 | [YYYY-MM-DD] | [Name] | Final. Frozen with git tag `sap-freeze-[NNN]` before any data are generated |
+
+# Introduction
+
+[Study, protocol version this SAP is based on, and scope of the SAP.]
+
+# Objectives, endpoints and estimands
+
+[Copy the objectives table from the protocol. For each estimand, complete the five attributes.]
+
+| Attribute | Primary estimand | Supplementary estimand |
+|---|---|---|
+| Population | | |
+| Treatment condition | | |
+| Variable | | |
+| Intercurrent events and strategies | | |
+| Population-level summary | | |
+
+# Study design
+
+[Summary of design, randomisation, stratification and blinding. Sample size justification.]
+
+# Analysis sets
+
+| Analysis set | Definition | Used for |
+|---|---|---|
+| Full analysis set (FAS) | [All randomised participants, analysed as randomised] | Efficacy |
+| Per-protocol set (PPS) | [Definition] | Sensitivity |
+| Safety set (SAF) | [All participants who received at least one dose, analysed as treated] | Safety |
+
+# Endpoint definitions and derivations
+
+[Each endpoint: source data, ADaM dataset and variables, baseline definition, visit windows, handling of repeated or unscheduled measurements.]
+
+# Statistical methods
+
+## General conventions
+
+[Significance level, sidedness, confidence intervals, software and versions (R version and `renv.lock` reference), rounding rules.]
+
+## Primary analysis
+
+[Model, covariates, covariance structure, estimation of the population-level summary. One subsection per estimand.]
+
+## Handling of intercurrent events and missing data
+
+[How each intercurrent event is handled under its strategy. Missing-data assumptions and imputation methods.]
+
+## Sensitivity analyses
+
+[Analyses that test the assumptions of the primary analysis, e.g. tipping-point analysis.]
+
+## Supplementary analyses
+
+[Analyses of supplementary estimands.]
+
+## Secondary endpoints and multiplicity
+
+[Testing strategy that controls the family-wise error rate; a graphical procedure is welcome.]
+
+## Subgroup analyses
+
+[Pre-specified subgroups and how they are presented.]
+
+# Safety analyses
+
+[Exposure, adverse events (incidence and exposure-adjusted rates), hypoglycaemia, laboratory shift tables, vital signs.]
+
+# Tables, listings and figures
+
+Each output is listed in the traceability matrix (`docs/traceability-matrix.csv`) with its SAP section, analysis dataset, program and QC program.
+
+# Changes from the protocol
+
+[Any analysis that differs from the protocol, with the reason. "None" if none.]
+
+# References
+
+[ICH E9, ICH E9(R1), CDISC ADaM Implementation Guide, and any methods papers.]

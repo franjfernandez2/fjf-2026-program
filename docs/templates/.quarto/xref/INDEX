@@ -1,0 +1,18 @@
+{
+  "csr-report.qmd": {
+    "csr-report.html": "7e8de43d",
+    "csr-report.typ": "d2c0a21a"
+  },
+  "protocol-synopsis.qmd": {
+    "protocol-synopsis.html": "cfc4f73f",
+    "protocol-synopsis.typ": "7dfdf432"
+  },
+  "sap.qmd": {
+    "sap.html": "e81515b5",
+    "sap.typ": "7b4ce200"
+  },
+  "module-note.qmd": {
+    "module-note.html": "44402647",
+    "module-note.typ": "e168eb7f"
+  }
+}

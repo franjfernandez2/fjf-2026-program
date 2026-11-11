@@ -1,0 +1,15 @@
+# Explanatory notes for the author, one per phase (ADR 0007: may be written in Spanish).
+#   quarto render docs/notes
+
+project:
+  type: default
+  output-dir: _output
+
+lang: es-ES
+toc: true
+number-sections: false
+
+format:
+  html:
+    embed-resources: true
+    theme: cosmo

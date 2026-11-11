@@ -1,0 +1,15 @@
+{
+  "hash": "ac2decdfbd1767e9adb85ccf1f264265",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Clinical study report (abridged): FJF-2026-NNN\"\nsubtitle: \"TEMPLATE · structure follows ICH E3, shortened for a portfolio\"\nauthor: \"Francisco Fernández\"\ndate: today\n---\n\n# Synopsis\n\n[One page: design, population, results of the primary estimand with its estimate and 95% CI, key safety findings, conclusion.]\n\n# Study design and conduct\n\n[Summary of the protocol and any amendments. Reference the protocol and the frozen SAP by git tag.]\n\n# Study participants\n\n[Disposition (a CONSORT-style flow diagram), protocol deviations, demographics and baseline characteristics.]\n\n# Efficacy results\n\n## Primary estimand\n\n[Main table and figure. The estimate, its 95% CI and p-value, stated in one sentence.]\n\n## Sensitivity and supplementary analyses\n\n[Do the conclusions hold under other assumptions?]\n\n## Secondary endpoints\n\n[Results in the order of the multiplicity procedure.]\n\n# Safety results\n\n[Exposure, adverse events, hypoglycaemia, laboratory values, vital signs.]\n\n# Discussion and conclusions\n\n[What the results mean, limitations, and whether the methods recovered the sealed simulation truth.]\n\n# Appendix: computational environment\n\nThis report was produced by the project pipeline in the pinned environment below.\n\n\n::: {.cell}\n\n```{.r .cell-code}\n# The project root is the folder holding renv.lock. (here::here() would stop at the\n# Quarto project in this folder instead.)\nroot <- rprojroot::find_root(rprojroot::has_file(\"renv.lock\"))\nlock <- jsonlite::read_json(file.path(root, \"renv.lock\"))\ncat(\n  \"R version:       \", R.version.string, \"\\n\",\n  \"Locked packages: \", length(lock$Packages), \"\\n\",\n  \"Package snapshot:\", lock$R$Repositories[[1]]$URL, \"\\n\"\n)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\nR version:        R version 4.6.1 (2026-06-24) \n Locked packages:  88 \n Package snapshot: https://p3m.dev/cran/2026-11-10 \n```\n\n\n:::\n:::\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
