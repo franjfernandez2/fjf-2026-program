@@ -47,6 +47,21 @@ check_against_spec <- function(data, spec, dataset) {
     }
   )
 
+  # Values of a variable with a codelist must be codes of that codelist. External
+  # dictionaries (MedDRA, WHODrug) have no codes in the define.xml and are not checked.
+  for (i in which(!is.na(spec_of$codelist))) {
+    var <- spec_of$variable[i]
+    codes <- spec$codelists$code[spec$codelists$code_id == spec_of$codelist[i]]
+    if (length(codes) == 0 || all(is.na(codes))) next
+    values <- as.character(unique(data[[var]]))
+    unlisted <- sort(setdiff(values[!is.na(values) & nzchar(values)], codes))
+    if (length(unlisted) > 0) {
+      findings <- c(findings, list(
+        finding(var, "value not in codelist", spec_of$codelist[i], paste(unlisted, collapse = "; "))
+      ))
+    }
+  }
+
   if ("PARAMCD" %in% names(data)) {
     vlm <- spec$value_level[spec$value_level$dataset == dataset, ]
     if (nrow(vlm) > 0) {

@@ -11,7 +11,7 @@ cli::cli_alert_success("lintr: no lints.")
 
 # 2. Format: the code must already be formatted as styler (tidyverse style) would format it.
 files <- c(
-  list.files(c("R", "tests", "tools"), pattern = "[.]R$", recursive = TRUE, full.names = TRUE),
+  list.files(c("R", "studies", "tests", "tools"), pattern = "[.]R$", recursive = TRUE, full.names = TRUE),
   "_targets.R"
 )
 unstyled <- styler::style_file(files, dry = "on")

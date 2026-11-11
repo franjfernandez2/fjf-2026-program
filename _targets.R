@@ -9,6 +9,8 @@ tar_option_set(packages = c("DBI", "RPostgres", "cli"))
 
 # Shared functions; _dependencies.R only declares packages for renv and is not sourced.
 tar_source(setdiff(list.files("R", pattern = "[.]R$", full.names = TRUE), "R/_dependencies.R"))
+# Study programs: the benchmark's ADaM derivations.
+tar_source("studies/benchmark/adam")
 
 list(
   # --- F0: environment smoke test ---
@@ -41,5 +43,15 @@ list(
       check_against_spec(official, adam_spec, ds)
     }))
   ),
-  tar_target(pilot_arm_findings, check_analysis_results(adam_spec))
+  tar_target(pilot_arm_findings, check_analysis_results(adam_spec)),
+
+  # ADaM derived from the pilot's SDTM, then checked against the specification and against
+  # the official dataset. Every difference is in studies/benchmark/discrepancy-log.csv.
+  tar_target(benchmark_sdtm, read_sdtm(pilot_files, c("dm", "ds", "ex", "mh", "qs", "sc", "sv", "vs"))),
+  tar_target(adsl, derive_adsl(benchmark_sdtm, adam_spec)),
+  tar_target(adsl_spec_findings, check_against_spec(adsl, adam_spec, "ADSL")),
+  tar_target(
+    adsl_vs_official,
+    compare_with_reference(adsl, haven::read_xpt(pilot_file(pilot_files, "adam/adsl.xpt")), keys = "USUBJID")
+  )
 )

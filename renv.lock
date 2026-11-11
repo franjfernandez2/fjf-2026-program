@@ -295,6 +295,116 @@
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "CRAN"
     },
+    "admiral": {
+      "Package": "admiral",
+      "Version": "1.5.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "ADaM in R Asset Library",
+      "Authors@R": "c( person(\"Edoardo\", \"Mancini\", , \"edoardo.mancini@roche.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0009-0006-4899-8641\")), person(\"Stefan\", \"Bundfuss\", role = \"aut\", comment = c(ORCID = \"0009-0005-0027-1198\")), person(\"Arianna\", \"Cascone\", role = \"aut\", comment = c(ORCID = \"0000-0001-5948-2831\")), person(\"Kristin\", \"Dahnert\", role = \"aut\"), person(\"Jeffrey\", \"Dickinson\", role = \"aut\"), person(\"Ross\", \"Farrugia\", role = \"aut\"), person(\"Fanny\", \"Gautier\", role = \"aut\", comment = c(ORCID = \"0009-0004-3581-0131\")), person(\"Liam\", \"Hobby\", , \"liam.f.hobby@gsk.com\", role = \"aut\"), person(\"Gordon\", \"Miller\", role = \"aut\"), person(\"Lina\", \"Patil\", role = \"aut\"), person(\"Ben\", \"Straub\", role = \"aut\"), person(\"F. Hoffmann-La Roche AG\", role = c(\"cph\", \"fnd\")), person(\"GlaxoSmithKline LLC\", role = c(\"cph\", \"fnd\")) )",
+      "Description": "A toolbox for programming Clinical Data Interchange Standards Consortium (CDISC) compliant Analysis Data Model (ADaM) datasets in R. ADaM datasets are a mandatory part of any New Drug or Biologics License Application submitted to the United States Food and Drug Administration (FDA). Analysis derivations are implemented in accordance with the \"Analysis Data Model Implementation Guide\" (CDISC Analysis Data Model Team, 2021, <https://www.cdisc.org/standards/foundational/adam>).",
+      "License": "Apache License (>= 2)",
+      "URL": "https://pharmaverse.github.io/admiral/, https://github.com/pharmaverse/admiral",
+      "BugReports": "https://github.com/pharmaverse/admiral/issues",
+      "Depends": [
+        "R (>= 4.1)"
+      ],
+      "Imports": [
+        "admiraldev (>= 1.5.0)",
+        "cli (>= 3.6.2)",
+        "dplyr (>= 1.1.1)",
+        "hms (>= 0.5.3)",
+        "lifecycle (>= 0.1.0)",
+        "lubridate (>= 1.7.4)",
+        "magrittr (>= 1.5)",
+        "purrr (>= 0.3.3)",
+        "rlang (>= 0.4.4)",
+        "stringr (>= 1.4.0)",
+        "tidyr (>= 1.0.2)",
+        "tidyselect (>= 1.1.0)"
+      ],
+      "Suggests": [
+        "diffdf",
+        "DT",
+        "ggnewscale",
+        "ggplot2",
+        "here",
+        "htmltools",
+        "knitr",
+        "methods",
+        "pharmaversesdtm (>= 1.0.0)",
+        "reactable",
+        "readxl",
+        "rmarkdown",
+        "testthat (>= 3.0.0)",
+        "tibble",
+        "withr"
+      ],
+      "VignetteBuilder": "knitr",
+      "Config/Needs/website": "gert, rmarkdown",
+      "Config/roxygen2/markdown": "TRUE",
+      "Config/roxygen2/roclets": "collate, namespace, admiraldev::rdx_roclet",
+      "Config/roxygen2/version": "8.0.0",
+      "Config/testthat/edition": "3",
+      "Encoding": "UTF-8",
+      "Language": "en-US",
+      "LazyData": "true",
+      "NeedsCompilation": "no",
+      "Author": "Edoardo Mancini [aut, cre] (ORCID: <https://orcid.org/0009-0006-4899-8641>), Stefan Bundfuss [aut] (ORCID: <https://orcid.org/0009-0005-0027-1198>), Arianna Cascone [aut] (ORCID: <https://orcid.org/0000-0001-5948-2831>), Kristin Dahnert [aut], Jeffrey Dickinson [aut], Ross Farrugia [aut], Fanny Gautier [aut] (ORCID: <https://orcid.org/0009-0004-3581-0131>), Liam Hobby [aut], Gordon Miller [aut], Lina Patil [aut], Ben Straub [aut], F. Hoffmann-La Roche AG [cph, fnd], GlaxoSmithKline LLC [cph, fnd]",
+      "Maintainer": "Edoardo Mancini <edoardo.mancini@roche.com>",
+      "Repository": "CRAN"
+    },
+    "admiraldev": {
+      "Package": "admiraldev",
+      "Version": "1.5.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Utility Functions and Development Tools for the Admiral Package Family",
+      "Authors@R": "c( person(\"Edoardo\", \"Mancini\", , \"edoardo.mancini@roche.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0009-0006-4899-8641\")), person(\"Stefan\", \"Bundfuss\", role = \"aut\", comment = c(ORCID = \"0009-0005-0027-1198\")), person(\"Arianna\", \"Cascone\", role = \"aut\", comment = c(ORCID = \"0000-0001-5948-2831\")), person(\"Kristin\", \"Dahnert\", role = \"aut\"), person(\"Jeffrey\", \"Dickinson\", role = \"aut\"), person(\"Ross\", \"Farrugia\", role = \"aut\"), person(\"Fanny\", \"Gautier\", role = \"aut\", comment = c(ORCID = \"0009-0004-3581-0131\")), person(\"Liam\", \"Hobby\", , \"liam.f.hobby@gsk.com\", role = \"aut\"), person(\"Gordon\", \"Miller\", role = \"aut\"), person(\"Lina\", \"Patil\", role = \"aut\"), person(\"Ben\", \"Straub\", role = \"aut\"), person(\"F. Hoffmann-La Roche AG\", role = c(\"cph\", \"fnd\")), person(\"GlaxoSmithKline LLC\", role = c(\"cph\", \"fnd\")) )",
+      "Description": "Utility functions to check data, variables and conditions for functions used in 'admiral' and 'admiral' extension packages. Additional utility helper functions to assist developers with maintaining documentation, testing and general upkeep of 'admiral' and 'admiral' extension packages.",
+      "License": "Apache License (>= 2)",
+      "URL": "https://pharmaverse.github.io/admiraldev/, https://github.com/pharmaverse/admiraldev/",
+      "BugReports": "https://github.com/pharmaverse/admiraldev/issues",
+      "Depends": [
+        "R (>= 4.1)"
+      ],
+      "Imports": [
+        "cli (>= 3.6.2)",
+        "dplyr (>= 1.1.1)",
+        "glue (>= 1.6.0)",
+        "lifecycle (>= 0.1.0)",
+        "lubridate (>= 1.7.4)",
+        "purrr (>= 0.3.3)",
+        "rlang (>= 0.4.4)",
+        "roxygen2 (>= 8.0.0)",
+        "stringr (>= 1.4.0)",
+        "tidyr (>= 1.0.2)",
+        "tidyselect (>= 1.1.0)",
+        "withr"
+      ],
+      "Suggests": [
+        "diffdf",
+        "DT",
+        "htmltools",
+        "knitr",
+        "methods",
+        "pkgdown",
+        "rmarkdown",
+        "spelling",
+        "testthat (>= 3.2.0)"
+      ],
+      "VignetteBuilder": "knitr",
+      "Config/roxygen2/markdown": "TRUE",
+      "Config/roxygen2/roclets": "collate, namespace, admiraldev::rdx_roclet",
+      "Config/roxygen2/version": "8.0.0",
+      "Config/testthat/edition": "3",
+      "Encoding": "UTF-8",
+      "Language": "en-US",
+      "NeedsCompilation": "no",
+      "Author": "Edoardo Mancini [aut, cre] (ORCID: <https://orcid.org/0009-0006-4899-8641>), Stefan Bundfuss [aut] (ORCID: <https://orcid.org/0009-0005-0027-1198>), Arianna Cascone [aut] (ORCID: <https://orcid.org/0000-0001-5948-2831>), Kristin Dahnert [aut], Jeffrey Dickinson [aut], Ross Farrugia [aut], Fanny Gautier [aut] (ORCID: <https://orcid.org/0009-0004-3581-0131>), Liam Hobby [aut], Gordon Miller [aut], Lina Patil [aut], Ben Straub [aut], F. Hoffmann-La Roche AG [cph, fnd], GlaxoSmithKline LLC [cph, fnd]",
+      "Maintainer": "Edoardo Mancini <edoardo.mancini@roche.com>",
+      "Repository": "CRAN"
+    },
     "arrow": {
       "Package": "arrow",
       "Version": "26.0.1",
@@ -561,6 +671,27 @@
       "Author": "Hadley Wickham [aut], Kirill Müller [cre], RStudio [cph, fnd]",
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "CRAN"
+    },
+    "brew": {
+      "Package": "brew",
+      "Version": "1.0-10",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Templating Framework for Report Generation",
+      "Authors@R": "c( person(\"Jeffrey\", \"Horner\", role = c(\"aut\", \"cph\")), person(\"Greg\", \"Hunt\", , \"greg@firmansyah.com\", role = c(\"aut\", \"cre\", \"cph\")) )",
+      "Description": "Implements a templating framework for mixing text and R code for report generation. brew template syntax is similar to PHP, Ruby's erb module, Java Server Pages, and Python's psp module.",
+      "License": "GPL (>= 2)",
+      "URL": "https://github.com/gregfrog/brew",
+      "BugReports": "https://github.com/gregfrog/brew/issues",
+      "Suggests": [
+        "testthat (>= 3.0.0)"
+      ],
+      "Config/testthat/edition": "3",
+      "Encoding": "UTF-8",
+      "Repository": "CRAN",
+      "NeedsCompilation": "no",
+      "Author": "Jeffrey Horner [aut, cph], Greg Hunt [aut, cre, cph]",
+      "Maintainer": "Greg Hunt <greg@firmansyah.com>"
     },
     "brio": {
       "Package": "brio",
@@ -844,6 +975,30 @@
       "NeedsCompilation": "no",
       "Repository": "CRAN"
     },
+    "commonmark": {
+      "Package": "commonmark",
+      "Version": "2.0.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "High Performance CommonMark and Github Markdown Rendering in R",
+      "Authors@R": "c( person(\"Jeroen\", \"Ooms\", ,\"jeroenooms@gmail.com\", role = c(\"aut\", \"cre\"), comment = c(ORCID = \"0000-0002-4035-0289\")), person(\"John MacFarlane\", role = \"cph\", comment = \"Author of cmark\"))",
+      "Description": "The CommonMark specification <https://github.github.com/gfm/> defines a rationalized version of markdown syntax. This package uses the 'cmark'  reference implementation for converting markdown text into various formats including html, latex and groff man. In addition it exposes the markdown parse tree in xml format. Also includes opt-in support for GFM extensions including tables, autolinks, and strikethrough text.",
+      "License": "BSD_2_clause + file LICENSE",
+      "URL": "https://docs.ropensci.org/commonmark/ https://ropensci.r-universe.dev/commonmark",
+      "BugReports": "https://github.com/r-lib/commonmark/issues",
+      "Suggests": [
+        "curl",
+        "testthat",
+        "xml2"
+      ],
+      "RoxygenNote": "7.3.2",
+      "Language": "en-US",
+      "Encoding": "UTF-8",
+      "NeedsCompilation": "yes",
+      "Author": "Jeroen Ooms [aut, cre] (ORCID: <https://orcid.org/0000-0002-4035-0289>), John MacFarlane [cph] (Author of cmark)",
+      "Maintainer": "Jeroen Ooms <jeroenooms@gmail.com>",
+      "Repository": "CRAN"
+    },
     "cpp11": {
       "Package": "cpp11",
       "Version": "0.5.5",
@@ -1056,6 +1211,49 @@
       "Collate": "'assertions.R' 'authors-at-r.R' 'built.R' 'classes.R' 'collate.R' 'constants.R' 'deps.R' 'desc-package.R' 'description.R' 'encoding.R' 'find-package-root.R' 'latex.R' 'non-oo-api.R' 'package-archives.R' 'read.R' 'remotes.R' 'str.R' 'syntax_checks.R' 'urls.R' 'utils.R' 'validate.R' 'version.R'",
       "NeedsCompilation": "no",
       "Author": "Gábor Csárdi [aut, cre], Kirill Müller [aut], Jim Hester [aut], Maëlle Salmon [ctb] (<https://orcid.org/0000-0002-2815-0399>), Posit Software, PBC [cph, fnd]",
+      "Repository": "CRAN"
+    },
+    "diffdf": {
+      "Package": "diffdf",
+      "Version": "1.1.2",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "Dataframe Difference Tool",
+      "Authors@R": "c(  person(\"Craig\" ,\"Gower-Page\" , email = \"craiggower@gmail.com\" , role = c(\"cre\",\"aut\")), person(\"Kieran\", \"Martin\" , email = \"kieranjmartin@gmail.com\" , role = \"aut\") )",
+      "Description": "Functions for comparing two data.frames against  each other. The core functionality is to provide a detailed breakdown of any differences  between two data.frames as well as providing utility functions to help narrow down the  source of problems and differences.",
+      "Encoding": "UTF-8",
+      "Language": "en-GB",
+      "Depends": [
+        "R (>= 3.1.2)"
+      ],
+      "Imports": [
+        "tibble",
+        "assertthat",
+        "methods"
+      ],
+      "Suggests": [
+        "testthat",
+        "lubridate",
+        "knitr",
+        "rmarkdown",
+        "purrr",
+        "dplyr",
+        "stringi",
+        "stringr",
+        "devtools",
+        "covr",
+        "bit64",
+        "withr"
+      ],
+      "RoxygenNote": "7.3.3",
+      "VignetteBuilder": "knitr",
+      "License": "MIT + file LICENSE",
+      "URL": "https://gowerc.github.io/diffdf/, https://github.com/gowerc/diffdf",
+      "Config/testthat/edition": "3",
+      "BugReports": "https://github.com/gowerc/diffdf/issues",
+      "NeedsCompilation": "no",
+      "Author": "Craig Gower-Page [cre, aut], Kieran Martin [aut]",
+      "Maintainer": "Craig Gower-Page <craiggower@gmail.com>",
       "Repository": "CRAN"
     },
     "diffobj": {
@@ -2555,6 +2753,36 @@
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
     },
+    "rdtools": {
+      "Package": "rdtools",
+      "Version": "0.1.0",
+      "Source": "Repository",
+      "Title": "Efficient Manipulation of 'Rd' Files and Help Topics",
+      "Authors@R": "c( person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\", \"cph\"), comment = c(ORCID = \"0000-0003-4757-117X\")), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"), comment = c(ROR = \"03wc8by49\")) )",
+      "Description": "Provides fast, cached lookup of help topics and aliases across installed, source, and in-development packages, plus efficient retrieval of parsed 'Rd' ('R' documentation) objects. Per-package indexes are built once and cached, making repeated retrieval cheap enough to call in a tight loop.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://rdtools.r-lib.org, https://github.com/r-lib/rdtools",
+      "BugReports": "https://github.com/r-lib/rdtools/issues",
+      "Depends": [
+        "R (>= 4.0)"
+      ],
+      "Imports": [
+        "stats",
+        "tools"
+      ],
+      "Suggests": [
+        "testthat (>= 3.0.0)",
+        "withr"
+      ],
+      "Config/testthat/edition": "3",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "8.0.0",
+      "Config/Needs/website": "tidyverse/tidytemplate",
+      "NeedsCompilation": "yes",
+      "Author": "Hadley Wickham [aut, cre, cph] (ORCID: <https://orcid.org/0000-0003-4757-117X>), Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+      "Maintainer": "Hadley Wickham <hadley@posit.co>",
+      "Repository": "CRAN"
+    },
     "readr": {
       "Package": "readr",
       "Version": "2.2.0",
@@ -2875,6 +3103,63 @@
       "NeedsCompilation": "no",
       "Author": "JJ Allaire [aut], Yihui Xie [aut, cre] (ORCID: <https://orcid.org/0000-0003-0645-5666>), Christophe Dervieux [aut] (ORCID: <https://orcid.org/0000-0003-4474-2498>), Jonathan McPherson [aut], Javier Luraschi [aut], Kevin Ushey [aut], Aron Atkins [aut], Hadley Wickham [aut], Joe Cheng [aut], Winston Chang [aut], Richard Iannone [aut] (ORCID: <https://orcid.org/0000-0003-3925-190X>), Andrew Dunning [ctb] (ORCID: <https://orcid.org/0000-0003-0464-5036>), Atsushi Yasumoto [ctb, cph] (ORCID: <https://orcid.org/0000-0002-8335-495X>, cph: Number sections Lua filter), Barret Schloerke [ctb], Carson Sievert [ctb] (ORCID: <https://orcid.org/0000-0002-4958-2844>), Devon Ryan [ctb] (ORCID: <https://orcid.org/0000-0002-8549-0971>), Frederik Aust [ctb] (ORCID: <https://orcid.org/0000-0003-4900-788X>), Jeff Allen [ctb], JooYoung Seo [ctb] (ORCID: <https://orcid.org/0000-0002-4064-6012>), Malcolm Barrett [ctb], Rob Hyndman [ctb], Romain Lesur [ctb], Roy Storey [ctb], Ruben Arslan [ctb], Sergio Oller [ctb], Posit Software, PBC [cph, fnd], jQuery UI contributors [ctb, cph] (jQuery UI library; authors listed in inst/rmd/h/jqueryui/AUTHORS.txt), Mark Otto [ctb] (Bootstrap library), Jacob Thornton [ctb] (Bootstrap library), Bootstrap contributors [ctb] (Bootstrap library), Twitter, Inc [cph] (Bootstrap library), Alexander Farkas [ctb, cph] (html5shiv library), Scott Jehl [ctb, cph] (Respond.js library), Ivan Sagalaev [ctb, cph] (highlight.js library), Greg Franko [ctb, cph] (tocify library), John MacFarlane [ctb, cph] (Pandoc templates), Google, Inc. [ctb, cph] (ioslides library), Dave Raggett [ctb] (slidy library), W3C [cph] (slidy library), Dave Gandy [ctb, cph] (Font-Awesome), Ben Sperry [ctb] (Ionicons), Drifty [cph] (Ionicons), Aidan Lister [ctb, cph] (jQuery StickyTabs), Benct Philip Jonsson [ctb, cph] (pagebreak Lua filter), Albert Krewinkel [ctb, cph] (pagebreak Lua filter)",
       "Maintainer": "Yihui Xie <xie@yihui.name>",
+      "Repository": "CRAN"
+    },
+    "roxygen2": {
+      "Package": "roxygen2",
+      "Version": "8.1.1",
+      "Source": "Repository",
+      "Title": "In-Line Documentation for R",
+      "Authors@R": "c( person(\"Hadley\", \"Wickham\", , \"hadley@posit.co\", role = c(\"aut\", \"cre\", \"cph\"), comment = c(ORCID = \"0000-0003-4757-117X\")), person(\"Peter\", \"Danenberg\", , \"pcd@roxygen.org\", role = c(\"aut\", \"cph\")), person(\"Gábor\", \"Csárdi\", , \"csardi.gabor@gmail.com\", role = \"aut\"), person(\"Manuel\", \"Eugster\", role = c(\"aut\", \"cph\")), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"), comment = c(ROR = \"03wc8by49\")) )",
+      "Description": "Generate your Rd documentation, 'NAMESPACE' file, and collation field using specially formatted comments. Writing documentation in-line with code makes it easier to keep your documentation up-to-date as your requirements change. 'roxygen2' is inspired by the 'Doxygen' system for C++.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://roxygen2.r-lib.org/, https://github.com/r-lib/roxygen2",
+      "BugReports": "https://github.com/r-lib/roxygen2/issues",
+      "Depends": [
+        "R (>= 4.1)"
+      ],
+      "Imports": [
+        "brew",
+        "cli (>= 3.3.0)",
+        "commonmark",
+        "desc (>= 1.2.0)",
+        "knitr",
+        "lifecycle",
+        "methods",
+        "pkgload (>= 1.5.2)",
+        "R6 (>= 2.1.2)",
+        "rdtools (>= 0.1.0)",
+        "rlang (>= 1.1.0)",
+        "stats",
+        "utils",
+        "withr",
+        "xml2"
+      ],
+      "Suggests": [
+        "covr",
+        "R.methodsS3",
+        "S7",
+        "R.oo",
+        "rmarkdown (>= 2.16)",
+        "testthat (>= 3.1.2)",
+        "yaml"
+      ],
+      "LinkingTo": [
+        "cpp11"
+      ],
+      "VignetteBuilder": "knitr",
+      "Config/Needs/development": "testthat",
+      "Config/Needs/website": "tidyverse/tidytemplate",
+      "Config/roxygen2/load": "installed",
+      "Config/roxygen2/markdown": "TRUE",
+      "Config/roxygen2/version": "8.1.0.9000",
+      "Config/testthat/edition": "3",
+      "Config/testthat/parallel": "TRUE",
+      "Encoding": "UTF-8",
+      "Language": "en-GB",
+      "NeedsCompilation": "yes",
+      "Author": "Hadley Wickham [aut, cre, cph] (ORCID: <https://orcid.org/0000-0003-4757-117X>), Peter Danenberg [aut, cph], Gábor Csárdi [aut], Manuel Eugster [aut, cph], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+      "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
     },
     "rprojroot": {
