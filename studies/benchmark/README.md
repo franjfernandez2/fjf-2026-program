@@ -13,7 +13,7 @@ This study checks the pipeline against a study whose answer is already published
 | Tables 14-2.01 and 14-5.01 compared with the study report | `tlf/`, `compare/`, targets `t_14_*` | Done (PR 11) |
 | Table 14-3.01 and Figure 14-1 compared with the study report | `tlf/`, `compare/`, targets `t_14_3_01*`, `f_14_1*` | Done (PR 12) |
 | XPT files from the specification (xportr) | `adam/xpt.R`, targets `adam_xpt*` | Done (PR 12) |
-| Conformance check (CDISC CORE or Pinnacle 21) | | Planned |
+| Conformance check with CDISC CORE (draft ADaM rules) | [`conformance.md`](conformance.md), `tools/run-core-adam.sh` | Run; no usable result yet (PR 12) |
 
 ## Discrepancy log
 
