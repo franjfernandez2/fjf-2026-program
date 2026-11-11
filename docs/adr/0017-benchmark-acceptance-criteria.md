@@ -40,6 +40,8 @@ So the plan's words "matches" and "passes" need a precise meaning before the gat
 - **B. Substitute evidence.** Accept, for F1 only, the checks that already run: each dataset against the `define.xml`, the XPT files written from the specification, and the read-back comparison with the official XPT files. CORE is run again when CDISC publishes ADaM rules, and criterion 5 is recorded as replaced, not as passed.
 - **C. Postpone gate 1** until CORE can check ADaM. The date is unknown, and phase F2 would wait for it.
 
+**Chosen: A** (the reviewer, 2026-11-11). Pinnacle 21 Community is run on our four XPT files and, for comparison, on the four official ones, with ADaMIG 1.0. An issue reported for both is a property of the pilot. An issue reported only for ours is ours to fix or to explain. Every issue goes to the discrepancy log like any other finding, and gate 1 waits for that run. CORE is run again when CDISC publishes ADaM rules.
+
 ## Alternatives considered
 
 - **Require every number to match the pilot exactly.** It cannot be met without copying the pilot's errors, and copying them is what the benchmark must never do. A benchmark that matches by hiding its differences proves less than one that explains them.
@@ -50,5 +52,5 @@ So the plan's words "matches" and "passes" need a precise meaning before the gat
 
 - Gate 1 is judged by running the pipeline and its tests, not by reading the log: the benchmark report shows every finding with the row that explains it.
 - Every explained difference is a documented error or ambiguity of the pilot. The log is part of the benchmark's result.
-- Criterion 4 is met under this ADR. Criterion 5 depends on the reviewer's choice among A, B and C.
+- Criterion 4 is met under this ADR. Criterion 5 waits for the Pinnacle 21 run (option A).
 - Phases F3 and F4 reuse the same rules: double programming with no exceptions, every difference logged, explained and linked.

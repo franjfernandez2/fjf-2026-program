@@ -29,4 +29,10 @@ The 3 passing rules are AD0013 (names of up to 8 characters), AD0016 (labels of 
   - `check_against_spec` checks variables, types, lengths, labels and codelists against the pilot's define.xml (targets `*_spec_findings`).
   - xportr writes the XPT files from the same specification (target `adam_xpt`).
   - `compare_xpt_with_official` compares them with the official files (target `adam_xpt_vs_official`).
-- **Next run:** run CORE again when ADaM rules appear under `Published/` in `cdisc-open-rules`, or in the engine's cache. Pinnacle 21 Community is the alternative. It needs an account and a local install, so the user would run it.
+- **Next run:** run CORE again when ADaM rules appear under `Published/` in `cdisc-open-rules`, or in the engine's cache.
+- **For gate 1: Pinnacle 21 Community** (ADR 0017, option A, chosen by the reviewer). It needs an account and a local install, so the reviewer runs it. Settings:
+  - standard ADaM, ADaMIG 1.0;
+  - our four XPT files from `data/adam/cdiscpilot01/`;
+  - then, separately, the four official files from `data/external/cdiscpilot01/adam/`.
+
+  Both Excel reports go in `studies/benchmark/output/p21/`, which git ignores. Each issue is classified as for CORE (both runs, or ours only) and recorded in the discrepancy log.
