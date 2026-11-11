@@ -92,8 +92,10 @@ test_that("an update without a reason for change is refused", {
 })
 
 test_that("an update is logged with old value, new value and reason", {
-  in_transaction(loader, "Transcription error corrected against source",
-                 "UPDATE raw_301.vitals_test SET sysbp = 128 WHERE subject_id = '301-001'")
+  in_transaction(
+    loader, "Transcription error corrected against source",
+    "UPDATE raw_301.vitals_test SET sysbp = 128 WHERE subject_id = '301-001'"
+  )
   log <- audit_rows()
   expect_equal(nrow(log), 2)
   last <- log[2, ]
@@ -104,8 +106,10 @@ test_that("an update is logged with old value, new value and reason", {
 })
 
 test_that("a delete is logged with the deleted row and reason", {
-  in_transaction(loader, "Duplicate record",
-                 "DELETE FROM raw_301.vitals_test WHERE subject_id = '301-001'")
+  in_transaction(
+    loader, "Duplicate record",
+    "DELETE FROM raw_301.vitals_test WHERE subject_id = '301-001'"
+  )
   log <- audit_rows()
   expect_equal(log$operation[3], "DELETE")
   expect_match(log$old_row[3], '"sysbp": 128')
