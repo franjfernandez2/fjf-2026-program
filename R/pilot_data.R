@@ -91,6 +91,14 @@ fetch_pilot_files <- function(manifest_path, dest = pilot_dir(), download = down
   local
 }
 
+# The local path of one pilot file, picked from the verified paths that fetch_pilot_files()
+# returns, so that targets reading it depend on the verification.
+pilot_file <- function(paths, file) {
+  match <- paths[endsWith(paths, paste0("/", file))]
+  if (length(match) != 1) cli::cli_abort("{.file {file}} is not in the pilot manifest.")
+  match
+}
+
 # One row per SAS transport file: what it is and how big it is.
 inventory_xpt <- function(paths) {
   paths <- paths[grepl("[.]xpt$", paths)]
