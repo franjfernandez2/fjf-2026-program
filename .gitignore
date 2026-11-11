@@ -28,7 +28,7 @@ data/adam/*
 simulator/truth/
 
 # --- Rendered documents ---
-/.quarto/
+.quarto/
 *_files/
 reports/**/*.html
 reports/**/*.pdf
