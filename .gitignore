@@ -1,0 +1,44 @@
+# --- R and RStudio ---
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# --- renv: the lockfile is versioned, the library is not ---
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/
+
+# --- targets: the pipeline store is rebuilt from code ---
+_targets/
+
+# --- Generated data: every dataset is rebuilt by the pipeline ---
+data/raw/*
+data/sdtm/*
+data/adam/*
+!data/*/.gitkeep
+!data/*/README.md
+
+# --- Sealed simulation truth: never committed, never read by analysis code ---
+simulator/truth/
+
+# --- Rendered documents ---
+/.quarto/
+*_files/
+reports/**/*.html
+reports/**/*.pdf
+
+# --- Secrets and local configuration ---
+.env
+.env.*
+!.env.example
+
+# --- Operating system and editors ---
+.DS_Store
+.vscode/
+.idea/
