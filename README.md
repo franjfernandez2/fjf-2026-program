@@ -57,10 +57,12 @@ Requires Docker.
 ```sh
 cp .env.example .env              # then set your own local passwords
 docker compose up -d db           # start the clinical database (PostgreSQL 18)
-docker compose run --rm analysis Rscript tests/run-tests.R
+docker compose run --rm analysis Rscript tests/run-tests.R        # 25 database checks
+docker compose run --rm analysis Rscript tests/check-style.R      # lintr and styler
+docker compose run --rm analysis Rscript -e 'targets::tar_make()' # the pipeline
 ```
 
-`compose.yaml` starts the database and the analysis environment together. The analysis image pins R 4.6.1, the system libraries and every R package ([ADR 0012](docs/adr/0012-reproducible-environment.md)). The database has separate roles for loading and reading raw data and an append-only audit trail ([ADR 0013](docs/adr/0013-database-roles-and-audit-trail.md)). The full pipeline command arrives with phase F0 day 4.
+`compose.yaml` starts the database and the analysis environment together. The analysis image pins R 4.6.1, the system libraries and every R package ([ADR 0012](docs/adr/0012-reproducible-environment.md)). The database has separate roles for loading and reading raw data and an append-only audit trail ([ADR 0013](docs/adr/0013-database-roles-and-audit-trail.md)). Continuous integration runs the same three commands, in the same image, on every pull request (`.github/workflows/ci.yaml`).
 
 ## How this project is made
 
