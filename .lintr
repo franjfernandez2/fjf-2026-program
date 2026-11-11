@@ -1,0 +1,12 @@
+linters: lintr::linters_with_defaults(
+    lintr::line_length_linter(120L),
+    # Disabled: lintr checks one file at a time and cannot see functions defined in other
+    # files of a non-package project (e.g. db_connect() in R/db.R), so it reports false
+    # positives. Undefined functions are caught by the test suite and the pipeline instead.
+    object_usage_linter = NULL
+  )
+exclusions: list(
+    "renv",
+    "_targets"
+  )
+encoding: "UTF-8"
