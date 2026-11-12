@@ -20,6 +20,7 @@ Esta nota creció con la fase: cada pull request añadió lo suyo. Con la PR 24 
 | Simulador, parte de eficacia: verdad, pacientes, visitas, HbA1c, glucosa, peso, rescate y abandonos | `simulator/` (paquete `fjfsim`) | 22 |
 | Simulador, parte de seguridad: acontecimientos adversos, hipoglucemias y laboratorio de seguridad; siete supuestos nuevos | `simulator/R/safety.R`, `docs/design/assumptions.yml` | 23 |
 | Errores de datos, generación desde la semilla sellada, carga en PostgreSQL y ensayo con semilla pública | `simulator/R/errors.R`, `tools/generate-study-data.sh`, `R/raw_load.R`, ADR 0025 | 24 |
+| Informe de calidad de datos de la capa raw (criterio 7 de la puerta 2) | `R/raw_quality.R`, `docs/specs/raw-quality.qmd` | 28 |
 
 # Por qué se ha hecho así
 
@@ -69,6 +70,7 @@ Esta nota creció con la fase: cada pull request añadió lo suyo. Con la PR 24 
 - **La generación se hace una sola vez.** El comando comprueba que existen las etiquetas de los SAP, que el árbol está limpio y que no hay datos todavía. Monta la semilla solo para lectura y escribe CSV con un manifiesto de hashes. Solo muestra los recuentos.
 - **La carga pasa por el rol de carga.** Cada estudio se carga en una transacción como `fjf_loader`, así que cada fila queda en el registro de auditoría. No se puede cargar dos veces.
 - **Ensayo general con semilla pública.** El camino completo (generar, verificar y cargar en una base desechable) funcionó con 475 + 300 pacientes. La consulta de revisión encontró 45 claves de laboratorio duplicadas en la 301.
+- **Un informe de calidad de datos antes de limpiar nada.** Cuenta lo que dejó pasar el EDC (duplicados por clave natural, fechas parciales, visitas fuera de ventana, unidades cambiadas, resultados como «<8», fechas al revés y gravedad vacía) y no corrige nada: las reglas de limpieza son de la F3. No usa el brazo de tratamiento, así que se puede leer antes del cierre de la base de datos.
 
 # Lo que salió mal y cómo se resolvió
 
