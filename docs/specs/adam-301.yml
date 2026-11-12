@@ -1,0 +1,59 @@
+# ADaM specification of study FJF-2026-301 (ADaMIG 1.3). The programs in studies/301/adam
+# read it, and a test checks that each dataset has exactly these variables, in this order.
+# Every derivation follows the frozen SAP (sap-301-v1.0, docs/sap/fjf-2026-301-sap.yml) and
+# the cleaning rules (docs/specs/cleaning-rules.yml). Study days count from randomisation,
+# as the SAP says, so they differ from the SDTM --DY variables, which count from the first dose.
+
+study: FJF-2026-301
+adamig: "1.3"
+
+datasets:
+  - name: ADSL
+    label: Subject-Level Analysis Dataset
+    class: SUBJECT LEVEL ANALYSIS DATASET
+    structure: One record per randomised subject
+    keys: [STUDYID, USUBJID]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Predecessor, source: DM.STUDYID}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Predecessor, source: DM.USUBJID}
+      - {name: SUBJID, label: Subject Identifier for the Study, type: text, origin: Predecessor, source: DM.SUBJID}
+      - {name: SITEID, label: Study Site Identifier, type: text, origin: Predecessor, source: DM.SITEID}
+      - {name: AGE, label: Age, type: integer, origin: Predecessor, source: DM.AGE}
+      - {name: AGEU, label: Age Units, type: text, origin: Predecessor, source: DM.AGEU}
+      - {name: AGEGR1, label: Pooled Age Group 1, type: text, origin: Derived, source: "<65, >=65 (SAP subgroups)"}
+      - {name: AGEGR1N, label: Pooled Age Group 1 (N), type: integer, origin: Derived, source: "1 = <65, 2 = >=65"}
+      - {name: SEX, label: Sex, type: text, origin: Predecessor, source: DM.SEX}
+      - {name: RACE, label: Race, type: text, origin: Predecessor, source: DM.RACE}
+      - {name: ETHNIC, label: Ethnicity, type: text, origin: Predecessor, source: DM.ETHNIC}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Predecessor, source: DM.ARMCD}
+      - {name: ARM, label: Description of Planned Arm, type: text, origin: Predecessor, source: DM.ARM}
+      - {name: ACTARMCD, label: Actual Arm Code, type: text, origin: Predecessor, source: DM.ACTARMCD}
+      - {name: ACTARM, label: Description of Actual Arm, type: text, origin: Predecessor, source: DM.ACTARM}
+      - {name: TRT01P, label: Planned Treatment for Period 01, type: text, origin: Derived, source: DM.ARM}
+      - {name: TRT01PN, label: Planned Treatment for Period 01 (N), type: integer, origin: Derived, source: protocol dose in mg}
+      - {name: TRT01A, label: Actual Treatment for Period 01, type: text, origin: Derived, source: DM.ACTARM}
+      - {name: TRT01AN, label: Actual Treatment for Period 01 (N), type: integer, origin: Derived, source: protocol dose in mg}
+      - {name: STRAT1R, label: Randomisation Stratum 1, type: text, origin: Predecessor, source: "SUPPDM.QVAL where QNAM = STRATUM"}
+      - {name: RANDDT, label: Date of Randomization, type: date, origin: Derived, source: "DS.DSSTDTC where DSDECOD = RANDOMIZED"}
+      - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Derived, source: "Y if randomised (SAP FAS)"}
+      - {name: SAFFL, label: Safety Population Flag, type: text, origin: Derived, source: "Y if randomised and dosed (SAP SAF)"}
+      - {name: TRTSDT, label: Date of First Exposure to Treatment, type: date, origin: Derived, source: DM.RFXSTDTC}
+      - {name: TRTEDT, label: Date of Last Exposure to Treatment, type: date, origin: Derived, source: DM.RFXENDTC}
+      - {name: TRTDURD, label: Total Treatment Duration (Days), type: integer, origin: Derived, source: TRTEDT - TRTSDT + 1}
+      - {name: COMPLPCT, label: Compliance (%), type: float, origin: Derived, source: "100 x tablets taken / days, over bottles returned with a count (DA, EX)"}
+      - {name: EOTSTT, label: End of Treatment Status, type: text, origin: Derived, source: "DS where DSSCAT = STUDY TREATMENT"}
+      - {name: DCTREAS, label: Reason for Discontinuation of Treatment, type: text, origin: Derived, source: "DS.DSDECOD where DSSCAT = STUDY TREATMENT, if not COMPLETED"}
+      - {name: DCTDT, label: Date of Discontinuation of Treatment, type: date, origin: Derived, source: "DS.DSSTDTC where DSSCAT = STUDY TREATMENT, if not COMPLETED"}
+      - {name: EOSSTT, label: End of Study Status, type: text, origin: Derived, source: "DS where DSSCAT = STUDY PARTICIPATION"}
+      - {name: DCSREAS, label: Reason for Discontinuation from Study, type: text, origin: Derived, source: "DS.DSDECOD where DSSCAT = STUDY PARTICIPATION, if not COMPLETED"}
+      - {name: EOSDT, label: End of Study Date, type: date, origin: Derived, source: "DS.DSSTDTC where DSSCAT = STUDY PARTICIPATION"}
+      - {name: RESCFL, label: Rescue Medication Flag, type: text, origin: Derived, source: "Y if any CM with CMCAT = RESCUE MEDICATION"}
+      - {name: RESCDT, label: Date of First Rescue Medication, type: date, origin: Derived, source: "first CMSTDTC where CMCAT = RESCUE MEDICATION"}
+      - {name: LSTCNDT, label: Date of Last Contact, type: date, origin: Derived, source: DM.RFPENDTC}
+      - {name: DTHFL, label: Subject Death Flag, type: text, origin: Predecessor, source: DM.DTHFL}
+      - {name: DTHDT, label: Date of Death, type: date, origin: Derived, source: DM.DTHDTC}
+      - {name: HBA1CBL, label: Baseline HbA1c (%), type: float, origin: Derived, source: "last LB HBA1C on or before RANDDT (SAP baseline)"}
+      - {name: HEIGHTBL, label: Baseline Height (cm), type: float, origin: Derived, source: "VS HEIGHT at screening"}
+      - {name: WEIGHTBL, label: Baseline Weight (kg), type: float, origin: Derived, source: "last VS WEIGHT on or before RANDDT"}
+      - {name: BMIBL, label: Baseline Body Mass Index (kg/m2), type: float, origin: Derived, source: "WEIGHTBL / (HEIGHTBL / 100)^2, rounded to 0.1"}
+      - {name: BMIGR1, label: Pooled BMI Group 1, type: text, origin: Derived, source: "<30, >=30 (SAP subgroups)"}

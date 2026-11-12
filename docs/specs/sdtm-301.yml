@@ -64,6 +64,22 @@ domains:
       - {name: ACTARMUD, label: Description of Unplanned Actual Arm, type: text, origin: Derived, source: none in this study}
       - {name: COUNTRY, label: Country, type: text, origin: Assigned, source: not collected}
 
+  - name: SUPPDM
+    label: Supplemental Qualifiers for DM
+    structure: One record per supplemental qualifier per subject
+    keys: [STUDYID, RDOMAIN, USUBJID, QNAM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: RDOMAIN, label: Related Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: IDVAR, label: Identifying Variable, type: text, origin: Assigned}
+      - {name: IDVARVAL, label: Identifying Variable Value, type: text, origin: Derived}
+      - {name: QNAM, label: Qualifier Variable Name, type: text, origin: Assigned}
+      - {name: QLABEL, label: Qualifier Variable Label, type: text, origin: Assigned}
+      - {name: QVAL, label: Data Value, type: text, origin: Collected, source: "randomisation.stratum, randomisation_number"}
+      - {name: QORIG, label: Origin, type: text, origin: Assigned}
+      - {name: QEVAL, label: Evaluator, type: text, origin: Assigned}
+
   - name: DS
     label: Disposition
     structure: One record per disposition status or protocol milestone per subject

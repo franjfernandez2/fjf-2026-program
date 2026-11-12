@@ -18,6 +18,7 @@ tar_source("qc/benchmark")
 tar_source(c("studies/benchmark/tlf", "studies/benchmark/compare"))
 tar_source("studies/301/sdtm")
 tar_source("qc/301")
+tar_source("studies/301/adam")
 
 list(
   # --- F0: environment smoke test ---
@@ -329,6 +330,7 @@ list(
   ),
   tar_target(sdtm_301_dm, map_dm_301(raw_data[["301"]], assignment_301, protocol_301, sdtm_301_spec)),
   tar_target(sdtm_301_se, map_se_301(sdtm_301_dm, protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_suppdm, map_suppdm_301(raw_data[["301"]], sdtm_301_spec)),
   tar_target(sdtm_301_ie, map_ie_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec)),
   tar_target(sdtm_301_ta, map_ta_301(protocol_301, sdtm_301_spec)),
   tar_target(sdtm_301_te, map_te_301(protocol_301, sdtm_301_spec)),
@@ -369,7 +371,8 @@ list(
   tar_target(
     sdtm_301,
     list(
-      DM = sdtm_301_dm, DS = sdtm_301_ds, SV = sdtm_301_sv, EX = sdtm_301_ex, DA = sdtm_301_da,
+      DM = sdtm_301_dm, SUPPDM = sdtm_301_suppdm, DS = sdtm_301_ds, SV = sdtm_301_sv, EX = sdtm_301_ex,
+      DA = sdtm_301_da,
       CM = sdtm_301_cm, AE = sdtm_301_ae, SUPPAE = sdtm_301_suppae, LB = sdtm_301_lb, VS = sdtm_301_vs,
       CE = sdtm_301_ce, SUPPCE = sdtm_301_suppce, IE = sdtm_301_ie, SE = sdtm_301_se, TA = sdtm_301_ta,
       TE = sdtm_301_te, TV = sdtm_301_tv, TI = sdtm_301_ti, TS = sdtm_301_ts
@@ -392,6 +395,14 @@ list(
   tar_target(
     sdtm_301_define,
     write_sdtm_define(sdtm_301, sdtm_301_spec, "data/sdtm/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
+    format = "file"
+  ),
+  tar_target(adam_301_spec_file, "docs/specs/adam-301.yml", format = "file"),
+  tar_target(adam_301_spec, yaml::read_yaml(adam_301_spec_file)),
+  tar_target(adam_301_adsl, derive_adsl_301(sdtm_301, protocol_301, adam_301_spec)),
+  tar_target(
+    adam_301_files,
+    write_adam_dataset(adam_301_adsl, adam_301_spec, "ADSL", "data/adam/301"),
     format = "file"
   )
 )

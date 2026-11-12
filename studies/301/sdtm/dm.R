@@ -92,3 +92,26 @@ last_contact_301 <- function(raw) {
   dates <- dates[!is.na(dates$date), ]
   stats::aggregate(list(date = dates$date), list(subject_id = dates$subject_id), max)
 }
+
+#' SUPPDM of FJF-2026-301: the randomisation stratum and number from the randomisation
+#' system, which have no DM variable.
+#'
+#' @param raw Named list of the study's raw tables.
+#' @param spec The SDTM specification.
+#' @return The SUPPDM dataset.
+map_suppdm_301 <- function(raw, spec) {
+  r <- raw$randomisation
+  r <- r[order(r$subject_id), ]
+  usubjid <- sdtm_usubjid(spec$study, r$subject_id)
+  qual <- function(qnam, qlabel, qval) {
+    data.frame(
+      STUDYID = spec$study, RDOMAIN = "DM", USUBJID = usubjid, IDVAR = NA_character_, IDVARVAL = NA_character_,
+      QNAM = qnam, QLABEL = qlabel, QVAL = as.character(qval), QORIG = "Collected", QEVAL = NA_character_
+    )
+  }
+  out <- rbind(
+    qual("RANDNO", "Randomisation Number", r$randomisation_number),
+    qual("STRATUM", "Randomisation Stratum", r$stratum)
+  )
+  sdtm_conform(out[order(out$USUBJID, out$QNAM), ], spec, "SUPPDM")
+}
