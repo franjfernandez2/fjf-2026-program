@@ -1,0 +1,113 @@
+# Design data of study FJF-2026-301 (phase III). The protocol synopsis, the SAP and the
+# simulator read this file, so the three cannot disagree. R/protocol.R checks it.
+# Clinical content (eligibility, rescue, schedule) is for the reviewer's clinical review.
+
+study: FJF-2026-301
+phase: III
+title: >-
+  A 26-week, randomised, double-blind, placebo-controlled, parallel-group study of the
+  efficacy and safety of FJF-2026 added to metformin in adults with type 2 diabetes
+  inadequately controlled on metformin alone
+treatment_weeks: 26
+follow_up_weeks: 2
+primary_visit_week: 26
+
+arms:
+  - code: PBO
+    label: Placebo + metformin
+    dose_mg: 0
+  - code: FJF20
+    label: FJF-2026 20 mg + metformin
+    dose_mg: 20
+randomisation:
+  ratio: [1, 1]
+  stratification:
+    - factor: Screening HbA1c
+      levels: ["<= 8.5%", "> 8.5%"]
+  blinding: Double-blind; placebo tablets identical to FJF-2026
+dose_rationale: >-
+  20 mg is the dose taken forward from phase II (FJF-2026-201, placebo and 5, 10, 20 and
+  40 mg). Both studies are simulated from the same true dose-response curve (ADR 0005); the
+  phase II analysis is done later in the programme (F4) and its MCP-Mod result is compared
+  with this choice.
+
+eligibility:
+  age_years: [18, 80]
+  hba1c_screening_pct: [7.0, 10.5]
+  metformin:
+    min_daily_mg: 1500
+    or_max_tolerated_min_mg: 1000
+    stable_weeks: 8
+  bmi_max: 45
+  egfr_min: 45
+  inclusion:
+    - Type 2 diabetes diagnosed at least 6 months before screening
+    - Age 18 to 80 years at screening
+    - HbA1c 7.0% to 10.5% at screening (central laboratory)
+    - >-
+      Metformin at least 1500 mg/day, or at least 1000 mg/day if that is the maximum
+      tolerated dose, unchanged for at least 8 weeks before screening
+    - Body mass index 45 kg/m2 or less
+  exclusion:
+    - Type 1 diabetes, diabetes after pancreatic disease, or a history of ketoacidosis
+    - Any glucose-lowering drug other than metformin in the 12 weeks before screening
+    - Fasting plasma glucose above 270 mg/dL at randomisation
+    - eGFR below 45 mL/min/1.73 m2 (CKD-EPI)
+    - ALT or AST above 3 times the upper limit of normal, or total bilirubin above 2 mg/dL
+    - Myocardial infarction, unstable angina, stroke or heart failure hospitalisation in the 3 months before screening
+    - Pregnancy, breastfeeding, or no reliable contraception in women of childbearing potential
+    - Level 3 (severe) hypoglycaemia in the 6 months before screening
+
+# Visits: week relative to randomisation (day 1 = week 0). window_days is +/- days around
+# the target day (7 * week). Assessments use the codes defined under `assessments`.
+visits:
+  - {code: V1, label: Screening, week: -2, window_days: 7, assessments: [consent, eligibility, demog, medhist, hba1c, fpg, labs, egfr, vitals, weight, height, ecg, conmed]}
+  - {code: V2, label: Randomisation, week: 0, window_days: 0, assessments: [hba1c, fpg, labs, egfr, vitals, weight, ae, hypo, conmed, dispense]}
+  - {code: V3, label: Week 2, week: 2, window_days: 3, assessments: [fpg, vitals, ae, hypo, conmed]}
+  - {code: V4, label: Week 4, week: 4, window_days: 3, assessments: [hba1c, fpg, vitals, ae, hypo, conmed, dispense]}
+  - {code: V5, label: Week 8, week: 8, window_days: 5, assessments: [hba1c, fpg, vitals, ae, hypo, conmed, dispense]}
+  - {code: V6, label: Week 12, week: 12, window_days: 5, assessments: [hba1c, fpg, labs, egfr, vitals, weight, ae, hypo, conmed, dispense]}
+  - {code: V7, label: Week 16, week: 16, window_days: 7, assessments: [hba1c, fpg, vitals, ae, hypo, conmed, dispense]}
+  - {code: V8, label: Week 20, week: 20, window_days: 7, assessments: [hba1c, fpg, vitals, ae, hypo, conmed, dispense]}
+  - {code: V9, label: Week 26 (end of treatment), week: 26, window_days: 7, assessments: [hba1c, fpg, labs, egfr, vitals, weight, ecg, ae, hypo, conmed, accountability]}
+  - {code: V10, label: Follow-up, week: 28, window_days: 5, assessments: [vitals, ae, hypo, conmed]}
+
+assessments:
+  consent: Informed consent
+  eligibility: Inclusion and exclusion criteria
+  demog: Demography (age, sex, race, ethnicity)
+  medhist: Medical history and diabetes history
+  hba1c: HbA1c (central laboratory)
+  fpg: Fasting plasma glucose (central laboratory)
+  labs: Safety laboratory (haematology, ALT, AST, bilirubin, lipids)
+  egfr: Serum creatinine and eGFR (CKD-EPI)
+  vitals: Blood pressure and heart rate
+  weight: Body weight
+  height: Height
+  ecg: 12-lead ECG
+  ae: Adverse events
+  hypo: Hypoglycaemia (glucose meter and diary, levels 1 to 3)
+  conmed: Concomitant medication, including rescue
+  dispense: Study drug dispensing
+  accountability: Study drug accountability
+
+# Rescue: a confirmed fasting plasma glucose above the threshold for the period of the
+# visit triggers rescue. Periods are [from_week, to_week); the last one includes week 26.
+rescue:
+  confirmation: Repeat FPG within 7 days at an unscheduled visit; rescue if it is still above the threshold
+  thresholds:
+    - {from_week: 2, to_week: 6, fpg_mg_dl: 270}
+    - {from_week: 6, to_week: 12, fpg_mg_dl: 240}
+    - {from_week: 12, to_week: 26, fpg_mg_dl: 200}
+  medication: >-
+    Investigator's choice of an approved glucose-lowering drug added to metformin, per its
+    label, excluding drugs with the same mechanism of action as FJF-2026. Insulin is allowed.
+  after_rescue: Study drug and all visits continue; the rescue drug is recorded as concomitant medication.
+
+discontinuation:
+  rule: >-
+    A patient who stops study drug for any reason stays in the study and attends every
+    remaining visit with all assessments, unless they withdraw consent.
+  reason: >-
+    The primary estimand uses a treatment-policy strategy for discontinuation, so the HbA1c
+    of patients after they stop treatment is part of the endpoint and must be observed.

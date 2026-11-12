@@ -1,0 +1,154 @@
+---
+title: "Protocol synopsis: FJF-2026-301"
+subtitle: "Phase III · FJF-2026 added to metformin in type 2 diabetes"
+author: "Francisco Fernández"
+date: today
+---
+
+```{r}
+#| include: false
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+for (f in c("assumptions.R", "protocol.R")) source(file.path(root, "R", f))
+a <- read_assumptions(file.path(root, "docs", "design", "assumptions.yml"))
+p <- read_protocol(file.path(root, "docs", "protocols", "fjf-2026-301.yml"))
+stopifnot(length(check_assumptions(a)) == 0, length(check_protocol(p, a)) == 0)
+pv <- function(id) a$parameters$planning[a$parameters$id == id]
+fmt <- function(x, d = 2) formatC(x, format = "f", digits = d, drop0trailing = TRUE)
+pct <- function(x) paste0(round(100 * x), "%")
+el <- p$eligibility
+th <- p$rescue$thresholds
+```
+
+Every number on this page is read from the study's design data ([`fjf-2026-301.yml`](fjf-2026-301.yml)) and the programme's [design assumptions](../design/assumptions.qmd). The SAP and the simulator read the same files.
+
+# Document control
+
+| Version | Date | Author | Change |
+|---|---|---|---|
+| 0.1 | 2026-11-12 | Francisco Fernández | First draft (F2 · PR 16) |
+
+Estimands and sample size are completed in version 0.2 (PR 17). The synopsis is frozen with the SAP (tag `sap-301-v1.0`).
+
+# Study identification
+
+| Item | Value |
+|---|---|
+| Study number | `r p$study` |
+| Title | `r p$title` |
+| Phase | `r p$phase` |
+| Indication | Type 2 diabetes inadequately controlled on metformin |
+| Investigational product | FJF-2026 `r p$arms[[2]]$dose_mg` mg, oral, once daily |
+| Comparator | Placebo, added to stable metformin |
+| Duration of treatment | `r p$treatment_weeks` weeks, then `r p$follow_up_weeks` weeks of follow-up |
+
+# Rationale
+
+Many people with type 2 diabetes do not reach their HbA1c target on metformin alone, and a second oral drug is the usual next step. FJF-2026 is a fictional once-daily oral drug. Its true effect is set by the programme's simulator and sealed until the unblinding ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)).
+
+`r p$dose_rationale`
+
+Placebo-controlled trials of drugs added to metformin have shown placebo-adjusted HbA1c reductions of about 0.5 to 0.7 percentage points at 24 weeks ([design assumptions](../design/assumptions.qmd)). This study plans for `r fmt(abs(pv("effect_target_dose")))`, below that range, so that it is not powered on an optimistic effect.
+
+# Objectives and endpoints
+
+| Type | Objective | Endpoint |
+|---|---|---|
+| Primary | Show that FJF-2026 lowers HbA1c more than placebo, when added to metformin | Change from baseline in HbA1c at week `r p$primary_visit_week` |
+| Key secondary | Compare the chance of reaching the usual glycaemic target | HbA1c below 7.0% at week `r p$primary_visit_week` |
+| Key secondary | Compare the effect on body weight | Change from baseline in body weight at week `r p$primary_visit_week` |
+| Key secondary | Compare the need for rescue medication | Time to first rescue medication up to week `r p$primary_visit_week` |
+| Secondary | Describe the effect on fasting glucose | Change from baseline in fasting plasma glucose at week `r p$primary_visit_week` |
+| Safety | Describe safety and tolerability | Adverse events; hypoglycaemia levels 1 to 3; laboratory values, including eGFR and ALT; vital signs |
+
+The key secondary endpoints are tested in a hierarchy, or a graphical procedure, that controls the overall type I error. The SAP sets the procedure.
+
+# Estimands
+
+Two events can happen after randomisation and change the meaning of a patient's week-26 HbA1c. ICH E9(R1) calls them **intercurrent events**:
+
+- **Starting rescue medication.** A second glucose-lowering drug lowers HbA1c on its own. A patient's HbA1c after rescue no longer shows the effect of the study treatment alone.
+- **Stopping study treatment.** A patient who stops FJF-2026 no longer receives it, but their HbA1c is still measured.
+
+The primary estimand handles both with a **treatment-policy** strategy: it compares the arms whatever happened after randomisation. A supplementary estimand uses a **hypothetical** strategy for rescue: what would have happened if no rescue had been available. Version 0.2 defines both estimands in full, with all five attributes, from the programme's estimands file.
+
+# Design
+
+A randomised, double-blind, placebo-controlled, parallel-group study:
+
+- **Arms:** `r paste(purrr::map_chr(p$arms, "label"), collapse = " and ")`.
+- **Randomisation:** `r paste(unlist(p$randomisation$ratio), collapse = ":")`, stratified by `r sub("^S", "s", p$randomisation$stratification[[1]]$factor)` (`r paste(unlist(p$randomisation$stratification[[1]]$levels), collapse = " and ")`).
+- **Blinding:** `r p$randomisation$blinding`.
+- **Periods:** 2 weeks of screening, `r p$treatment_weeks` weeks of treatment and `r p$follow_up_weeks` weeks of follow-up.
+
+**Patients who stop study treatment stay in the study.** `r p$discontinuation$rule` `r p$discontinuation$reason`
+
+# Population
+
+**Key inclusion criteria**
+
+```{r}
+#| results: asis
+cat(paste0(seq_along(el$inclusion), ". ", unlist(el$inclusion), collapse = "\n"), "\n")
+```
+
+**Key exclusion criteria**
+
+```{r}
+#| results: asis
+cat(paste0(seq_along(el$exclusion), ". ", unlist(el$exclusion), collapse = "\n"), "\n")
+```
+
+The HbA1c, metformin and eGFR limits follow published trials and the metformin label, as recorded in the design assumptions.
+
+# Treatments and rescue
+
+- **Study treatment:** FJF-2026 `r p$arms[[2]]$dose_mg` mg or matching placebo, once daily, with the patient's usual metformin dose, which stays unchanged.
+- **Rescue rule:** a fasting plasma glucose above the threshold for the period triggers rescue. `r p$rescue$confirmation`.
+
+```{r}
+knitr::kable(data.frame(
+  Period = sprintf("Week %g to %s %g", purrr::map_dbl(th, "from_week"),
+                   c(rep("before", length(th) - 1), "and including"), purrr::map_dbl(th, "to_week")),
+  `FPG threshold (mg/dL)` = purrr::map_dbl(th, "fpg_mg_dl"),
+  `FPG threshold (mmol/L)` = round(purrr::map_dbl(th, "fpg_mg_dl") / 18.016, 1),
+  check.names = FALSE
+))
+```
+
+- **Rescue medication:** `r p$rescue$medication`
+- **After rescue:** `r p$rescue$after_rescue`
+- **Hypoglycaemia** is classified in levels 1 to 3 (below 70 mg/dL, below 54 mg/dL, and severe), as in the FDA's 2023 draft guidance.
+
+# Sample size
+
+Completed in version 0.2 (PR 17), by simulation. The planning assumptions are:
+
+| Assumption | Planning value |
+|---|---|
+| Placebo-adjusted change in HbA1c on treatment, without rescue | `r fmt(pv("effect_target_dose"))`% |
+| Standard deviation of the change | `r fmt(pv("change_sd"))`% |
+| Treatment discontinuation by week 26 (placebo / FJF-2026) | `r pct(pv("discontinuation_placebo"))` / `r pct(pv("discontinuation_active"))` |
+| Rescue by week 26 (placebo / FJF-2026) | `r pct(pv("rescue_placebo"))` / `r pct(pv("rescue_active"))` |
+| Two-sided alpha; power | 5%; 90% |
+
+# Statistical analysis overview
+
+- **Primary estimand (treatment policy):** multiple imputation of the missing week-26 values. It uses every observed HbA1c, including after rescue and after treatment discontinuation, and imputes the rest by jump to reference. An ANCOVA on each imputed dataset is adjusted for baseline HbA1c and the stratification factor.
+- **Supplementary estimand (hypothetical for rescue):** a mixed model for repeated measures, on the values before rescue.
+- **Sensitivity:** a tipping-point analysis on the imputed values and other imputation assumptions.
+- **Multiplicity:** the key secondary endpoints are tested only after the primary one succeeds.
+
+The SAP gives the full detail and is frozen before any data exist.
+
+# Schedule of assessments
+
+```{r}
+v <- p$visits
+codes <- names(p$assessments)
+grid <- sapply(seq_len(nrow(v)), function(i) ifelse(codes %in% v$assessments[[i]], "✓", ""))
+grid <- data.frame(Assessment = unlist(p$assessments), grid, check.names = FALSE, row.names = NULL)
+names(grid)[-1] <- sprintf("%s wk %g ±%gd", v$code, v$week, v$window_days)
+knitr::kable(grid)
+```
+
+Week 0 is the day of randomisation. Windows are in days around the target day.
