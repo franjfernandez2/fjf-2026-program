@@ -1,0 +1,234 @@
+---
+title: "Statistical analysis plan: FJF-2026-301"
+subtitle: "Part 1 · Primary endpoint, intercurrent events and missing data"
+author: "Francisco Fernández"
+date: today
+---
+
+```{r}
+#| include: false
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+knitr::opts_knit$set(root.dir = root)
+for (f in c("assumptions.R", "protocol.R", "estimands.R", "sample_size.R", "dry_run_301.R", "sap.R")) {
+  source(file.path(root, "R", f))
+}
+p <- read_protocol(file.path(root, "docs", "protocols", "fjf-2026-301.yml"))
+e <- read_estimands(file.path(root, "docs", "protocols", "fjf-2026-301-estimands.yml"))
+s <- read_sap(file.path(root, "docs", "sap", "fjf-2026-301-sap.yml"))
+stopifnot(length(check_sap(s, e, p)) == 0)
+store <- file.path(root, "_targets")
+tr <- function(name) targets::tar_read_raw(name, store = store)
+ss_n <- tr("sample_size_301")
+windows <- tr("analysis_windows_301_table")
+dry <- tr("dry_run_301_efficacy")
+large <- tr("dry_run_301_large_efficacy")
+large_data <- tr("dry_run_301_large")$adeff
+oc <- tr("dry_run_301_oc_summary")
+pars <- tr("dry_run_301_pars")
+fmt <- function(x, d = 2) formatC(x, format = "f", digits = d)
+pct <- function(x, d = 1) paste0(formatC(100 * x, format = "f", digits = d), "%")
+pval <- function(x) ifelse(x < 0.001, "<0.001", formatC(x, format = "f", digits = 3))
+item <- function(id) sap_item(s, id)
+est_of <- function(id) purrr::keep(e$estimands, \(x) x$id == id)[[1]]
+wk26 <- large_data[large_data$AVISITN == p$primary_visit_week, ]
+e1_value <- mean(wk26$CHG_FULL[wk26$ARMCD == "FJF20"]) - mean(wk26$CHG_FULL[wk26$ARMCD == "PBO"])
+```
+
+Every setting in this plan is read from [`fjf-2026-301-sap.yml`](fjf-2026-301-sap.yml), and the analysis code reads the same file, so the text and the code cannot disagree. The estimands come from [`fjf-2026-301-estimands.yml`](../protocols/fjf-2026-301-estimands.yml) and the design from the [protocol synopsis](../protocols/fjf-2026-301-synopsis.qmd).
+
+# Document control
+
+| Version | Date | Author | Change |
+|---|---|---|---|
+| 0.1 | 2026-11-12 | Francisco Fernández | Part 1, primary endpoint (F2 · PR 18) |
+
+Part 2 (PR 19) adds the key secondary endpoints, multiplicity, subgroups, safety and the table shells. The SAP becomes version 1.0 with the tag `sap-301-v1.0`, before any study data are generated ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)). After the tag, any change is an amendment with its date and reason, and is reported in the study report.
+
+# Study design in brief
+
+`r p$title`. Patients are randomised `r paste(unlist(p$randomisation$ratio), collapse = ":")` to placebo or FJF-2026 `r p$arms[[2]]$dose_mg` mg, both added to metformin, stratified by screening HbA1c (`r paste(unlist(p$randomisation$stratification[[1]]$levels), collapse = " or ")`). The sample size is `r ss_n` patients per arm, `r 2 * ss_n` in all ([ADR 0020](../adr/0020-sample-size-by-simulation.md)). The primary endpoint is the change from baseline in HbA1c at week `r p$primary_visit_week`.
+
+# Analysis sets
+
+```{r}
+#| results: asis
+for (x in s$analysis_sets) cat("- **", x$label, " (", x$id, "):** ", x$definition, " *Use:* ", x$use, "\n", sep = "")
+```
+
+The full analysis set follows the intention-to-treat principle: every randomised patient counts, in the arm they were randomised to, whatever happened afterwards. That is what the treatment-policy estimand needs.
+
+# Derivations
+
+```{r}
+#| results: asis
+labels <- c(
+  study_day = "Study day", baseline = "Baseline", change = "Change from baseline",
+  visit_windows = "Analysis visits", on_treatment = "On treatment", pre_rescue = "Before rescue"
+)
+for (k in names(labels)) cat("- **", labels[[k]], ":** ", s$derivations[[k]], "\n", sep = "")
+```
+
+The windows that follow from the protocol's HbA1c visits:
+
+```{r}
+knitr::kable(
+  windows |> dplyr::transmute(
+    `Analysis visit` = visit, `Target day` = target_day, `From day` = from_day, `To day` = to_day
+  ),
+  align = "lrrr"
+)
+```
+
+# Intercurrent events and missing data
+
+The two intercurrent events of the study are rescue medication and permanent discontinuation of study treatment. They are not missing data: under the primary estimand the HbA1c measured after them is part of the endpoint and is used as observed. The protocol keeps patients in the study after they stop treatment for this reason.
+
+Data are **missing** only when a value was not measured: the patient left the study, or missed a visit. How each estimand treats the two:
+
+| | E1 · treatment policy (primary) | E2 · hypothetical (supplementary) |
+|---|---|---|
+| Value after rescue | Used as observed | Not used: set to missing |
+| Value after discontinuation | Used as observed | Not used: set to missing |
+| Missing after leaving the study | Imputed by jump to reference | Missing at random, handled by the model |
+| Missing visit between observed ones | Imputed, missing at random | Missing at random, handled by the model |
+
+# Primary analysis (A1)
+
+```{r}
+#| results: asis
+a1 <- item("A1")
+cat("**Estimand:** ", a1$estimand, ", ", est_of(a1$estimand)$label, ". **Analysis set:** ", a1$analysis_set, ".\n\n", sep = "")
+for (k in c("data", "missing_data", "imputation_model", "analysis_model", "pooling", "test")) {
+  cat("- **", c(
+    data = "Data", missing_data = "Missing data", imputation_model = "Imputation model",
+    analysis_model = "Analysis model", pooling = "Combination", test = "Test"
+  )[[k]], ":** ", a1[[k]], "\n", sep = "")
+}
+cat("- **Settings:** ", a1$settings$imputations, " imputations, imputation seed ", a1$settings$seed,
+  ", reference arm ", a1$settings$reference, ".\n", sep = "")
+```
+
+**Why jump to reference.** A patient who leaves the study usually stopped FJF-2026 first. Under jump to reference, their missing values follow the placebo arm from the moment they leave, given their own earlier values: the effect of the drug is assumed lost. This is the conservative assumption regulators expect for a treatment-policy estimand: it does not credit the drug with an effect nobody observed.
+
+# Supplementary analysis (A2)
+
+```{r}
+#| results: asis
+a2 <- item("A2")
+cat("**Estimand:** ", a2$estimand, ", ", est_of(a2$estimand)$label, ". **Analysis set:** ", a2$analysis_set, ".\n\n", sep = "")
+for (k in c("data", "missing_data", "analysis_model", "summary_measure", "test")) {
+  cat("- **", c(
+    data = "Data", missing_data = "Missing data", analysis_model = "Model",
+    summary_measure = "Summary", test = "Test"
+  )[[k]], ":** ", a2[[k]], "\n", sep = "")
+}
+```
+
+**Why the MMRM answers E2 and not E1.** The MMRM estimates the mean at week `r p$primary_visit_week` from the observed values, assuming that the missing ones behave like those of similar patients who were observed (missing at random). On the values before rescue and on treatment, the patients it borrows from are patients still on their drug and not rescued, so it describes a world without those events: the hypothetical question. Applied to the treatment-policy question it would assume that patients who left kept the effect of the drug they had stopped. The dry run below shows the difference in numbers.
+
+# Sensitivity analyses
+
+Each one changes one assumption of the primary analysis and keeps the rest.
+
+```{r}
+#| results: asis
+for (x in s$sensitivity) cat("- **", x$id, " · ", x$label, ":** ", x$assumption, "\n", sep = "")
+```
+
+```{r}
+#| include: false
+grid <- item("S3")$settings$deltas
+```
+
+The tipping-point grid runs from `r grid$from` to `r grid$to` HbA1c points in steps of `r grid$by`. For scale, the planning effect of FJF-2026 is `r fmt(pars$effect_target_dose)`: a delta of `r fmt(abs(pars$effect_target_dose))` wipes out the planning effect in the patients whose values are imputed, and `r fmt(2 * abs(pars$effect_target_dose))` gives them the opposite effect.
+
+# Dry run on planning data
+
+::: {.callout-important}
+## Not study results
+The numbers in this section come from data generated from the **planning values** with a public seed (`r s$dry_run$seed`), before any study data exist. They test the plan, not FJF-2026. The study data are generated by the simulator from the sealed truth, after this SAP is frozen.
+:::
+
+The dry run answers three questions: does the code run as written, does each analysis estimate what its estimand asks, and does the real primary analysis have the power the sample size assumed.
+
+## One trial of the planned size
+
+```{r}
+res_table <- function(r) {
+  labs <- c(A1 = "A1 · J2R (primary)", A2 = "A2 · MMRM (E2)", S1 = "S1 · MAR", S2 = "S2 · copy reference")
+  data.frame(
+    Analysis = labs[r$analysis],
+    Difference = fmt(r$estimate),
+    `95% CI` = sprintf("%s to %s", fmt(r$lower), fmt(r$upper)),
+    p = pval(r$p_value),
+    check.names = FALSE, row.names = NULL
+  )
+}
+knitr::kable(res_table(dry$results), align = "lrrr")
+```
+
+Difference is FJF-2026 minus placebo in HbA1c change at week `r p$primary_visit_week` (percentage points). This trial happens to show a larger difference than the planning model expects: over the `r oc$trials[1]` trials of section 9.3 the primary analysis averages `r fmt(oc$mean_estimate[grepl("^A1", oc$analysis)])`, with a spread of `r fmt(oc$empirical_sd[grepl("^A1", oc$analysis)])`. One trial is one draw, which is why the dry run does not stop here. Its seed was fixed in the SAP file before it was run and is not changed for a nicer result. The tipping point of S3 is `r if (is.na(dry$tipping_point)) paste("beyond", grid$to) else fmt(dry$tipping_point)`.
+
+```{r}
+#| fig-height: 3
+#| fig-width: 6
+library(ggplot2)
+ggplot(dry$tipping, aes(delta, estimate)) +
+  geom_hline(yintercept = 0, colour = "grey50") +
+  geom_ribbon(aes(ymin = lower, ymax = upper), fill = "#4a7ab5", alpha = 0.25) +
+  geom_line(colour = "#4a7ab5", linewidth = 0.8) +
+  labs(x = "Delta added to imputed values on FJF-2026 (HbA1c points)", y = "Difference (95% CI)") +
+  theme_minimal(base_size = 10)
+```
+
+## A large trial: each analysis and its own estimand
+
+With `r format(s$dry_run$large_sample_per_arm, big.mark = ",")` patients per arm the estimates are precise enough to see what each one estimates. A dry run can also know the value nothing missing would have shown (`CHG_FULL`), which a real trial never can.
+
+```{r}
+lr <- large$results
+knitr::kable(data.frame(
+  Analysis = c("A1 · J2R (primary)", "S1 · MAR", "A2 · MMRM (E2)"),
+  Estimate = fmt(lr$estimate[match(c("A1", "S1", "A2"), lr$analysis)]),
+  `Value it targets` = c(
+    sprintf("%s (E1, complete data)", fmt(e1_value)),
+    sprintf("%s (E1, complete data)", fmt(e1_value)),
+    sprintf("%s (E2, planning effect)", fmt(pars$effect_target_dose))
+  ),
+  check.names = FALSE
+), align = "lrl")
+```
+
+- **A2 recovers the planning effect** of `r fmt(pars$effect_target_dose)`: on treatment and without rescue, the drug does what the planning model says.
+- **A1 is smaller than the complete-data value.** In this dry run, patients who leave the study kept their trajectory; J2R assumes they lost the effect. J2R is conservative by design: when its assumption is wrong, it errs against the drug.
+- **The gap between A2 and A1** is the treatment-policy dilution: discontinuation, rescue and the imputation together.
+
+## Many trials: power of the real primary analysis
+
+The sample size was chosen with a simplified analysis ([ADR 0020](../adr/0020-sample-size-by-simulation.md)). Here `r oc$trials[1]` trials of `r ss_n` patients per arm are generated and each is analysed both ways: by the real primary analysis (with `r s$dry_run$operating_characteristics$imputations` imputations, to save time) and by the simplified one.
+
+```{r}
+knitr::kable(data.frame(
+  Analysis = oc$analysis,
+  Power = sprintf("%s ± %s", pct(oc$power), pct(1.96 * oc$mcse)),
+  `Implied power` = pct(oc$implied_power),
+  `Mean estimate` = fmt(oc$mean_estimate, 3),
+  `SD` = fmt(oc$empirical_sd, 3),
+  `Mean SE` = ifelse(is.na(oc$mean_se), "", fmt(oc$mean_se, 3)),
+  check.names = FALSE
+), align = "lrrrrr")
+```
+
+```{r}
+#| include: false
+a1oc <- oc[grepl("^A1", oc$analysis), ]
+```
+
+*Power* is the share of trials that succeed, with its 95% Monte Carlo margin; with `r oc$trials[1]` trials the margin is wide. *Implied power* comes from the mean and the spread of the estimates, and is far less noisy.
+
+- **The standard error is honest.** The mean standard error of the primary analysis (`r fmt(a1oc$mean_se, 3)`) matches the spread of its estimates (`r fmt(a1oc$empirical_sd, 3)`), so its confidence intervals have the coverage they claim.
+- **The real primary analysis has about `r pct(a1oc$implied_power, 0)` implied power** at `r ss_n` patients per arm, the 90% the sample size aimed for. On the same trials the simplified analysis has less (`r pct(oc$implied_power[!grepl("^A1", oc$analysis)], 0)`): the imputation uses each patient's earlier visits, while the simplified analysis draws a missing value at random from the placebo arm, so the estimates of the real analysis spread less. The sample size chosen with the simplified analysis is therefore not too small ([ADR 0021](../adr/0021-sap-dry-run-on-planning-data.md)).
+
+# Still to come (part 2, PR 19)
+
+Key secondary endpoints (E3 to E5) and their analyses, the multiplicity strategy, subgroups, safety analyses, table shells and the traceability of every table to a line of this plan.

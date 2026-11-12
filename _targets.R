@@ -172,5 +172,51 @@ list(
   tar_target(
     sample_size_301_robustness,
     power_robustness_301(sample_size_301, design_assumptions, reps = 5000, seed = sample_size_seed)
-  )
+  ),
+
+  # SAP of FJF-2026-301, part 1 (efficacy), checked against the estimands and the protocol.
+  tar_target(sap_301_file, "docs/sap/fjf-2026-301-sap.yml", format = "file"),
+  tar_target(sap_301, read_sap(sap_301_file)),
+  tar_target(sap_301_problems, check_sap(sap_301, estimands_301, protocol_301)),
+  tar_target(analysis_windows_301_table, analysis_windows_301(protocol_301)),
+
+  # Dry run (SAP, dry run): the SAP's analyses on data generated from the planning values
+  # with a public seed. Not study data, and not the simulator (ADR 0018).
+  tar_target(dry_run_301_pars, planning_values_dry_run_301(design_assumptions)),
+  tar_target(
+    dry_run_301,
+    {
+      stopifnot(length(sap_301_problems) == 0)
+      d <- sap_301$dry_run
+      simulate_dry_run_301(sample_size_301, dry_run_301_pars, protocol_301, d$seed, d$missing_at_visit, d$washout_weeks)
+    }
+  ),
+  tar_target(dry_run_301_efficacy, analyse_efficacy_301(dry_run_301$adeff, sap_301, protocol_301)),
+  # A large trial: does each analysis recover the value of its own estimand?
+  tar_target(
+    dry_run_301_large,
+    {
+      d <- sap_301$dry_run
+      simulate_dry_run_301(
+        d$large_sample_per_arm, dry_run_301_pars, protocol_301, d$seed + 1, d$missing_at_visit, d$washout_weeks
+      )
+    }
+  ),
+  tar_target(
+    dry_run_301_large_efficacy,
+    analyse_efficacy_301(dry_run_301_large$adeff, sap_301, protocol_301, imputations = 20, deltas = c(0, 1, 2))
+  ),
+  # Many trials of the planned size: the power of the real primary analysis (ADR 0020).
+  tar_target(
+    dry_run_301_oc,
+    {
+      oc <- sap_301$dry_run$operating_characteristics
+      operating_characteristics_301(
+        sample_size_301, dry_run_301_pars, protocol_301, sap_301,
+        trials = oc$trials, imputations = oc$imputations, seed = sap_301$dry_run$seed + 1000,
+        cores = min(4L, parallel::detectCores())
+      )
+    }
+  ),
+  tar_target(dry_run_301_oc_summary, summarise_oc_301(dry_run_301_oc))
 )

@@ -87,12 +87,12 @@ jobs:
       - name: Test suite on the pipeline's results
         run: docker compose run --rm -T analysis Rscript tests/run-tests.R
 
-      - name: Render document templates (HTML and PDF), notes, design documents, protocols and the benchmark report
+      - name: Render document templates (HTML and PDF), notes, design documents, protocols, SAPs and the benchmark report
         run: >-
           docker compose run --rm -T --no-deps analysis bash -c
           'cd docs/templates && quarto render && cd ../notes && quarto render
           && cd ../design && quarto render && cd ../protocols && quarto render
-          && cd ../../studies/benchmark/report && quarto render'
+          && cd ../sap && quarto render && cd ../../studies/benchmark/report && quarto render'
 
       - name: Database logs (only if something failed)
         if: failure()
