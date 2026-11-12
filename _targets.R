@@ -16,6 +16,7 @@ tar_source("studies/benchmark/adam")
 tar_source("qc/benchmark")
 # Tables, figures and their comparison with the pilot's study report.
 tar_source(c("studies/benchmark/tlf", "studies/benchmark/compare"))
+tar_source("studies/301/sdtm")
 
 list(
   # --- F0: environment smoke test ---
@@ -314,5 +315,18 @@ list(
       check_raw_quality(raw_data[["201"]], raw_spec, protocol_201, "201"),
       check_raw_quality(raw_data[["301"]], raw_spec, protocol_301, "301")
     )
-  )
+  ),
+
+  # --- FJF-2026-301: SDTM (F3). Blinded until the database lock (ADR 0027): before it, the
+  # pipeline uses a dummy assignment, the real arms shuffled within strata with a public seed.
+  tar_target(sdtm_301_spec_file, "docs/specs/sdtm-301.yml", format = "file"),
+  tar_target(sdtm_301_spec, yaml::read_yaml(sdtm_301_spec_file)),
+  tar_target(dblock_301, database_locked(lock_file("301")), cue = tar_cue(mode = "always")),
+  tar_target(
+    assignment_301,
+    assignment_in_use(raw_data[["301"]]$randomisation, dblock_301, sdtm_301_spec$blinding_seed)
+  ),
+  tar_target(sdtm_301_dm, map_dm_301(raw_data[["301"]], assignment_301, protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_ds, map_ds_301(raw_data[["301"]], assignment_301, sdtm_301_dm, sdtm_301_spec)),
+  tar_target(sdtm_301_sv, map_sv_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec))
 )
