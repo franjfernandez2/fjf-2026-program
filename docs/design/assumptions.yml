@@ -49,6 +49,13 @@ sources:
       Clinical trial protocol, NCT02964247, published on ClinicalTrials.gov.
     url: https://cdn.clinicaltrials.gov/large-docs/47/NCT02964247/Prot_000.pdf
     read: Rescue criteria section, as quoted in a search result; an example of industry practice.
+  fda2016metformin:
+    citation: >-
+      U.S. Food and Drug Administration. FDA Drug Safety Communication: FDA revises warnings
+      regarding use of the diabetes medicine metformin in certain patients with reduced kidney
+      function. 8 April 2016.
+    url: https://www.fda.gov/drugs/drug-safety-and-availability/fda-drug-safety-communication-fda-revises-warnings-regarding-use-diabetes-medicine-metformin-certain
+    read: Summary of the communication (search results); the label wording is checked against current prescribing information.
 
 parameters:
   - id: hba1c_baseline_mean
@@ -212,6 +219,25 @@ design_rules:
     rule: Hypoglycaemia is classified in levels 1, 2 and 3 (70, 54 mg/dL and severe).
     sources: [fda2023]
     evidence: Levels as given in the draft, after ADA 2023.
+
+  - id: eligibility_hba1c
+    rule: HbA1c 7.0% to 10.5% at screening.
+    sources: [charbonnel2006, haring2014]
+    evidence: >-
+      Inclusion was 7-10% in NCT00086515 and 7-10% in the metformin trial of Häring 2014
+      (7-11% in its registry entry, NCT01159600). The upper limit of 10.5% sits between them.
+  - id: eligibility_metformin
+    rule: Metformin at least 1500 mg/day (or the maximum tolerated dose), unchanged for at least 8 weeks.
+    sources: [bailey2010, haring2014]
+    evidence: >-
+      At least 1500 mg/day for at least 8 weeks in NCT00528879; at least 1500 mg/day or the
+      maximum tolerated dose, unchanged for 12 weeks, in NCT01159600.
+  - id: eligibility_egfr
+    rule: eGFR at least 45 mL/min/1.73 m2.
+    sources: [fda2016metformin]
+    evidence: >-
+      Metformin is contraindicated below 30, and its benefit and risk are to be reassessed
+      below 45. Patients at 45 or more can stay on stable metformin for the whole study.
 
 calibration_targets:
   - id: responders_below_7
