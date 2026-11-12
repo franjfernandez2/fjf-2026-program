@@ -355,8 +355,8 @@ domains:
       - {name: ELEMENT, label: Description of Element, type: text, origin: Derived}
       - {name: TAETORD, label: Planned Order of Element within Arm, type: integer, origin: Derived}
       - {name: EPOCH, label: Epoch, type: text, origin: Derived}
-      - {name: SESTDTC, label: Start Date/Time of Element, type: text, origin: Derived, source: "RFICDTC, RFXSTDTC, day after RFXENDTC"}
-      - {name: SEENDTC, label: End Date/Time of Element, type: text, origin: Derived, source: "day before RFXSTDTC, RFXENDTC, RFPENDTC"}
+      - {name: SESTDTC, label: Start Date/Time of Element, type: text, origin: Derived, source: "RFICDTC (screening), RFXSTDTC (treatment), RFXENDTC (follow-up)"}
+      - {name: SEENDTC, label: End Date/Time of Element, type: text, origin: Derived, source: "RFXSTDTC (screening), RFXENDTC (treatment), RFPENDTC (follow-up): each element ends when the next starts"}
       - {name: SESTDY, label: Study Day of Start of Element, type: integer, origin: Derived}
       - {name: SEENDY, label: Study Day of End of Element, type: integer, origin: Derived}
 

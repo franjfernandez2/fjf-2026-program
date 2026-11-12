@@ -111,8 +111,9 @@ repository) was run with its published rules by
 CDISC terminology version in `def:Standards`. CORE takes it from there when the define is
 Define-XML 2.1, and P21 still finds no define issue.
 
-- **SDTMIG 3.4**: 562 rules. 346 passed, 146 did not apply, and 42 failed inside CORE
-  ("rule execution error"; CORE's own problem, not the data's). 28 reported issues.
+- **SDTMIG 3.4**: 562 rules. 347 passed, 146 did not apply, and 42 failed inside CORE
+  ("rule execution error"; CORE's own problem, not the data's). 27 reported issues, after the
+  SE fix below; the first run had 28.
 - **ADaMIG 1.3**: CORE v1.0.0 has no published ADaM rules ("No rules were selected"). Only
   draft rules exist, which the F1 benchmark showed are not a conformance check. ADaM rests on
   P21 and the second programming.
@@ -139,12 +140,19 @@ Define-XML 2.1, and P21 still finds no define issue.
 | IE, TA, TV, SUPP-- | CORE-002006, CORE-002030 | 1 each | Expected or permissible variable present and empty (IEDY of screening failures, TATRANS, TV.ARMCD, QEVAL, SUPPDM IDVAR). Allowed by the IG. |
 | TS | CORE-000152, -000483, -000550, -000728, -000735, -000852, -001082 | 1-3 | TSVAL1 (title over 200 characters), and no UNII or MED-RT for the fictional drug, as in P21. |
 
-## Two findings for a decision before the lock
+## Fixed after the first run
 
-- **SE boundaries (CORE-000352, 594 records).** Each element ends the day before the next
-  starts. SDTMIG asks that an element's SEENDTC equal the next element's SESTDTC. Changing it
-  moves the boundary day's EPOCH, so SE, EPOCH in eight domains, and the SDTM second
-  programming change together.
+- **SE boundaries (CORE-000352, 594 records).** Each element ended the day before the next
+  started. SDTMIG asks that an element's SEENDTC equal the next element's SESTDTC, so now:
+  - screening ends, and treatment starts, on the day of the first dose;
+  - treatment ends, and follow-up starts, on the day of the last dose.
+
+  Records on those shared days take the treatment EPOCH, as before. EPOCH is unchanged in
+  every domain (checked record by record against the previous build), and both second
+  programmings still agree.
+
+## A finding for a decision before the lock
+
 - **Last dose (CORE-000238, 129 patients).** RFXENDTC is the last-dose date of the disposition
   page. For 129 patients it is 1-8 days after the end of their last returned bottle (return
   date minus 1). The two CRF sources disagree. It is a data query, not a programming error,

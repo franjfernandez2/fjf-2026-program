@@ -162,8 +162,14 @@ test_that("end of participation is the last date of contact", {
 test_that("SE follows each subject through screening, treatment and follow-up", {
   s1 <- se[se$USUBJID == dm$USUBJID[1], ]
   expect_identical(s1$ETCD, c("SCRN", "FJF20", "FU"))
-  expect_identical(s1$SESTDTC, c("2028-01-02", "2028-01-19", "2028-07-19"))
-  expect_identical(s1$SEENDTC, c("2028-01-18", "2028-07-18", "2028-08-01"))
+  expect_identical(s1$SESTDTC, c("2028-01-02", "2028-01-19", "2028-07-18"))
+  expect_identical(s1$SEENDTC, c("2028-01-19", "2028-07-18", "2028-08-01"))
+  # Each element ends when the next starts; the shared days belong to treatment.
+  expect_identical(s1$SEENDTC[-3], s1$SESTDTC[-1])
+  expect_identical(
+    epoch_of(rep(s1$USUBJID[1], 4), c("2028-01-18", "2028-01-19", "2028-07-18", "2028-07-19"), se),
+    c("SCREENING", "TREATMENT", "TREATMENT", "FOLLOW-UP")
+  )
   expect_identical(se$ETCD[se$USUBJID != dm$USUBJID[1]], c("SCRN", "SCRN"))
 })
 

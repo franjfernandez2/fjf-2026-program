@@ -152,18 +152,20 @@ map_ts_301 <- function(protocol, spec, dm, planned_subjects, secondary) {
   sdtm_conform(ts, spec, "TS")
 }
 
-#' SE: the elements each subject went through, from DM's reference dates.
+#' SE: the elements each subject went through, from DM's reference dates. As SDTMIG asks,
+#' each element ends when the next starts: with dates only, screening ends and treatment
+#' starts on the day of the first dose, and treatment ends and follow-up starts on the day of
+#' the last dose.
 #' @param dm The DM dataset.
 #' @param protocol The protocol design.
 #' @param spec The SDTM specification.
 #' @return The SE dataset.
 map_se_301 <- function(dm, protocol, spec) {
   e <- elements_301(protocol)
-  day <- function(dtc, shift) ifelse(is.na(dtc), NA, format(iso_date(dtc) + shift))
   dosed <- !is.na(dm$RFXSTDTC)
   scrn <- data.frame(
     USUBJID = dm$USUBJID, ETCD = "SCRN", SESTDTC = dm$RFICDTC,
-    SEENDTC = ifelse(dosed, day(dm$RFXSTDTC, -1), dm$RFPENDTC)
+    SEENDTC = ifelse(dosed, dm$RFXSTDTC, dm$RFPENDTC)
   )
   trt <- data.frame(
     USUBJID = dm$USUBJID[dosed], ETCD = dm$ACTARMCD[dosed], SESTDTC = dm$RFXSTDTC[dosed],
@@ -171,7 +173,7 @@ map_se_301 <- function(dm, protocol, spec) {
   )
   fu_rows <- dosed & !is.na(dm$RFXENDTC) & !is.na(dm$RFPENDTC) & dm$RFPENDTC > dm$RFXENDTC
   fu <- data.frame(
-    USUBJID = dm$USUBJID[fu_rows], ETCD = "FU", SESTDTC = day(dm$RFXENDTC[fu_rows], 1),
+    USUBJID = dm$USUBJID[fu_rows], ETCD = "FU", SESTDTC = dm$RFXENDTC[fu_rows],
     SEENDTC = dm$RFPENDTC[fu_rows]
   )
   se <- rbind(scrn, trt, fu)
@@ -190,7 +192,9 @@ map_se_301 <- function(dm, protocol, spec) {
 }
 
 #' EPOCH of each record, from the subject's elements: the element whose dates contain the
-#' record's date. Partial dates, and dates outside every element, give NA.
+#' record's date. On the days of the first and last dose, which two elements share, the
+#' treatment element is taken: those records are on treatment. Partial dates, and dates
+#' outside every element, give NA.
 #'
 #' @param usubjid,dtc Subject and ISO 8601 date of each record.
 #' @param se The SE dataset.
@@ -200,7 +204,7 @@ epoch_of <- function(usubjid, dtc, se) {
   out <- rep(NA_character_, length(usubjid))
   start <- iso_date(se$SESTDTC)
   end <- iso_date(se$SEENDTC)
-  for (k in seq_len(nrow(se))) {
+  for (k in order(se$EPOCH != "TREATMENT")) {
     rows <- is.na(out) & usubjid == se$USUBJID[k] & !is.na(date) & !is.na(start[k]) & date >= start[k] &
       (is.na(end[k]) | date <= end[k])
     out[rows] <- se$EPOCH[k]
