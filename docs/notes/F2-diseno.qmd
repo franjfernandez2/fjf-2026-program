@@ -17,6 +17,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 | SAP de la 301, parte 2: secundarias, multiplicidad, subgrupos, seguridad, salidas y trazabilidad | `docs/sap/fjf-2026-301-outputs.yml`, `R/secondary_301.R`, `R/outputs.R`, ADR 0022 | 19 |
 | Protocolo y SAP de la 201: búsqueda de dosis con MCP-Mod | `docs/protocols/fjf-2026-201.yml`, `docs/sap/fjf-2026-201-sap.yml`, `R/mcpmod_201.R`, ADR 0023 | 20 |
 | Especificación de la capa raw y sus tablas en PostgreSQL | `docs/specs/raw-layer.yml`, `R/raw_spec.R`, `db/init/04-raw-tables.sql`, ADR 0024 | 21 |
+| Simulador, parte de eficacia: verdad, pacientes, visitas, HbA1c, glucosa, peso, rescate y abandonos | `simulator/` (paquete `fjfsim`) | 22 |
 
 # Por qué se ha hecho así
 
@@ -48,6 +49,13 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 - **Las listas de códigos se aplican en la base de datos**, como los controles de un EDC: un valor fuera de la lista no se puede cargar. Por eso los errores del simulador serán de los que un EDC deja pasar.
 - **Un solo fichero manda.** La DDL se escribe desde la especificación, y una prueba falla si no coinciden.
 
+- **El simulador es un paquete aparte** (`simulator/`). Solo lee los ficheros públicos de diseño y escribe exactamente las tablas de la especificación. Una prueba revisa que el código de análisis no lo cargue, no lea la semilla y no llame a las funciones de la verdad.
+- **La verdad se dibuja dentro de los rangos públicos.** Con una semilla pública sale una verdad de prueba; con la sellada, la verdad sellada. Ni la verdad ni la semilla se imprimen: al mostrarlas sale «not shown».
+- **Un modelo, varias piezas.** La curva dosis-respuesta es Emax, y el efecto crece con el tiempo hasta la semana 26. Al dejar el tratamiento el efecto se desvanece en 12 semanas, y el rescate suma su beneficio. Los residuos tienen una parte común del paciente y otra de cada visita.
+- **El rescate sigue la regla del protocolo.** En la visita que lleva al rescate, la glucosa en ayunas supera el umbral y una visita no programada lo confirma. En las demás visitas bajo la regla queda por debajo.
+- **Parte de los abandonos no es al azar.** Los pacientes que responden peor salen más a menudo, según el supuesto `mnar_share_of_dropouts`. Es lo que pone a prueba el «jump to reference» de la 301.
+- **El simulador se prueba a sí mismo.** Con semillas públicas y miles de pacientes, tiene que devolver los parámetros que se le dieron: el efecto, la curva de la 201, las tasas de acontecimientos y la regla de rescate. Las tolerancias son de 3,5 errores estándar.
+
 # Lo que salió mal y cómo se resolvió
 
 1. **Los artículos completos no son accesibles.** Están tras un muro de pago. Se usaron los resúmenes y los resultados de ClinicalTrials.gov, y cada número dice de cuál de los dos sale.
@@ -61,6 +69,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 9. **El modelo lineal desaparecía** (PR 20). Al construir los modelos candidatos, asignar `NULL` a un elemento de una lista en R lo borra, y el lineal no tiene parámetros. Una prueba exige ahora que estén los cuatro modelos del SAP.
 10. **La potencia de MCP-Mod pide un número entero de pacientes.** El tamaño efectivo, descontados los que no tienen valor en la semana 12, se redondea hacia abajo.
 11. **«Y» y «N» se leían como verdadero y falso** (PR 21). El lector de YAML sigue la versión 1.1, donde `Y` y `N` son booleanos, y la primera DDL tenía `CHECK (eligible IN ('TRUE', 'FALSE'))`. Además, las comas cortaban las descripciones sin comillas. Se entrecomillaron, y una prueba comprueba la lista `yes_no`.
+12. **Las tolerancias de las pruebas eran relativas** (PR 22). En la edición 3 de testthat, `expect_equal(..., tolerance)` compara en términos relativos, y el argumento `scale` se ignora. Una tasa del 5,1 % frente al 5,7 % fallaba por un 10 % relativo. Las pruebas usan ahora una diferencia absoluta, y para los efectos, 3,5 errores estándar calculados con los datos.
 
 # Preguntas de control
 

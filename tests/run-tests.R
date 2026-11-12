@@ -1,7 +1,14 @@
-# Runs the whole test suite and fails (non-zero exit) if any test fails.
+# Runs the whole test suite and fails (non-zero exit) if any test fails: the analysis side
+# (tests/testthat) and, separately, the simulator package (simulator/tests), each in its own
+# environment, so neither can see the other's functions (ADR 0018).
 #   docker compose run --rm analysis Rscript tests/run-tests.R
 testthat::test_dir(
   here::here("tests", "testthat"),
+  reporter = testthat::ProgressReporter$new(show_praise = FALSE),
+  stop_on_failure = TRUE
+)
+testthat::test_local(
+  here::here("simulator"),
   reporter = testthat::ProgressReporter$new(show_praise = FALSE),
   stop_on_failure = TRUE
 )
