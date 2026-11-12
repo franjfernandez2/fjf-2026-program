@@ -1,6 +1,6 @@
 # ADR 0021: Missing data in FJF-2026-301, and a dry run of the SAP on planning data
 
-- **Status:** Proposed
+- **Status:** Accepted (reviewer's gate-2 review, 2026-11-12)
 - **Date:** 2026-11-12
 - **Decided by:** Francisco Fernández
 

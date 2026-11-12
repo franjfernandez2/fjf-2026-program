@@ -1,6 +1,6 @@
 # ADR 0023: MCP-Mod design and sample size of FJF-2026-201
 
-- **Status:** Proposed
+- **Status:** Accepted (reviewer's gate-2 review, 2026-11-12)
 - **Date:** 2026-11-12
 - **Decided by:** Francisco Fernández
 

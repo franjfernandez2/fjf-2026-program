@@ -24,7 +24,7 @@ This project is built by one person working with an AI assistant (Claude, by Ant
 
 The simulated studies are analysed against a sealed truth ([ADR 0018](adr/0018-sealed-truth-and-data-generating-model.md)): the parameters that generate the data come from a secret seed, and the analysis side must not know them until every analysis is final.
 
-At Francisco's request, the assistant generated that seed. It used a command that wrote the number straight to a private file outside the repository and displayed nothing, so the assistant does not know it. Francisco keeps a copy. The file is on a disk the assistant can read, though, so the protection rests on a rule and on a test that keeps the analysis code away from the seed and the simulator, not on an impossibility. A seed known only to Francisco would have been stronger.
+At Francisco's request, the assistant generated that seed. It used a command that wrote the number straight to a private file outside the repository and displayed nothing, so the assistant does not know it. Francisco keeps a copy. The file is on a disk the assistant can read, though, so the protection rests on a rule and on a test that keeps the analysis code away from the seed and the simulator, not on an impossibility. A seed known only to Francisco would have been stronger, and Francisco chose that option at the gate-2 review (2026-11-12): before the study data are generated, Francisco replaces the seed with a new one and does not tell the assistant.
 
 ## What this means for a reader
 

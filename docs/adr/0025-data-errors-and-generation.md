@@ -1,6 +1,6 @@
 # ADR 0025: Data errors in the raw data, and how the study data are generated and loaded
 
-- **Status:** Proposed
+- **Status:** Accepted (reviewer's gate-2 review, 2026-11-12)
 - **Date:** 2026-11-12
 - **Decided by:** Francisco Fernández
 

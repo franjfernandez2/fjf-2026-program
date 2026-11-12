@@ -1,6 +1,6 @@
 # ADR 0024: Tables of the raw data layer
 
-- **Status:** Proposed
+- **Status:** Accepted (reviewer's gate-2 review, 2026-11-12)
 - **Date:** 2026-11-12
 - **Decided by:** Francisco Fernández
 

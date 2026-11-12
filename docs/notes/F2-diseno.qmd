@@ -120,16 +120,25 @@ Pendientes: las escribes tú.
 8.
 :::
 
+# Revisión de la puerta 2 (2026-11-12)
+
+El revisor contestó a las preguntas de revisión que le planteó el asistente. Decisiones:
+
+- **Tamaño de la 301:** 150 por brazo, con un 90 % de potencia para −0,50 puntos. No se aumenta el estudio para poder detectar −0,30.
+- **Tamaño de la 201:** 95 por brazo, con un 90 % de potencia.
+- **Multiplicidad de la 301:** grafo con reparto a partes iguales.
+- **Supuestos de seguridad sin fuente:** se aceptan como juicio.
+- **Estimando E2:** se acepta la desviación del dossier, con estrategia hipotética también para el abandono del tratamiento.
+- **Criterios clínicos y dosis de 20 mg en la 301:** revisados, sin cambios.
+- **ADR 0018 a 0025:** aceptados.
+- **Semilla:** antes de generar los datos, el revisor la sustituirá por una nueva que no conozca nadie más.
+
 # Puerta 2: lo que falta, y es tuyo
 
 La puerta 2 es «SAP congelados». Todo lo que había que programar en la F2 está hecho (PR 15 a 24). Lo que queda son decisiones tuyas, en este orden:
 
-1. **Revisar y fusionar las PR 15 a 24.** Lo que más conviene mirar:
-   - los criterios clínicos (PR 16);
-   - los tamaños muestrales: 150 por brazo en la 301 y 95 en la 201;
-   - el grafo de multiplicidad;
-   - los supuestos de seguridad sin fuente (PR 23).
-2. **Aceptar, cambiar o rechazar los ADR 0018 a 0025**, que están como «Proposed».
+1. ~~Decidir los puntos de diseño y aceptar los ADR 0018 a 0025~~: hecho en la revisión de arriba.
+2. **Fusionar las PR 15 a 24** en orden, con el CI en verde.
 3. **Responder las preguntas de control 1 a 8**, arriba, con tus palabras.
 4. **Congelar los SAP**, con las etiquetas `sap-301-v1.0` y `sap-201-v1.0` sobre main. Desde ese momento, cualquier cambio es una enmienda con fecha y motivo.
 5. **Generar los datos tú mismo**, desde una copia limpia de main:
