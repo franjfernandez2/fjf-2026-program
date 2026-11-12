@@ -37,6 +37,7 @@ datasets:
       - {name: RANDDT, label: Date of Randomization, type: date, origin: Derived, source: "DS.DSSTDTC where DSDECOD = RANDOMIZED"}
       - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Derived, source: "Y if randomised (SAP FAS)"}
       - {name: SAFFL, label: Safety Population Flag, type: text, origin: Derived, source: "Y if randomised and dosed (SAP SAF)"}
+      - {name: PPROTFL, label: Per-Protocol Population Flag, type: text, origin: Derived, source: "FAS, compliance >= 80%, week-26 HbA1c on treatment and before rescue (SAP PPS); protocol deviations are not collected"}
       - {name: TRTSDT, label: Date of First Exposure to Treatment, type: date, origin: Derived, source: DM.RFXSTDTC}
       - {name: TRTEDT, label: Date of Last Exposure to Treatment, type: date, origin: Derived, source: DM.RFXENDTC}
       - {name: TRTDURD, label: Total Treatment Duration (Days), type: integer, origin: Derived, source: TRTEDT - TRTSDT + 1}
@@ -57,3 +58,65 @@ datasets:
       - {name: WEIGHTBL, label: Baseline Weight (kg), type: float, origin: Derived, source: "last VS WEIGHT on or before RANDDT"}
       - {name: BMIBL, label: Baseline Body Mass Index (kg/m2), type: float, origin: Derived, source: "WEIGHTBL / (HEIGHTBL / 100)^2, rounded to 0.1"}
       - {name: BMIGR1, label: Pooled BMI Group 1, type: text, origin: Derived, source: "<30, >=30 (SAP subgroups)"}
+
+  - name: ADEFF
+    label: Efficacy Analysis Dataset
+    class: BASIC DATA STRUCTURE
+    structure: One record per subject per parameter per analysis visit, plus the records not selected in a window
+    keys: [STUDYID, USUBJID, PARAMCD, AVISITN, ADT, SRCSEQ]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Predecessor, source: ADSL.STUDYID}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Predecessor, source: ADSL.USUBJID}
+      - {name: TRTP, label: Planned Treatment, type: text, origin: Predecessor, source: ADSL.TRT01P}
+      - {name: TRTPN, label: Planned Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01PN}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Predecessor, source: ADSL.ARMCD}
+      - {name: STRAT1R, label: Randomisation Stratum 1, type: text, origin: Predecessor, source: ADSL.STRAT1R}
+      - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Predecessor, source: ADSL.FASFL}
+      - {name: PPROTFL, label: Per-Protocol Population Flag, type: text, origin: Predecessor, source: ADSL.PPROTFL}
+      - {name: PARAMCD, label: Parameter Code, type: text, origin: Assigned, source: "HBA1C (LB), WEIGHT (VS)"}
+      - {name: PARAM, label: Parameter, type: text, origin: Assigned}
+      - {name: PARAMN, label: Parameter (N), type: integer, origin: Assigned}
+      - {name: AVISIT, label: Analysis Visit, type: text, origin: Derived, source: "SAP visit windows: nearest scheduled visit by study day"}
+      - {name: AVISITN, label: Analysis Visit (N), type: integer, origin: Derived, source: "week of the scheduled visit; 0 for baseline"}
+      - {name: AWTARGET, label: Analysis Window Target, type: integer, origin: Derived, source: "study day 7 x week + 1"}
+      - {name: AWLO, label: Analysis Window Beginning Timepoint, type: integer, origin: Derived}
+      - {name: AWHI, label: Analysis Window End Timepoint, type: integer, origin: Derived}
+      - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: "LB.LBDTC, VS.VSDTC"}
+      - {name: ADY, label: Analysis Relative Day, type: integer, origin: Derived, source: "from randomisation, no day 0"}
+      - {name: AVAL, label: Analysis Value, type: float, origin: Derived, source: "LB.LBSTRESN, VS.VSSTRESN"}
+      - {name: BASE, label: Baseline Value, type: float, origin: Derived, source: "last value on or before randomisation; HbA1c missing: stratum mean (SAP)"}
+      - {name: CHG, label: Change from Baseline, type: float, origin: Derived, source: AVAL - BASE}
+      - {name: ABLFL, label: Baseline Record Flag, type: text, origin: Derived}
+      - {name: BIMPFL, label: Baseline Imputed Flag, type: text, origin: Derived, source: "Y when BASE is the stratum mean (SAP)"}
+      - {name: ONTRTFL, label: On Treatment Record Flag, type: text, origin: Derived, source: "ADT (or the target day of a missing visit) <= TRTEDT + 7 (SAP)"}
+      - {name: PRERESFL, label: Pre-Rescue Record Flag, type: text, origin: Derived, source: "ADT (or the target day) <= RESCDT, or no rescue (SAP)"}
+      - {name: ANL01FL, label: Analysis Flag 01 (Selected in Window), type: text, origin: Derived, source: "one record per subject and scheduled visit: the value closest to the target, the later if tied, or the missing-visit record (E1, E3, E4)"}
+      - {name: ANL02FL, label: Analysis Flag 02 (Hypothetical Estimand), type: text, origin: Derived, source: "ANL01FL and ONTRTFL and PRERESFL, with a value (E2)"}
+      - {name: DTYPE, label: Derivation Type, type: text, origin: Assigned, source: "PHANTOM: scheduled visit with no value in its window"}
+      - {name: SRCDOM, label: Source Data, type: text, origin: Derived}
+      - {name: SRCVAR, label: Source Variable, type: text, origin: Derived}
+      - {name: SRCSEQ, label: Source Sequence Number, type: integer, origin: Derived}
+
+  - name: ADTTE
+    label: Time-to-Event Analysis Dataset
+    class: BASIC DATA STRUCTURE
+    structure: One record per subject per parameter
+    keys: [STUDYID, USUBJID, PARAMCD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Predecessor, source: ADSL.STUDYID}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Predecessor, source: ADSL.USUBJID}
+      - {name: TRTP, label: Planned Treatment, type: text, origin: Predecessor, source: ADSL.TRT01P}
+      - {name: TRTPN, label: Planned Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01PN}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Predecessor, source: ADSL.ARMCD}
+      - {name: STRAT1R, label: Randomisation Stratum 1, type: text, origin: Predecessor, source: ADSL.STRAT1R}
+      - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Predecessor, source: ADSL.FASFL}
+      - {name: PPROTFL, label: Per-Protocol Population Flag, type: text, origin: Predecessor, source: ADSL.PPROTFL}
+      - {name: PARAMCD, label: Parameter Code, type: text, origin: Assigned, source: TTRESC}
+      - {name: PARAM, label: Parameter, type: text, origin: Assigned}
+      - {name: STARTDT, label: Time to Event Origin Date for Subject, type: date, origin: Derived, source: ADSL.RANDDT}
+      - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: "first rescue, or the censoring date"}
+      - {name: AVAL, label: Analysis Value, type: float, origin: Derived, source: "ADT - STARTDT + 1 (days)"}
+      - {name: CNSR, label: Censor, type: integer, origin: Derived, source: "0 rescue; 1 censored at the end of study or week 26, whichever first (SAP B3)"}
+      - {name: EVNTDESC, label: Event or Censoring Description, type: text, origin: Derived}
+      - {name: SRCDOM, label: Source Data, type: text, origin: Derived}
+      - {name: SRCVAR, label: Source Variable, type: text, origin: Derived}

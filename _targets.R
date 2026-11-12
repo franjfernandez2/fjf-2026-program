@@ -399,10 +399,19 @@ list(
   ),
   tar_target(adam_301_spec_file, "docs/specs/adam-301.yml", format = "file"),
   tar_target(adam_301_spec, yaml::read_yaml(adam_301_spec_file)),
-  tar_target(adam_301_adsl, derive_adsl_301(sdtm_301, protocol_301, adam_301_spec)),
+  tar_target(adam_301_adsl_base, derive_adsl_301(sdtm_301, protocol_301, adam_301_spec)),
+  tar_target(adam_301_adeff_base, derive_adeff_301(sdtm_301, adam_301_adsl_base, protocol_301, adam_301_spec)),
+  tar_target(adam_301_pps, add_pps_301(adam_301_adsl_base, adam_301_adeff_base, protocol_301)),
+  tar_target(adam_301_adsl, adam_301_pps$adsl),
+  tar_target(adam_301_adeff, adam_301_pps$adeff),
+  tar_target(adam_301_adtte, derive_adtte_301(adam_301_adsl, protocol_301, adam_301_spec)),
   tar_target(
     adam_301_files,
-    write_adam_dataset(adam_301_adsl, adam_301_spec, "ADSL", "data/adam/301"),
+    c(
+      write_adam_dataset(adam_301_adsl, adam_301_spec, "ADSL", "data/adam/301"),
+      write_adam_dataset(adam_301_adeff, adam_301_spec, "ADEFF", "data/adam/301"),
+      write_adam_dataset(adam_301_adtte, adam_301_spec, "ADTTE", "data/adam/301")
+    ),
     format = "file"
   )
 )
