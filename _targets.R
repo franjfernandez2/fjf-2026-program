@@ -404,13 +404,23 @@ list(
   tar_target(adam_301_pps, add_pps_301(adam_301_adsl_base, adam_301_adeff_base, protocol_301)),
   tar_target(adam_301_adsl, adam_301_pps$adsl),
   tar_target(adam_301_adeff, adam_301_pps$adeff),
-  tar_target(adam_301_adtte, derive_adtte_301(adam_301_adsl, protocol_301, adam_301_spec)),
+  tar_target(adam_301_adex, derive_adex_301(adam_301_adsl, adam_301_spec)),
+  tar_target(adam_301_adae, derive_adae_301(sdtm_301, adam_301_adsl, adam_301_spec)),
+  tar_target(adam_301_adhypo, derive_adhypo_301(sdtm_301, adam_301_adsl, adam_301_spec)),
+  tar_target(adam_301_adlb, derive_adlb_301(sdtm_301, adam_301_adsl, protocol_301, adam_301_spec)),
+  tar_target(adam_301_advs, derive_advs_301(sdtm_301, adam_301_adsl, protocol_301, adam_301_spec)),
+  tar_target(adam_301_adtte, derive_adtte_301(adam_301_adsl, adam_301_adhypo, protocol_301, adam_301_spec)),
   tar_target(
     adam_301_files,
     c(
       write_adam_dataset(adam_301_adsl, adam_301_spec, "ADSL", "data/adam/301"),
       write_adam_dataset(adam_301_adeff, adam_301_spec, "ADEFF", "data/adam/301"),
-      write_adam_dataset(adam_301_adtte, adam_301_spec, "ADTTE", "data/adam/301")
+      write_adam_dataset(adam_301_adtte, adam_301_spec, "ADTTE", "data/adam/301"),
+      write_adam_dataset(adam_301_adex, adam_301_spec, "ADEX", "data/adam/301"),
+      write_adam_dataset(adam_301_adae, adam_301_spec, "ADAE", "data/adam/301"),
+      write_adam_dataset(adam_301_adhypo, adam_301_spec, "ADHYPO", "data/adam/301"),
+      write_adam_dataset(adam_301_adlb, adam_301_spec, "ADLB", "data/adam/301"),
+      write_adam_dataset(adam_301_advs, adam_301_spec, "ADVS", "data/adam/301")
     ),
     format = "file"
   )
