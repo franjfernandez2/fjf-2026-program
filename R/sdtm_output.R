@@ -58,7 +58,7 @@ write_sdtm_domain <- function(data, spec, domain, dir) {
 sdtm_class <- c(
   DM = "SPECIAL PURPOSE", SV = "SPECIAL PURPOSE", DS = "EVENTS", AE = "EVENTS", CE = "EVENTS",
   EX = "INTERVENTIONS", CM = "INTERVENTIONS", DA = "FINDINGS", LB = "FINDINGS", VS = "FINDINGS",
-  SUPPAE = "RELATIONSHIP", SUPPCE = "RELATIONSHIP", IE = "FINDINGS", SE = "SPECIAL PURPOSE",
+  SUPPAE = "RELATIONSHIP", SUPPCE = "RELATIONSHIP", SUPPDM = "RELATIONSHIP", IE = "FINDINGS", SE = "SPECIAL PURPOSE",
   TA = "TRIAL DESIGN", TE = "TRIAL DESIGN", TV = "TRIAL DESIGN", TI = "TRIAL DESIGN", TS = "TRIAL DESIGN"
 )
 
@@ -66,7 +66,7 @@ sdtm_class <- c(
 sdtm_required <- function(name, domain) {
   prefix <- if (startsWith(domain, "SUPP")) "" else domain
   fixed <- c(
-    "STUDYID", "DOMAIN", "USUBJID", "SUBJID", "SITEID", "SEX", "RDOMAIN", "IDVAR", "IDVARVAL", "QNAM",
+    "STUDYID", "DOMAIN", "USUBJID", "SUBJID", "SITEID", "SEX", "RDOMAIN", "QNAM",
     "QLABEL", "QVAL", "QORIG", "VISITNUM"
   )
   name %in% c(fixed, paste0(prefix, c("SEQ", "TESTCD", "TEST", "TERM", "DECOD", "TRT", "CAT")[
@@ -190,4 +190,40 @@ write_sdtm_define <- function(datasets, spec, path, created) {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   xml2::write_xml(doc, path)
   path
+}
+
+#' Write one ADaM dataset to XPT and Parquet, with the specification's labels and types.
+#' Dates are numeric in XPT, with the DATE9. format.
+#'
+#' @param data The dataset.
+#' @param spec The ADaM specification (its `datasets` section).
+#' @param dataset Dataset name.
+#' @param dir Folder to write to.
+#' @return The paths of the two files, for a file target.
+write_adam_dataset <- function(data, spec, dataset, dir) {
+  dir.create(dir, recursive = TRUE, showWarnings = FALSE)
+  d <- purrr::keep(spec$datasets, \(x) x$name == dataset)[[1]]
+  names <- purrr::map_chr(d$variables, "name")
+  type <- purrr::map_chr(d$variables, "type")
+  length <- vapply(seq_along(names), \(i) {
+    if (type[i] == "text") max(1L, nchar(data[[names[i]]]), na.rm = TRUE) else 8L
+  }, integer(1))
+  meta <- data.frame(
+    dataset = dataset, variable = names, label = purrr::map_chr(d$variables, "label"),
+    type = c(text = "character", integer = "integer", float = "float", date = "numeric")[type],
+    length = length, order = seq_along(names), format = ifelse(type == "date", "DATE9.", NA)
+  )
+  xpt <- file.path(dir, paste0(tolower(dataset), ".xpt"))
+  parquet <- file.path(dir, paste0(tolower(dataset), ".parquet"))
+  data |>
+    xportr::xportr_metadata(meta, domain = dataset, verbose = "stop") |>
+    xportr::xportr_type() |>
+    xportr::xportr_length() |>
+    xportr::xportr_label() |>
+    xportr::xportr_order() |>
+    xportr::xportr_format() |>
+    xportr::xportr_df_label(data.frame(dataset = dataset, label = d$label)) |>
+    xportr::xportr_write(xpt)
+  arrow::write_parquet(data, parquet)
+  c(xpt, parquet)
 }
