@@ -8,6 +8,6 @@ Description: Generates the raw, EDC-like data of the fictional studies FJF-2026-
 License: file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.4)
-Imports: purrr, stats, tibble, withr, yaml
+Imports: digest, purrr, stats, tibble, utils, withr, yaml
 Suggests: testthat (>= 3.0.0)
 Config/testthat/edition: 3

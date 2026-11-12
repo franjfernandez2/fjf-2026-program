@@ -4,7 +4,7 @@ author: "Francisco Fernández"
 date: 2026-11-12
 ---
 
-Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la PR 24, con la revisión de la puerta 2.
+Esta nota creció con la fase: cada pull request añadió lo suyo. Con la PR 24 el trabajo de la F2 está hecho; falta la revisión de la puerta 2 (al final).
 
 # Qué se ha hecho
 
@@ -19,6 +19,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 | Especificación de la capa raw y sus tablas en PostgreSQL | `docs/specs/raw-layer.yml`, `R/raw_spec.R`, `db/init/04-raw-tables.sql`, ADR 0024 | 21 |
 | Simulador, parte de eficacia: verdad, pacientes, visitas, HbA1c, glucosa, peso, rescate y abandonos | `simulator/` (paquete `fjfsim`) | 22 |
 | Simulador, parte de seguridad: acontecimientos adversos, hipoglucemias y laboratorio de seguridad; siete supuestos nuevos | `simulator/R/safety.R`, `docs/design/assumptions.yml` | 23 |
+| Errores de datos, generación desde la semilla sellada, carga en PostgreSQL y ensayo con semilla pública | `simulator/R/errors.R`, `tools/generate-study-data.sh`, `R/raw_load.R`, ADR 0025 | 24 |
 
 # Por qué se ha hecho así
 
@@ -63,6 +64,12 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 - **Cada abandono por un acontecimiento adverso tiene su acontecimiento**, con «drug withdrawn» y una fecha cercana a la última dosis. Una prueba lo comprueba.
 - **Los términos son literales.** «Headache», «HEADACHE» y «Tension headache» son el mismo término. Se codifican en la F3.
 
+- **Errores que un EDC deja pasar** ([ADR 0025](../adr/0025-data-errors-and-generation.md)). Fechas parciales, visitas fuera de ventana, registros duplicados, peso en libras, altura en metros, gravedad sin rellenar y acontecimientos que terminan antes de empezar. Ninguno rompe una lista de códigos, porque la base de datos lo rechazaría al cargar.
+- **El registro de errores no se guarda.** Encontrarlos es el trabajo de la F3. El registro se reconstruye con la semilla y se compara con lo encontrado en el desenmascaramiento.
+- **La generación se hace una sola vez.** El comando comprueba que existen las etiquetas de los SAP, que el árbol está limpio y que no hay datos todavía. Monta la semilla solo para lectura y escribe CSV con un manifiesto de hashes. Solo muestra los recuentos.
+- **La carga pasa por el rol de carga.** Cada estudio se carga en una transacción como `fjf_loader`, así que cada fila queda en el registro de auditoría. No se puede cargar dos veces.
+- **Ensayo general con semilla pública.** El camino completo (generar, verificar y cargar en una base desechable) funcionó con 475 + 300 pacientes. La consulta de revisión encontró 45 claves de laboratorio duplicadas en la 301.
+
 # Lo que salió mal y cómo se resolvió
 
 1. **Los artículos completos no son accesibles.** Están tras un muro de pago. Se usaron los resúmenes y los resultados de ClinicalTrials.gov, y cada número dice de cuál de los dos sale.
@@ -79,6 +86,9 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 12. **Las tolerancias de las pruebas eran relativas** (PR 22). En la edición 3 de testthat, `expect_equal(..., tolerance)` compara en términos relativos, y el argumento `scale` se ignora. Una tasa del 5,1 % frente al 5,7 % fallaba por un 10 % relativo. Las pruebas usan ahora una diferencia absoluta, y para los efectos, 3,5 errores estándar calculados con los datos.
 13. **El eGFR de la selección podía quedar por debajo de 45** (PR 23). El nivel de cada paciente cumplía el criterio, pero el ruido de la visita lo bajaba a veces, y ese paciente no habría entrado en el estudio. En la selección el ruido ya no puede empeorar el valor.
 14. **Un supuesto decía «abandono del tratamiento» donde debía decir «salida del estudio».** `mnar_share_of_dropouts` se aplica a quien sale del estudio, que es cuando faltan datos. Se corrigió la descripción; el valor no cambia.
+15. **Un error raro podía no aparecer nunca** (PR 24). La fecha de fin anterior al inicio se elegía entre todos los acontecimientos y luego se filtraba, y con pocos pacientes no quedaba ninguno. Ahora se elige solo entre los que pueden tenerlo.
+16. **Las fechas se leían según el idioma del sistema.** `as.Date(x, "%d-%b-%Y")` depende de la configuración regional. El simulador usa ahora su propio lector de fechas de CRF.
+17. **El contenedor no tiene git.** Las comprobaciones de etiquetas y de árbol limpio se hacen en un script de shell en el anfitrión, antes de lanzar el contenedor.
 
 # Preguntas de control
 
@@ -109,3 +119,26 @@ Pendientes: las escribes tú.
 7.
 8.
 :::
+
+# Puerta 2: lo que falta, y es tuyo
+
+La puerta 2 es «SAP congelados». Todo lo que había que programar en la F2 está hecho (PR 15 a 24). Lo que queda son decisiones tuyas, en este orden:
+
+1. **Revisar y fusionar las PR 15 a 24.** Lo que más conviene mirar:
+   - los criterios clínicos (PR 16);
+   - los tamaños muestrales: 150 por brazo en la 301 y 95 en la 201;
+   - el grafo de multiplicidad;
+   - los supuestos de seguridad sin fuente (PR 23).
+2. **Aceptar, cambiar o rechazar los ADR 0018 a 0025**, que están como «Proposed».
+3. **Responder las preguntas de control 1 a 8**, arriba, con tus palabras.
+4. **Congelar los SAP**, con las etiquetas `sap-301-v1.0` y `sap-201-v1.0` sobre main. Desde ese momento, cualquier cambio es una enmienda con fecha y motivo.
+5. **Generar los datos tú mismo**, desde una copia limpia de main:
+
+   ```sh
+   tools/generate-study-data.sh
+   docker compose run --rm analysis Rscript tools/load-raw-data.R
+   ```
+
+   Después hay que hacer commit de `data/raw`. Si quieres una semilla que solo conozcas tú ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)), cambia el contenido de `~/.fjf-2026/truth-seed` antes del primer comando y no se lo digas al asistente.
+6. **Etiqueta `gate-2`.** Con ella termina la F2 y se escribe el plan detallado de la F3.
+

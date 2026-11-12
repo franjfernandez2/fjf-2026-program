@@ -10,7 +10,7 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | --- | --- | --- |
 | F0 · Foundations | Repository, environment, database, CI and templates | Done (`gate-0`) |
 | F1 · Benchmark | Replication of the public CDISC pilot (CDISCPILOT01) | Done (`gate-1`) |
-| F2 · Design | Protocols, SAPs, table shells and the data simulator | In progress |
+| F2 · Design | Protocols, SAPs, table shells and the data simulator | Built; awaiting review, SAP freeze and `gate-2` |
 | F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation | Planned |
 | F4 · Safety and phase II | Safety TLFs, integrated safety and MCP-Mod dose finding | Planned |
 | F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | Planned |
@@ -61,6 +61,13 @@ docker compose run --rm analysis Rscript tests/run-tests.R        # 25 database 
 docker compose run --rm analysis Rscript tests/check-style.R      # lintr and styler
 docker compose run --rm analysis Rscript -e 'targets::tar_make()' # the pipeline
 docker compose run --rm analysis bash -c 'cd docs/templates && quarto render'  # documents
+```
+
+The study data are generated once, from the sealed seed, after the SAPs are frozen ([ADR 0025](docs/adr/0025-data-errors-and-generation.md)):
+
+```sh
+tools/generate-study-data.sh                                     # checks the SAP tags; writes data/raw
+docker compose run --rm analysis Rscript tools/load-raw-data.R   # loads it as the loader role
 ```
 
 `compose.yaml` starts the database and the analysis environment together. The analysis image pins R 4.6.1, the system libraries and every R package ([ADR 0012](docs/adr/0012-reproducible-environment.md)). The database has separate roles for loading and reading raw data and an append-only audit trail ([ADR 0013](docs/adr/0013-database-roles-and-audit-trail.md)). Continuous integration runs the same commands, in the same image, on every pull request (`.github/workflows/ci.yaml`).

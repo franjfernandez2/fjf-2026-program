@@ -30,3 +30,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0022](0022-multiplicity-and-traceability-of-fjf-2026-301.md) | Multiplicity, subgroups and output traceability of FJF-2026-301 | Proposed |
 | [0023](0023-mcpmod-design-of-201.md) | MCP-Mod design and sample size of FJF-2026-201 | Proposed |
 | [0024](0024-raw-data-layer.md) | Tables of the raw data layer | Proposed |
+| [0025](0025-data-errors-and-generation.md) | Data errors in the raw data, and how the study data are generated and loaded | Proposed |

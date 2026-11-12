@@ -63,7 +63,7 @@ truth <- planning_truth(design$assumptions)           # or draw_truth(design$ass
 tables <- simulate_study(design, truth, "301", 150, seed = 1)
 ```
 
-The study data are generated once, after the SAPs are frozen, by the generation command of PR 24.
+The study data are generated once, after the SAPs are frozen, by `tools/generate-study-data.sh` ([ADR 0025](../docs/adr/0025-data-errors-and-generation.md)). `generate_programme()` adds the data errors (`add_data_errors()`), and `write_programme()` writes the CSV files and their manifest.
 
 ## Tests
 

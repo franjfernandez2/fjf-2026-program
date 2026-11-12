@@ -8,7 +8,7 @@
 #   - the SDTM programs of F3 read from them.
 #
 # Raw means as collected, not clean. Dates are text, because the CRF allows partial dates
-# ("UNK-03-2026", "2026"). Laboratory results are text, because laboratories report values
+# ("UNK-MAR-2026", "2026"). Laboratory results are text, because laboratories report values
 # like "<5". Duplicated records can occur, so tables have no natural primary key: each row
 # has the EDC's own record_id, and the natural key is listed for the data checks of F3.
 #
