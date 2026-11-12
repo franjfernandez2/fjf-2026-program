@@ -18,6 +18,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 | Protocolo y SAP de la 201: búsqueda de dosis con MCP-Mod | `docs/protocols/fjf-2026-201.yml`, `docs/sap/fjf-2026-201-sap.yml`, `R/mcpmod_201.R`, ADR 0023 | 20 |
 | Especificación de la capa raw y sus tablas en PostgreSQL | `docs/specs/raw-layer.yml`, `R/raw_spec.R`, `db/init/04-raw-tables.sql`, ADR 0024 | 21 |
 | Simulador, parte de eficacia: verdad, pacientes, visitas, HbA1c, glucosa, peso, rescate y abandonos | `simulator/` (paquete `fjfsim`) | 22 |
+| Simulador, parte de seguridad: acontecimientos adversos, hipoglucemias y laboratorio de seguridad; siete supuestos nuevos | `simulator/R/safety.R`, `docs/design/assumptions.yml` | 23 |
 
 # Por qué se ha hecho así
 
@@ -56,6 +57,12 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 - **Parte de los abandonos no es al azar.** Los pacientes que responden peor salen más a menudo, según el supuesto `mnar_share_of_dropouts`. Es lo que pone a prueba el «jump to reference» de la 301.
 - **El simulador se prueba a sí mismo.** Con semillas públicas y miles de pacientes, tiene que devolver los parámetros que se le dieron: el efecto, la curva de la 201, las tasas de acontecimientos y la regla de rescate. Las tolerancias son de 3,5 errores estándar.
 
+- **La seguridad va después de la eficacia.** Sus números aleatorios se sacan tras todos los de eficacia, así que añadirla no cambió ningún dato de eficacia.
+- **Siete supuestos de seguridad sin fuente publicada.** Tasa de acontecimientos adversos, riesgo relativo, exceso gastrointestinal, graves, hipoglucemias y ALT elevada. Se declaran como juicio (`sources: none`), con rangos amplios, y ninguna eficacia ni tamaño muestral depende de ellos.
+- **Los riesgos del fármaco crecen con la dosis.** El exceso es proporcional a la dosis, con 20 mg como referencia, para que la 201 tenga una señal de seguridad que encontrar.
+- **Cada abandono por un acontecimiento adverso tiene su acontecimiento**, con «drug withdrawn» y una fecha cercana a la última dosis. Una prueba lo comprueba.
+- **Los términos son literales.** «Headache», «HEADACHE» y «Tension headache» son el mismo término. Se codifican en la F3.
+
 # Lo que salió mal y cómo se resolvió
 
 1. **Los artículos completos no son accesibles.** Están tras un muro de pago. Se usaron los resúmenes y los resultados de ClinicalTrials.gov, y cada número dice de cuál de los dos sale.
@@ -70,6 +77,8 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 10. **La potencia de MCP-Mod pide un número entero de pacientes.** El tamaño efectivo, descontados los que no tienen valor en la semana 12, se redondea hacia abajo.
 11. **«Y» y «N» se leían como verdadero y falso** (PR 21). El lector de YAML sigue la versión 1.1, donde `Y` y `N` son booleanos, y la primera DDL tenía `CHECK (eligible IN ('TRUE', 'FALSE'))`. Además, las comas cortaban las descripciones sin comillas. Se entrecomillaron, y una prueba comprueba la lista `yes_no`.
 12. **Las tolerancias de las pruebas eran relativas** (PR 22). En la edición 3 de testthat, `expect_equal(..., tolerance)` compara en términos relativos, y el argumento `scale` se ignora. Una tasa del 5,1 % frente al 5,7 % fallaba por un 10 % relativo. Las pruebas usan ahora una diferencia absoluta, y para los efectos, 3,5 errores estándar calculados con los datos.
+13. **El eGFR de la selección podía quedar por debajo de 45** (PR 23). El nivel de cada paciente cumplía el criterio, pero el ruido de la visita lo bajaba a veces, y ese paciente no habría entrado en el estudio. En la selección el ruido ya no puede empeorar el valor.
+14. **Un supuesto decía «abandono del tratamiento» donde debía decir «salida del estudio».** `mnar_share_of_dropouts` se aplica a quien sale del estudio, que es cuando faltan datos. Se corrigió la descripción; el valor no cambia.
 
 # Preguntas de control
 
@@ -82,8 +91,7 @@ Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas son 
 5. ¿Qué es un análisis de punto de inflexión, y cómo se lee su resultado? (PR 18)
 6. ¿Por qué se calcula el tamaño muestral por simulación, y qué es el error de Monte Carlo? (PR 17)
 7. En MCP-Mod, ¿qué hace el paso MCP y qué hace el paso Mod? ¿Por qué no basta con comparar cada dosis con placebo, y por qué la 201 demuestra el efecto con más seguridad que la dosis? (PR 20 y 21)
-
-La 8 se añade con la PR 23.
+8. ¿Por qué el simulador se prueba con semillas públicas y no con la sellada? ¿Qué demuestra que devuelva sus propios parámetros, y qué no puede demostrar? (PR 22 y 23)
 
 # Respuestas
 
@@ -99,4 +107,5 @@ Pendientes: las escribes tú.
 5.
 6.
 7.
+8.
 :::

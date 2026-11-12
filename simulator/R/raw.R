@@ -87,8 +87,7 @@ efficacy_tables <- function(design, study, screened, pt, visits) {
       .date = gl$date
     )
   )
-  labs <- labs[order(labs$subject_id, labs$.date, labs$test_code), ]
-  labs$.date <- NULL
+  # Kept as rows with their dates: the safety laboratory values are added in simulate_study().
   vs <- done[done$has_vitals | done$has_weight, ]
   vit <- sh$vitals
   nvs <- nrow(vs)
@@ -166,7 +165,7 @@ efficacy_tables <- function(design, study, screened, pt, visits) {
     randomisation = as_raw_table(randomisation, spec, "randomisation"),
     demography = as_raw_table(demography, spec, "demography"),
     visits = as_raw_table(vis, spec, "visits"),
-    lab_results = as_raw_table(labs, spec, "lab_results"),
+    lab_rows = labs,
     vital_signs = as_raw_table(vital_signs, spec, "vital_signs"),
     exposure = as_raw_table(exposure, spec, "exposure"),
     disposition = as_raw_table(disposition, spec, "disposition"),
