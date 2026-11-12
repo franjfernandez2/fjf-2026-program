@@ -92,7 +92,7 @@ Esta nota creció con la fase: cada pull request añadió lo suyo. Con la PR 24 
 
 # Preguntas de control
 
-Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas son tuyas: escríbelas abajo con tus palabras.
+Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas de abajo las escribió el asistente a petición de Francisco (2026-11-12), como en F0 y F1: sirven para estudiarlas, no como prueba de que se respondieron sin mirar. Es una desviación de la regla de `docs/ai-assistance.md` y queda registrada.
 
 1. ¿Cuáles son los cinco atributos de un estimando? Aplícalos al estimando principal de la 301. (PR 17)
 2. ¿Qué es un acontecimiento intercurrente, y por qué el rescate lo es? (PR 16)
@@ -100,7 +100,7 @@ Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas son 
 4. ¿Por qué un MMRM bajo «missing at random» responde a la pregunta hipotética y no a la de política de tratamiento? ¿Qué hace «jump to reference» con un paciente que deja FJF-2026 y sale del estudio? (PR 18)
 5. ¿Qué es un análisis de punto de inflexión, y cómo se lee su resultado? (PR 18)
 6. ¿Por qué se calcula el tamaño muestral por simulación, y qué es el error de Monte Carlo? (PR 17)
-7. En MCP-Mod, ¿qué hace el paso MCP y qué hace el paso Mod? ¿Por qué no basta con comparar cada dosis con placebo, y por qué la 201 demuestra el efecto con más seguridad que la dosis? (PR 20 y 21)
+7. En MCP-Mod, ¿qué hace el paso MCP y qué hace el paso Mod? ¿Por qué no basta con comparar cada dosis con placebo, y por qué la 201 demuestra el efecto con más seguridad que la dosis? (PR 20)
 8. ¿Por qué el simulador se prueba con semillas públicas y no con la sellada? ¿Qué demuestra que devuelva sus propios parámetros, y qué no puede demostrar? (PR 22 y 23)
 
 # Respuestas
@@ -108,16 +108,21 @@ Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas son 
 ::: {.callout-note collapse="true"}
 ## Pulsa para ver las respuestas
 
-Pendientes: las escribes tú.
+1. **Los cinco atributos** (ICH E9(R1)) son el tratamiento, la población, la variable, la estrategia para cada acontecimiento intercurrente y la medida resumen de la población. En el estimando principal de la 301 (E1): el tratamiento es FJF-2026 20 mg una vez al día frente a placebo, los dos añadidos a metformina estable y con rescate disponible según la regla del protocolo. La población son adultos con diabetes tipo 2 mal controlada con metformina, según los criterios de inclusión. La variable es el cambio de la HbA1c (%) desde la basal en la semana 26. El rescate y el abandono del tratamiento se tratan con política de tratamiento: la HbA1c medida después cuenta tal cual. La medida resumen es la diferencia de medias entre los brazos.
 
-1.
-2.
-3.
-4.
-5.
-6.
-7.
-8.
+2. **Un acontecimiento intercurrente** ocurre después de empezar el tratamiento y cambia la interpretación de la variable, o impide medirla. El rescate lo es porque, desde ese momento, la HbA1c ya no refleja solo el efecto del fármaco asignado: refleja también el de un segundo fármaco, que además reciben más los pacientes de placebo. Si no se dice qué hacer con él, el efecto estimado depende de cuánto rescate hubo, y la pregunta queda sin definir.
+
+3. **Política de tratamiento** pregunta qué pasa por asignar FJF-2026, ocurra lo que ocurra después: abandonos, rescate y todo. Es el efecto de la estrategia en la práctica, y es lo que interesa a reguladores y pagadores, porque así se usará el fármaco. **La estrategia hipotética** pregunta qué pasaría en un escenario que no ocurrió, aquí sin rescate y con todos tomando lo asignado. Es el efecto del fármaco en sí, y interesa a quien desarrolla el fármaco, a quien elige dosis y a un médico que quiere saber qué hace el fármaco cuando se toma. Por eso en la 301 la principal es la de política de tratamiento (E1) y la hipotética es suplementaria (E2), y en la 201 se usa la hipotética.
+
+4. **El MMRM bajo «missing at random»** supone que lo que falta se parece a lo observado en pacientes con la misma historia previa. Aplicado a los valores previos al rescate y al abandono, predice cómo seguirían esos pacientes si siguieran con su tratamiento y sin rescate: eso es la pregunta hipotética (E2). No responde a la de política de tratamiento porque esa pregunta incluye lo que pasa de verdad tras el abandono, y lo normal es que el efecto se pierda; el MMRM supondría que se mantiene. **«Jump to reference»**: para un paciente que deja FJF-2026 y sale del estudio, sus valores que faltan se imputan como si desde ese momento fuera un paciente de placebo, condicionado a lo que se le midió antes. Su efecto desaparece al salir. Es conservador: no le atribuye al fármaco un efecto que nadie midió.
+
+5. **Un análisis de punto de inflexión** empeora poco a poco los valores imputados del brazo FJF-2026: les suma un desplazamiento delta, de 0 a 5 puntos de HbA1c de 0,25 en 0,25, sin tocar placebo. Busca el delta más pequeño al que el límite superior del intervalo del 95 % llega a 0, es decir, al que la conclusión deja de ser significativa. Si ese delta es mayor que todo el efecto esperado, y por tanto implausible, la conclusión no depende de cómo se imputaron los datos faltantes. Si es pequeño, la conclusión es frágil.
+
+6. **Por simulación** porque, con política de tratamiento, el efecto se diluye por varias vías a la vez. Quien abandona FJF-2026 pierde el efecto, el rescate ayuda más al placebo y lo que falta se imputa con «jump to reference». Ninguna fórmula cerrada recoge todo eso: se simulan miles de ensayos con el análisis real y se cuenta en cuántos sale significativo. El efecto efectivo baja de −0,50 a unos −0,39, y salen 150 por brazo. **El error de Monte Carlo** es la incertidumbre de la potencia estimada por haber simulado un número finito de ensayos: con una potencia p y R ensayos es raíz de p(1 − p)/R. Por eso se exige que la potencia menos 1,96 errores llegue al 90 %. Con 140 por brazo daba justo el 90 %, y una simulación con suerte habría elegido un estudio demasiado pequeño.
+
+7. **El paso MCP** (comparación múltiple) contrasta si hay relación dosis-respuesta. Usa un contraste óptimo para cada uno de los cuatro modelos candidatos (lineal, Emax, Emax sigmoide y cuadrático) y controla el error de tipo I entre todos. Así no hay que apostar por una sola forma de curva. **El paso Mod** (modelización) ajusta el modelo significativo con menor AIC generalizado y lee de la curva la dosis: la menor que da al menos el 80 % del efecto máximo y 0,3 puntos frente a placebo. **Comparar cada dosis con placebo** no basta: con cuatro dosis hay que repartir el alfa entre cuatro contrastes, cada uno con solo 95 pacientes por brazo, y se pierde potencia. Además no usa que las dosis están ordenadas, y no dice nada de las dosis intermedias. **El efecto se demuestra mejor que la dosis** porque la señal suma información de todos los brazos: aparece en el 93 % de los ensayos en seco. Elegir la dosis, en cambio, depende de la forma de la parte alta de la curva, que se estima con poca precisión. Por eso 20 mg sale solo en el 46 %, y las dosis vecinas se reparten el resto.
+
+8. **Con semillas públicas** porque probar con la sellada revelaría la verdad a quien prueba, y la verdad debe estar oculta hasta el desenmascaramiento. **Que el simulador devuelva sus propios parámetros** con miles de pacientes demuestra que el código hace lo que dice el modelo: el efecto, la curva de la 201, las tasas de acontecimientos y la regla de rescate salen dentro de 3,5 errores estándar. Así, una diferencia futura entre la estimación y la verdad será del análisis, no de un fallo del generador. **Lo que no puede demostrar** es que el modelo se parezca a la realidad. Si los supuestos (Emax, abandono no aleatorio, desvanecimiento del efecto) son poco realistas, el simulador los reproduce igual de bien. Tampoco prueba la verdad sellada en concreto, solo que cualquier verdad dentro de los rangos se genera bien.
 :::
 
 # Revisión de la puerta 2 (2026-11-12)
@@ -138,8 +143,8 @@ El revisor contestó a las preguntas de revisión que le planteó el asistente. 
 La puerta 2 es «SAP congelados». Todo lo que había que programar en la F2 está hecho (PR 15 a 24). Lo que queda son decisiones tuyas, en este orden:
 
 1. ~~Decidir los puntos de diseño y aceptar los ADR 0018 a 0025~~: hecho en la revisión de arriba.
-2. **Fusionar las PR 15 a 24** en orden, con el CI en verde.
-3. **Responder las preguntas de control 1 a 8**, arriba, con tus palabras.
+2. ~~Fusionar las PR 15 a 24~~: hecho el 2026-11-12, en orden y con la CI en verde.
+3. ~~Responder las preguntas de control 1 a 8~~: respondidas por el asistente a petición de Francisco (2026-11-12). Desviación registrada; quedan para estudiarlas.
 4. ~~Congelar los SAP~~: hecho el 2026-11-12 (versión 1.0). Etiquetas `sap-301-v1.0` y `sap-201-v1.0` sobre main. Desde ese momento, cualquier cambio es una enmienda con fecha y motivo.
 5. **Generar los datos tú mismo**, desde una copia limpia de main:
 
