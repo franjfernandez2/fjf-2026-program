@@ -81,12 +81,13 @@ fixture_sdtm_301 <- function(root) {
   dm <- map_dm_301(raw, f$assignment, protocol, spec)
   se <- map_se_301(dm, protocol, spec)
   ae <- map_ae_301(raw, dm, dictionary, spec, se)
+  ce <- map_ce_301(raw, dm, spec, se)
   list(
     DM = dm, SUPPDM = map_suppdm_301(raw, spec), DS = map_ds_301(raw, f$assignment, dm, spec, se), SE = se,
     EX = map_ex_301(raw, f$assignment, dm, protocol, spec, se), DA = map_da_301(raw, dm, protocol, spec, se),
     CM = map_cm_301(raw, dm, dictionary, spec, se), AE = ae$ae,
     LB = map_lb_301(raw, raw_spec, dm, protocol, spec, se)$lb,
     VS = map_vs_301(raw, raw_spec, dm, protocol, spec, se)$vs,
-    CE = map_ce_301(raw, dm, spec, se)$ce
+    CE = ce$ce, SUPPCE = ce$suppce
   )
 }

@@ -97,9 +97,9 @@ derive_adeff_301 <- function(sdtm, adsl, protocol, spec) {
   )
   # SAP: a missing baseline HbA1c is imputed by the mean of the stratum. Weight is not imputed.
   stratum_mean <- function(adsl, base) {
-    m <- tapply(base, adsl$STRAT1R, mean, na.rm = TRUE)
+    m <- tapply(base, adsl$STRATAR, mean, na.rm = TRUE)
     imputed <- is.na(base)
-    list(BASE = ifelse(imputed, round(m[adsl$STRAT1R], 4), base), BIMPFL = ifelse(imputed, "Y", NA))
+    list(BASE = ifelse(imputed, round(m[adsl$STRATAR], 4), base), BIMPFL = ifelse(imputed, "Y", NA))
   }
   as_is <- function(adsl, base) list(BASE = base, BIMPFL = rep(NA_character_, length(base)))
   out <- rbind(
@@ -122,11 +122,15 @@ derive_adeff_301 <- function(sdtm, adsl, protocol, spec) {
   out$ANL02FL <- ifelse(
     !is.na(out$ANL01FL) & is.na(out$ABLFL) & out$ONTRTFL == "Y" & out$PRERESFL == "Y" & !is.na(out$AVAL), "Y", NA
   )
+  # SAP B1: HbA1c below 7.0%, evaluated on post-baseline HbA1c records that have a value.
+  b1 <- out$PARAMCD == "HBA1C" & is.na(out$ABLFL) & !is.na(out$AVAL)
+  out$CRIT1 <- ifelse(b1, "HbA1c < 7.0%", NA)
+  out$CRIT1FL <- ifelse(b1, ifelse(out$AVAL < 7, "Y", "N"), NA)
   out$STUDYID <- a$STUDYID
   out$TRTP <- a$TRT01P
   out$TRTPN <- a$TRT01PN
   out$ARMCD <- a$ARMCD
-  out$STRAT1R <- a$STRAT1R
+  out$STRATAR <- a$STRATAR
   out$FASFL <- a$FASFL
   out$PPROTFL <- if ("PPROTFL" %in% names(a)) a$PPROTFL else NA
   out <- out[order(out$USUBJID, out$PARAMN, out$AVISITN, out$ADT), ]
@@ -151,14 +155,14 @@ add_pps_301 <- function(adsl, adeff, protocol) {
 }
 
 #' ADEFF records in the form the efficacy models read (R/efficacy_301.R): the full analysis
-#' set, one record per subject and scheduled post-baseline visit, STRATUM for STRAT1R.
+#' set, one record per subject and scheduled post-baseline visit, STRATUM for STRATAR.
 #'
 #' @param adeff The ADEFF dataset.
 #' @param paramcd Parameter code, "HBA1C" or "WEIGHT".
 #' @return A data frame.
 adeff_analysis_301 <- function(adeff, paramcd) {
   d <- adeff[adeff$PARAMCD == paramcd & !is.na(adeff$ANL01FL) & adeff$AVISITN > 0 & adeff$FASFL == "Y", ]
-  d$STRATUM <- d$STRAT1R
+  d$STRATUM <- d$STRATAR
   as.data.frame(d[c(
     "USUBJID", "ARMCD", "STRATUM", "PARAMCD", "BASE", "AVISITN", "AVISIT", "AVAL", "CHG", "ONTRTFL", "PRERESFL"
   )])

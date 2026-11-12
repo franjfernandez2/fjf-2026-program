@@ -14,7 +14,7 @@ test_that("ADSL sets the analysis sets and treatment from the assignment", {
   expect_identical(adsl$SAFFL, c("Y", "N"))
   expect_identical(adsl$TRT01PN, c(20L, 0L))
   expect_identical(adsl$TRT01AN, c(20L, NA))
-  expect_identical(adsl$STRAT1R, c("A", "A"))
+  expect_identical(adsl$STRATAR, c("A", "A"))
 })
 
 test_that("ADSL derives treatment dates, duration and compliance", {
@@ -58,7 +58,8 @@ test_that("the ADaM XPT keeps dates as SAS dates", {
 adeff_base <- derive_adeff_301(sdtm, adsl, protocol, adam_spec)
 pps <- add_pps_301(adsl, adeff_base, protocol)
 adeff <- pps$adeff
-adtte <- derive_adtte_301(pps$adsl, protocol, adam_spec)
+adhypo <- derive_adhypo_301(sdtm, pps$adsl, adam_spec)
+adtte <- derive_adtte_301(pps$adsl, adhypo, protocol, adam_spec)
 hba1c <- adeff[adeff$PARAMCD == "HBA1C", ]
 
 test_that("ADEFF and ADTTE have the variables of the specification", {
@@ -116,13 +117,15 @@ test_that("the per-protocol set needs the week-26 HbA1c on treatment and before 
 })
 
 test_that("ADTTE counts days to rescue and censors at the end of study or week 26", {
-  expect_identical(adtte$CNSR, c(0L, 1L))
-  expect_identical(adtte$AVAL[1], as.numeric(as.Date("2028-05-02") - as.Date("2028-01-19")) + 1)
-  expect_identical(adtte$EVNTDESC, c("RESCUE MEDICATION", "END OF STUDY"))
+  resc <- adtte[adtte$PARAMCD == "TTRESC", ]
+  expect_identical(resc$CNSR, c(0L, 1L))
+  expect_identical(resc$AVAL[1], as.numeric(as.Date("2028-05-02") - as.Date("2028-01-19")) + 1)
+  expect_identical(resc$EVNTDESC, c("RESCUE MEDICATION", "END OF STUDY"))
   a <- pps$adsl
   a$RESCDT <- as.Date(NA)
   a$EOSDT <- as.Date(NA)
-  expect_identical(derive_adtte_301(a, protocol, adam_spec)$AVAL, c(183, 183))
+  t <- derive_adtte_301(a, adhypo, protocol, adam_spec)
+  expect_identical(t$AVAL[t$PARAMCD == "TTRESC"], c(183, 183))
 })
 
 test_that("the analysis input of ADEFF has the columns the efficacy models read", {

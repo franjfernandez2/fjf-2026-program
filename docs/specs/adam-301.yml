@@ -33,8 +33,9 @@ datasets:
       - {name: TRT01PN, label: Planned Treatment for Period 01 (N), type: integer, origin: Derived, source: protocol dose in mg}
       - {name: TRT01A, label: Actual Treatment for Period 01, type: text, origin: Derived, source: DM.ACTARM}
       - {name: TRT01AN, label: Actual Treatment for Period 01 (N), type: integer, origin: Derived, source: protocol dose in mg}
-      - {name: STRAT1R, label: Randomisation Stratum 1, type: text, origin: Predecessor, source: "SUPPDM.QVAL where QNAM = STRATUM"}
+      - {name: STRATAR, label: Randomisation Stratum, type: text, origin: Predecessor, source: "SUPPDM.QVAL where QNAM = STRATUM"}
       - {name: RANDDT, label: Date of Randomization, type: date, origin: Derived, source: "DS.DSSTDTC where DSDECOD = RANDOMIZED"}
+      - {name: RANDFL, label: Randomized Population Flag, type: text, origin: Derived, source: "Y: ADSL has one record per randomised subject"}
       - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Derived, source: "Y if randomised (SAP FAS)"}
       - {name: SAFFL, label: Safety Population Flag, type: text, origin: Derived, source: "Y if randomised and dosed (SAP SAF)"}
       - {name: PPROTFL, label: Per-Protocol Population Flag, type: text, origin: Derived, source: "FAS, compliance >= 80%, week-26 HbA1c on treatment and before rescue (SAP PPS); protocol deviations are not collected"}
@@ -70,7 +71,7 @@ datasets:
       - {name: TRTP, label: Planned Treatment, type: text, origin: Predecessor, source: ADSL.TRT01P}
       - {name: TRTPN, label: Planned Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01PN}
       - {name: ARMCD, label: Planned Arm Code, type: text, origin: Predecessor, source: ADSL.ARMCD}
-      - {name: STRAT1R, label: Randomisation Stratum 1, type: text, origin: Predecessor, source: ADSL.STRAT1R}
+      - {name: STRATAR, label: Randomisation Stratum, type: text, origin: Predecessor, source: ADSL.STRATAR}
       - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Predecessor, source: ADSL.FASFL}
       - {name: PPROTFL, label: Per-Protocol Population Flag, type: text, origin: Predecessor, source: ADSL.PPROTFL}
       - {name: PARAMCD, label: Parameter Code, type: text, origin: Assigned, source: "HBA1C (LB), WEIGHT (VS)"}
@@ -86,6 +87,8 @@ datasets:
       - {name: AVAL, label: Analysis Value, type: float, origin: Derived, source: "LB.LBSTRESN, VS.VSSTRESN"}
       - {name: BASE, label: Baseline Value, type: float, origin: Derived, source: "last value on or before randomisation; HbA1c missing: stratum mean (SAP)"}
       - {name: CHG, label: Change from Baseline, type: float, origin: Derived, source: AVAL - BASE}
+      - {name: CRIT1, label: Analysis Criterion 1, type: text, origin: Assigned, source: "HbA1c < 7.0% (SAP B1)"}
+      - {name: CRIT1FL, label: Criterion 1 Evaluation Result Flag, type: text, origin: Derived, source: "Y if AVAL < 7.0, N if not; HbA1c post-baseline records with a value only"}
       - {name: ABLFL, label: Baseline Record Flag, type: text, origin: Derived}
       - {name: BIMPFL, label: Baseline Imputed Flag, type: text, origin: Derived, source: "Y when BASE is the stratum mean (SAP)"}
       - {name: ONTRTFL, label: On Treatment Record Flag, type: text, origin: Derived, source: "ADT (or the target day of a missing visit) <= TRTEDT + 7 (SAP)"}
@@ -108,15 +111,144 @@ datasets:
       - {name: TRTP, label: Planned Treatment, type: text, origin: Predecessor, source: ADSL.TRT01P}
       - {name: TRTPN, label: Planned Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01PN}
       - {name: ARMCD, label: Planned Arm Code, type: text, origin: Predecessor, source: ADSL.ARMCD}
-      - {name: STRAT1R, label: Randomisation Stratum 1, type: text, origin: Predecessor, source: ADSL.STRAT1R}
+      - {name: STRATAR, label: Randomisation Stratum, type: text, origin: Predecessor, source: ADSL.STRATAR}
       - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Predecessor, source: ADSL.FASFL}
       - {name: PPROTFL, label: Per-Protocol Population Flag, type: text, origin: Predecessor, source: ADSL.PPROTFL}
-      - {name: PARAMCD, label: Parameter Code, type: text, origin: Assigned, source: TTRESC}
+      - {name: SAFFL, label: Safety Population Flag, type: text, origin: Predecessor, source: ADSL.SAFFL}
+      - {name: TRTA, label: Actual Treatment, type: text, origin: Predecessor, source: ADSL.TRT01A}
+      - {name: TRTAN, label: Actual Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01AN}
+      - {name: PARAMCD, label: Parameter Code, type: text, origin: Assigned, source: "TTRESC (FAS), TTHYPO23 (SAF)"}
       - {name: PARAM, label: Parameter, type: text, origin: Assigned}
-      - {name: STARTDT, label: Time to Event Origin Date for Subject, type: date, origin: Derived, source: ADSL.RANDDT}
-      - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: "first rescue, or the censoring date"}
+      - {name: STARTDT, label: Time to Event Origin Date for Subject, type: date, origin: Derived, source: "ADSL.RANDDT (TTRESC), ADSL.TRTSDT (TTHYPO23)"}
+      - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: "first rescue or level 2-3 hypoglycaemia, or the censoring date"}
       - {name: AVAL, label: Analysis Value, type: float, origin: Derived, source: "ADT - STARTDT + 1 (days)"}
-      - {name: CNSR, label: Censor, type: integer, origin: Derived, source: "0 rescue; 1 censored at the end of study or week 26, whichever first (SAP B3)"}
+      - {name: CNSR, label: Censor, type: integer, origin: Derived, source: "TTRESC: 0 rescue, 1 censored at the end of study or week 26, whichever first (SAP B3). TTHYPO23: 0 first level 2 or 3 episode, 1 censored at the last contact (SAP SF2)"}
       - {name: EVNTDESC, label: Event or Censoring Description, type: text, origin: Derived}
       - {name: SRCDOM, label: Source Data, type: text, origin: Derived}
       - {name: SRCVAR, label: Source Variable, type: text, origin: Derived}
+
+  - name: ADEX
+    label: Exposure Analysis Dataset
+    class: ADAM OTHER
+    structure: One record per subject in the safety set
+    keys: [STUDYID, USUBJID]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Predecessor, source: ADSL.STUDYID}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Predecessor, source: ADSL.USUBJID}
+      - {name: TRTA, label: Actual Treatment, type: text, origin: Predecessor, source: ADSL.TRT01A}
+      - {name: TRTAN, label: Actual Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01AN}
+      - {name: SAFFL, label: Safety Population Flag, type: text, origin: Predecessor, source: ADSL.SAFFL}
+      - {name: TRTSDT, label: Date of First Exposure to Treatment, type: date, origin: Predecessor, source: ADSL.TRTSDT}
+      - {name: TRTEDT, label: Date of Last Exposure to Treatment, type: date, origin: Predecessor, source: ADSL.TRTEDT}
+      - {name: TRTDURD, label: Total Treatment Duration (Days), type: integer, origin: Predecessor, source: ADSL.TRTDURD}
+      - {name: TRTDURY, label: Total Treatment Duration (Years), type: float, origin: Derived, source: TRTDURD / 365.25}
+      - {name: COMPLPCT, label: Compliance (%), type: float, origin: Predecessor, source: ADSL.COMPLPCT}
+
+  - name: ADAE
+    label: Adverse Events Analysis Dataset
+    class: OCCURRENCE DATA STRUCTURE
+    structure: One record per adverse event of a randomised subject
+    keys: [STUDYID, USUBJID, AESEQ]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Predecessor, source: ADSL.STUDYID}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Predecessor, source: ADSL.USUBJID}
+      - {name: TRTA, label: Actual Treatment, type: text, origin: Predecessor, source: ADSL.TRT01A}
+      - {name: TRTAN, label: Actual Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01AN}
+      - {name: SAFFL, label: Safety Population Flag, type: text, origin: Predecessor, source: ADSL.SAFFL}
+      - {name: AESEQ, label: Sequence Number, type: integer, origin: Predecessor, source: AE.AESEQ}
+      - {name: AETERM, label: Reported Term for the Adverse Event, type: text, origin: Predecessor, source: AE.AETERM}
+      - {name: AELLT, label: Lowest Level Term, type: text, origin: Predecessor, source: AE.AELLT}
+      - {name: AEDECOD, label: Dictionary-Derived Term, type: text, origin: Predecessor, source: AE.AEDECOD}
+      - {name: AEBODSYS, label: Body System or Organ Class, type: text, origin: Predecessor, source: AE.AEBODSYS}
+      - {name: AESOC, label: Primary System Organ Class, type: text, origin: Predecessor, source: AE.AESOC}
+      - {name: AESEV, label: Severity/Intensity, type: text, origin: Predecessor, source: AE.AESEV}
+      - {name: AESER, label: Serious Event, type: text, origin: Predecessor, source: AE.AESER}
+      - {name: AEACN, label: Action Taken with Study Treatment, type: text, origin: Predecessor, source: AE.AEACN}
+      - {name: AEREL, label: Causality, type: text, origin: Predecessor, source: AE.AEREL}
+      - {name: AEOUT, label: Outcome of Adverse Event, type: text, origin: Predecessor, source: AE.AEOUT}
+      - {name: ASTDT, label: Analysis Start Date, type: date, origin: Derived, source: "AE.AESTDTC; a partial date is imputed to the first dose when the period contains it and the event did not end before it, else to the first day of the period"}
+      - {name: ASTDTF, label: Analysis Start Date Imputation Flag, type: text, origin: Derived, source: "D (day imputed), M (month and day imputed)"}
+      - {name: AENDT, label: Analysis End Date, type: date, origin: Derived, source: "AE.AEENDTC, complete dates only"}
+      - {name: ASTDY, label: Analysis Start Relative Day, type: integer, origin: Derived, source: "from randomisation, no day 0"}
+      - {name: AENDY, label: Analysis End Relative Day, type: integer, origin: Derived, source: "from randomisation, no day 0"}
+      - {name: TRTEMFL, label: Treatment Emergent Analysis Flag, type: text, origin: Derived, source: "Y if ASTDT is on or after TRTSDT and no later than TRTEDT + 14 (SAP SF1)"}
+
+  - name: ADHYPO
+    label: Hypoglycaemia Analysis Dataset
+    class: OCCURRENCE DATA STRUCTURE
+    structure: One record per hypoglycaemic episode of a randomised subject
+    keys: [STUDYID, USUBJID, CESEQ]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Predecessor, source: ADSL.STUDYID}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Predecessor, source: ADSL.USUBJID}
+      - {name: TRTA, label: Actual Treatment, type: text, origin: Predecessor, source: ADSL.TRT01A}
+      - {name: TRTAN, label: Actual Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01AN}
+      - {name: SAFFL, label: Safety Population Flag, type: text, origin: Predecessor, source: ADSL.SAFFL}
+      - {name: CESEQ, label: Sequence Number, type: integer, origin: Predecessor, source: CE.CESEQ}
+      - {name: CESCAT, label: Subcategory for Clinical Event, type: text, origin: Predecessor, source: CE.CESCAT}
+      - {name: HYPOLVL, label: Hypoglycaemia Level, type: integer, origin: Derived, source: "1, 2 or 3 from CE.CESCAT (SAP SF2)"}
+      - {name: GLUCOSE, label: Glucose at Episode (mg/dL), type: float, origin: Predecessor, source: "SUPPCE.QVAL where QNAM = CEGLUC"}
+      - {name: ASSIST, label: Assistance Required, type: text, origin: Predecessor, source: "SUPPCE.QVAL where QNAM = CEASSIST"}
+      - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: CE.CESTDTC}
+      - {name: ADY, label: Analysis Relative Day, type: integer, origin: Derived, source: "from randomisation, no day 0"}
+      - {name: ONTRTFL, label: On Treatment Record Flag, type: text, origin: Derived, source: "on or after the first dose and no later than 7 days after the last (SAP)"}
+      - {name: PRERESFL, label: Pre-Rescue Record Flag, type: text, origin: Derived, source: "on or before the first rescue dose, or no rescue (SAP)"}
+
+  - name: ADLB
+    label: Laboratory Analysis Dataset
+    class: BASIC DATA STRUCTURE
+    structure: One record per subject per parameter per laboratory sample
+    keys: [STUDYID, USUBJID, PARAMCD, ADT, SRCSEQ]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Predecessor, source: ADSL.STUDYID}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Predecessor, source: ADSL.USUBJID}
+      - {name: TRTA, label: Actual Treatment, type: text, origin: Predecessor, source: ADSL.TRT01A}
+      - {name: TRTAN, label: Actual Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01AN}
+      - {name: SAFFL, label: Safety Population Flag, type: text, origin: Predecessor, source: ADSL.SAFFL}
+      - {name: PARAMCD, label: Parameter Code, type: text, origin: Predecessor, source: LB.LBTESTCD}
+      - {name: PARAM, label: Parameter, type: text, origin: Derived, source: "LB.LBTEST and LB.LBSTRESU"}
+      - {name: AVISIT, label: Analysis Visit, type: text, origin: Derived, source: "Baseline, or the planned visit (Week n); empty for other screening values and unscheduled visits"}
+      - {name: AVISITN, label: Analysis Visit (N), type: integer, origin: Derived, source: "week of the planned visit; 0 for baseline"}
+      - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: LB.LBDTC}
+      - {name: ADY, label: Analysis Relative Day, type: integer, origin: Derived, source: "from randomisation, no day 0"}
+      - {name: AVAL, label: Analysis Value, type: float, origin: Predecessor, source: LB.LBSTRESN}
+      - {name: ANRLO, label: Analysis Normal Range Lower Limit, type: float, origin: Predecessor, source: LB.LBSTNRLO}
+      - {name: ANRHI, label: Analysis Normal Range Upper Limit, type: float, origin: Predecessor, source: LB.LBSTNRHI}
+      - {name: ANRIND, label: Analysis Reference Range Indicator, type: text, origin: Predecessor, source: LB.LBNRIND}
+      - {name: BASE, label: Baseline Value, type: float, origin: Derived, source: "last value on or before the first dose (randomisation if not dosed)"}
+      - {name: BNRIND, label: Baseline Reference Range Indicator, type: text, origin: Derived, source: ANRIND of the baseline record}
+      - {name: CHG, label: Change from Baseline, type: float, origin: Derived, source: AVAL - BASE}
+      - {name: ABLFL, label: Baseline Record Flag, type: text, origin: Derived}
+      - {name: ONTRTFL, label: On Treatment Record Flag, type: text, origin: Derived, source: "after the first dose and no later than 7 days after the last (SAP)"}
+      - {name: ANL01FL, label: Analysis Flag 01 (Planned Visit), type: text, origin: Derived, source: "one record per subject, parameter and planned post-baseline visit"}
+      - {name: WORSTFL, label: Worst Post-Baseline On-Treatment Flag, type: text, origin: Derived, source: "the on-treatment value furthest outside its reference range, as a multiple of the limit crossed; if none is outside, the last on treatment"}
+      - {name: SRCDOM, label: Source Data, type: text, origin: Derived}
+      - {name: SRCVAR, label: Source Variable, type: text, origin: Derived}
+      - {name: SRCSEQ, label: Source Sequence Number, type: integer, origin: Derived}
+
+  - name: ADVS
+    label: Vital Signs Analysis Dataset
+    class: BASIC DATA STRUCTURE
+    structure: One record per subject per parameter per measurement (height excluded)
+    keys: [STUDYID, USUBJID, PARAMCD, ADT, SRCSEQ]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Predecessor, source: ADSL.STUDYID}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Predecessor, source: ADSL.USUBJID}
+      - {name: TRTA, label: Actual Treatment, type: text, origin: Predecessor, source: ADSL.TRT01A}
+      - {name: TRTAN, label: Actual Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01AN}
+      - {name: SAFFL, label: Safety Population Flag, type: text, origin: Predecessor, source: ADSL.SAFFL}
+      - {name: PARAMCD, label: Parameter Code, type: text, origin: Predecessor, source: VS.VSTESTCD}
+      - {name: PARAM, label: Parameter, type: text, origin: Derived, source: "VS.VSTEST and VS.VSSTRESU"}
+      - {name: AVISIT, label: Analysis Visit, type: text, origin: Derived, source: "Baseline, or the planned visit (Week n); empty for other screening values and unscheduled visits"}
+      - {name: AVISITN, label: Analysis Visit (N), type: integer, origin: Derived, source: "week of the planned visit; 0 for baseline"}
+      - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: VS.VSDTC}
+      - {name: ADY, label: Analysis Relative Day, type: integer, origin: Derived, source: "from randomisation, no day 0"}
+      - {name: AVAL, label: Analysis Value, type: float, origin: Predecessor, source: VS.VSSTRESN}
+      - {name: BASE, label: Baseline Value, type: float, origin: Derived, source: "last value on or before the first dose (randomisation if not dosed)"}
+      - {name: CHG, label: Change from Baseline, type: float, origin: Derived, source: AVAL - BASE}
+      - {name: ABLFL, label: Baseline Record Flag, type: text, origin: Derived}
+      - {name: ONTRTFL, label: On Treatment Record Flag, type: text, origin: Derived, source: "after the first dose and no later than 7 days after the last (SAP)"}
+      - {name: ANL01FL, label: Analysis Flag 01 (Planned Visit), type: text, origin: Derived, source: "one record per subject, parameter and planned post-baseline visit"}
+      - {name: SRCDOM, label: Source Data, type: text, origin: Derived}
+      - {name: SRCVAR, label: Source Variable, type: text, origin: Derived}
+      - {name: SRCSEQ, label: Source Sequence Number, type: integer, origin: Derived}
