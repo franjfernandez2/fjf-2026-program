@@ -9,6 +9,15 @@ adamig: "1.3"
 # CDISC ADaM terminology the package is checked against (P21, CORE), declared in define.xml.
 ct: "2024-03-29"
 
+# Limits for vital signs and weight outside predefined limits (SAP SF4). The SAP names them
+# but does not give them; the reviewer set these on blinded data, before the lock (ADR 0028).
+# high: value at or above; low: value at or below; for WEIGHT, change from baseline in %.
+vital_sign_limits:
+  SYSBP: {high: 160, low: 90, unit: mmHg}
+  DIABP: {high: 100, low: 50, unit: mmHg}
+  PULSE: {high: 120, low: 50, unit: beats/min}
+  WEIGHT: {increase_pct: 7, decrease_pct: 7}
+
 datasets:
   - name: ADSL
     label: Subject-Level Analysis Dataset
@@ -251,6 +260,11 @@ datasets:
       - {name: AVAL, label: Analysis Value, type: float, origin: Predecessor, source: VS.VSSTRESN}
       - {name: BASE, label: Baseline Value, type: float, origin: Derived, source: "last value on or before the first dose (randomisation if not dosed)"}
       - {name: CHG, label: Change from Baseline, type: float, origin: Derived, source: AVAL - BASE}
+      - {name: PCHG, label: Percent Change from Baseline, type: float, origin: Derived, source: "100 x CHG / BASE (WEIGHT only)"}
+      - {name: CRIT1, label: Analysis Criterion 1, type: text, origin: Assigned, source: "vital_sign_limits: high value, or weight increase (SAP SF4)"}
+      - {name: CRIT1FL, label: Criterion 1 Evaluation Result Flag, type: text, origin: Derived, source: "Y or N on post-baseline records with a value"}
+      - {name: CRIT2, label: Analysis Criterion 2, type: text, origin: Assigned, source: "vital_sign_limits: low value, or weight decrease (SAP SF4)"}
+      - {name: CRIT2FL, label: Criterion 2 Evaluation Result Flag, type: text, origin: Derived, source: "Y or N on post-baseline records with a value"}
       - {name: ABLFL, label: Baseline Record Flag, type: text, origin: Derived}
       - {name: ONTRTFL, label: On Treatment Record Flag, type: text, origin: Derived, source: "after the first dose and no later than 7 days after the last (SAP)"}
       - {name: ANL01FL, label: Analysis Flag 01 (Planned Visit), type: text, origin: Derived, source: "one record per subject, parameter and planned post-baseline visit"}

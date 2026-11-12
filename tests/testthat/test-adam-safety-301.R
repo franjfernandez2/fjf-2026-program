@@ -115,7 +115,7 @@ test_that("the ADaM second programming agrees with production and catches a diff
   production <- list(
     ADSL = adsl, ADEFF = adeff, ADTTE = adtte, ADAE = adae, ADHYPO = adhypo, ADLB = adlb, ADVS = advs
   )
-  qc <- qc_adam_301(dir, protocol)
+  qc <- qc_adam_301(dir, protocol, adam_spec$vital_sign_limits)
   expect_true(all(compare_adam_301(production, qc)$clean))
   production$ADAE$TRTEMFL[1] <- NA
   expect_false(compare_adam_301(production, qc)$clean[4])
@@ -126,4 +126,18 @@ test_that("a missing severity counts as severe, flagged (CR09)", {
   expect_identical(adae$ASEV, c("MILD", "SEVERE", "MODERATE"))
   expect_identical(adae$ASEVN, c(1L, 3L, 2L))
   expect_identical(adae$ASEVIMFL, c(NA, "Y", NA))
+})
+
+test_that("ADVS flags values outside the SF4 limits", {
+  d <- data.frame(
+    PARAMCD = c("SYSBP", "SYSBP", "SYSBP", "PULSE", "WEIGHT", "WEIGHT"), AVAL = c(160, 120, 90, 49, 93.6, 80),
+    ABLFL = c(NA, NA, "Y", NA, NA, NA), CHG = c(20, -20, NA, -20, 6.6, -7), PCHG = c(NA, NA, NA, NA, 7.586, -8.046)
+  )
+  f <- vital_sign_criteria_301(d, adam_spec$vital_sign_limits)
+  expect_identical(f$CRIT1FL, c("Y", "N", NA, "N", "Y", "N"))
+  expect_identical(f$CRIT2FL, c("N", "N", NA, "Y", "N", "Y"))
+  expect_identical(f$CRIT1[1], "SYSBP >= 160 mmHg")
+  expect_identical(f$CRIT2[6], "Decrease >= 7% from baseline")
+  s <- advs[advs$PARAMCD == "SYSBP", ]
+  expect_true(all(is.na(s$CRIT1FL[!is.na(s$ABLFL)])))
 })
