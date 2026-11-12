@@ -103,6 +103,8 @@ test_that("the ADaM define.xml describes every dataset and variable", {
   date <- xml2::xml_find_first(x, "//d1:ItemDef[@OID='IT.ADSL.RANDDT']", ns)
   expect_identical(xml2::xml_attr(date, "DataType"), "integer")
   expect_identical(xml2::xml_attr(date, "def:DisplayFormat", ns), "DATE9.")
+  ct <- xml2::xml_find_first(x, "//def:Standard[@Type='CT']", ns)
+  expect_identical(xml2::xml_attr(ct, "Version"), adam_spec$ct)
 })
 
 test_that("the ADaM second programming agrees with production and catches a difference", {

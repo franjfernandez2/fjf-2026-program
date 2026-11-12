@@ -5,6 +5,8 @@
 
 study: FJF-2026-301
 sdtmig: "3.4"
+# CDISC SDTM terminology the package is checked against (P21, CORE), declared in define.xml.
+ct: "2024-03-29"
 # Public seed of the dummy treatment assignment used until the database lock (ADR 0027).
 blinding_seed: 301301
 # The CRF does not collect the country. COUNTRY stays empty and the reviewer's guide says so.
