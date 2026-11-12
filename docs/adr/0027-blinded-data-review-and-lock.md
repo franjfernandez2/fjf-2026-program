@@ -1,6 +1,6 @@
 # ADR 0027: Blinded data review, and the database lock
 
-- **Status:** Proposed
+- **Status:** Accepted (reviewer, 2026-11-12)
 - **Date:** 2026-11-12
 - **Decided by:** Francisco Fernández
 

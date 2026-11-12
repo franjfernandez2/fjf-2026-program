@@ -32,4 +32,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0024](0024-raw-data-layer.md) | Tables of the raw data layer | Accepted |
 | [0025](0025-data-errors-and-generation.md) | Data errors in the raw data, and how the study data are generated and loaded | Accepted |
 | [0026](0026-cleaning-rules-and-mapping.md) | Cleaning rules, and where cleaning happens | Accepted |
-| [0027](0027-blinded-data-review-and-lock.md) | Blinded data review, and the database lock | Proposed |
+| [0027](0027-blinded-data-review-and-lock.md) | Blinded data review, and the database lock | Accepted |
