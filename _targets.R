@@ -292,5 +292,19 @@ list(
       trials = sap_201$dry_run$operating_characteristics$trials, seed = sap_201$dry_run$seed + 1000,
       cores = min(4L, parallel::detectCores())
     )
+  ),
+
+  # --- Raw study data (data/raw, generated once from the sealed seed): data quality ---
+  # The checks count what an EDC let through; cleaning is F3's job. No treatment arm is used.
+  tar_target(raw_spec_file, "docs/specs/raw-layer.yml", format = "file"),
+  tar_target(raw_spec, read_raw_spec(raw_spec_file)),
+  tar_target(raw_manifest_file, "data/raw/manifest.csv", format = "file"),
+  tar_target(raw_data, read_raw_files(dirname(raw_manifest_file), raw_spec)),
+  tar_target(
+    raw_quality,
+    rbind(
+      check_raw_quality(raw_data[["201"]], raw_spec, protocol_201, "201"),
+      check_raw_quality(raw_data[["301"]], raw_spec, protocol_301, "301")
+    )
   )
 )

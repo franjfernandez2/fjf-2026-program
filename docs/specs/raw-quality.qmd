@@ -1,0 +1,69 @@
+---
+title: "Raw data layer: data-quality report"
+subtitle: "Studies FJF-2026-201 and FJF-2026-301"
+author: "Francisco Fernández"
+date: today
+---
+
+```{r}
+#| include: false
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+knitr::opts_knit$set(root.dir = root)
+q <- targets::tar_read(raw_quality, store = file.path(root, "_targets"))
+manifest <- utils::read.csv(file.path(root, "data", "raw", "manifest.csv"))
+fmt <- function(x) format(x, big.mark = " ")
+```
+
+# Purpose
+
+This report lists what the data-quality checks find in the raw study data, as collected (`data/raw`, loaded into the `raw_201` and `raw_301` schemas). It is gate-2 criterion 7. Nothing is corrected here: the raw layer and its audit trail stay as collected, and the cleaning rules are written in F3, when the data are mapped to SDTM ([ADR 0024](../adr/0024-raw-data-layer.md)).
+
+The checks never use the treatment arm, so this report can be read before the database lock.
+
+# The data checked
+
+The raw data were generated once, from the sealed seed, after the SAPs were frozen. Every file is checked against its SHA-256 hash in the manifest before it is read.
+
+```{r}
+totals <- stats::aggregate(rows ~ study, transform(manifest, study = dirname(file)), sum)
+knitr::kable(
+  data.frame(
+    Study = paste0("FJF-2026-", totals$study), Files = as.vector(table(dirname(manifest$file))),
+    Rows = fmt(totals$rows)
+  ),
+  align = "lrr"
+)
+```
+
+# Findings
+
+Each row is one check on one table: the number of findings among the rows checked. Checks with no finding are listed at the end.
+
+```{r}
+#| results: asis
+for (s in c("201", "301")) {
+  cat("\n## FJF-2026-", s, "\n\n", sep = "")
+  d <- q[q$study == s & q$n > 0, ]
+  print(knitr::kable(
+    data.frame(Check = d$check, Table = d$table, Findings = fmt(d$n), Rows = fmt(d$rows), Detail = d$detail),
+    align = "llrrl", row.names = FALSE
+  ))
+  clean <- q[q$study == s & q$n == 0, ]
+  where <- ifelse(clean$check == "Partial date", paste0(clean$table, ".", clean$detail), clean$table)
+  cat("\nNo findings: ", paste0(clean$check, " (", where, ")", collapse = "; "), ".\n", sep = "")
+}
+```
+
+# What the checks look for
+
+- **Duplicated natural key.** Two rows with the same natural key of the specification (for example the same patient, visit, test and date). The tables have no natural primary key on purpose, so duplicates can be loaded.
+- **Partial date.** A date present but incomplete, for example `UN-MAR-2028`.
+- **Visit outside its window.** A scheduled visit done more days away from its target day than the protocol's window allows, counted from the randomisation date.
+- **Unexpected unit.** Weight not in kg, height below 3 (probably metres), or a laboratory test in a unit other than its usual one.
+- **Qualified or non-numeric result.** A laboratory result such as `<8`.
+- **Ends before it starts.** An adverse event whose end date is before its start date, among complete dates.
+- **Missing required value.** An adverse event without its severity.
+
+# What happens next
+
+In F3, each kind of finding gets a cleaning rule with its reason, applied when the data are mapped to SDTM. The simulator's own log of the errors it planted is not stored ([ADR 0025](../adr/0025-data-errors-and-generation.md)). At the unblinding it is rebuilt from the seed and compared with what these checks and the F3 cleaning found.
