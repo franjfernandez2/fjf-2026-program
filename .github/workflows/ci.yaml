@@ -27,7 +27,8 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    # The first run of a branch rebuilds the whole pipeline, dry run of the SAP included.
+    timeout-minutes: 60
 
     steps:
       - name: Check out the repository
@@ -66,6 +67,16 @@ jobs:
           path: data/external/cdiscpilot01
           key: cdiscpilot01-${{ hashFiles('data/external/cdiscpilot01-manifest.csv') }}
 
+      # The pipeline store of an earlier run, so that targets rebuilds only what is outdated.
+      # Pull requests only: every push to main rebuilds the whole pipeline from scratch.
+      - name: Restore the pipeline store (pull requests)
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@v4
+        with:
+          path: _targets
+          key: targets-${{ github.sha }}
+          restore-keys: targets-
+
       - name: Start the clinical database
         run: docker compose up -d --wait db
 
@@ -81,6 +92,12 @@ jobs:
 
       - name: Pipeline
         run: docker compose run --rm -T analysis Rscript -e 'targets::tar_make(reporter = "verbose")'
+
+      - name: Save the pipeline store
+        uses: actions/cache/save@v4
+        with:
+          path: _targets
+          key: targets-${{ github.sha }}-${{ github.run_attempt }}
 
       # Some tests read the pipeline's results (e.g. every benchmark finding must be explained,
       # ADR 0017). Before the pipeline has run they are skipped, so the suite runs again here.
