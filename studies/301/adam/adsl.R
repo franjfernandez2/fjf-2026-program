@@ -75,6 +75,8 @@ derive_adsl_301 <- function(sdtm, protocol, spec) {
   out$TRTDURD <- as.integer(out$TRTEDT - out$TRTSDT) + 1L
   out$DCTDT <- by_subject(trt, adam_date(trt$DSSTDTC))
   out$DCTDT[out$EOTSTT != "DISCONTINUED" | is.na(out$EOTSTT)] <- NA
+  # Set by add_pps_301(), which needs the analysis visits of ADEFF.
+  out$PPROTFL <- NA_character_
   out <- out[order(out$USUBJID), ]
   adam_conform(out, spec, "ADSL")
 }
