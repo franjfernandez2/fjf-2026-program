@@ -234,7 +234,9 @@ parameters:
       simulator's HbA1c trajectories. The sample size uses the week-26 value only, so it does
       not depend on it, and neither does the MMRM with unstructured covariance.
   - id: mnar_share_of_dropouts
-    description: Share of treatment discontinuations whose timing depends on the unobserved HbA1c
+    description: >-
+      Share of withdrawals from the study (dropouts, after which nothing is measured) whose
+      timing depends on the unobserved HbA1c
     unit: proportion
     planning: 0.3
     truth_range: [0.1, 0.5]
@@ -242,6 +244,70 @@ parameters:
     evidence: >-
       Not observable in any trial, by definition. It sets how far the missing data depart from
       missing at random, which is what the tipping-point analysis has to detect.
+
+  # Safety parameters (PR 23). Rates are over 26 weeks; the simulator rescales them to 12
+  # weeks for FJF-2026-201 with a constant hazard, and makes the excess of the active drug
+  # proportional to the dose (20 mg is the reference).
+  - id: ae_any_placebo
+    description: Proportion of patients on placebo with at least one adverse event over 26 weeks
+    unit: proportion
+    planning: 0.50
+    truth_range: [0.40, 0.65]
+    sources: none
+    evidence: >-
+      A judgement, typical of placebo-controlled add-on trials in type 2 diabetes; the registry
+      safety results of the source trials were not extracted for this parameter. It shapes the
+      safety tables only and no efficacy analysis or sample size depends on it.
+  - id: ae_relative_risk_active
+    description: Relative risk of at least one adverse event on 20 mg against placebo
+    unit: ratio
+    planning: 1.10
+    truth_range: [0.95, 1.30]
+    sources: none
+    evidence: >-
+      A judgement: oral add-ons to metformin show small differences in overall adverse events.
+      The range includes no difference.
+  - id: gi_excess_active
+    description: Excess proportion of patients with a gastrointestinal adverse event (nausea, diarrhoea, vomiting) on 20 mg
+    unit: proportion
+    planning: 0.05
+    truth_range: [0.00, 0.10]
+    sources: none
+    evidence: >-
+      A judgement, to give the safety analysis a dose-related signal to find. The lower end of
+      the range is no signal at all.
+  - id: serious_ae
+    description: Proportion of patients with at least one serious adverse event over 26 weeks, in every arm
+    unit: proportion
+    planning: 0.03
+    truth_range: [0.02, 0.05]
+    sources: none
+    evidence: A judgement for a 26-week study of this population; no difference between arms is simulated.
+  - id: hypoglycaemia_level1_placebo
+    description: Proportion of patients on placebo with at least one level 1 hypoglycaemia (54 to 69 mg/dL)
+    unit: proportion
+    planning: 0.03
+    truth_range: [0.01, 0.06]
+    sources: none
+    evidence: >-
+      A judgement: without a sulfonylurea or insulin, symptomatic hypoglycaemia on metformin is
+      uncommon. Level 2 on placebo is simulated at a third of the active rate.
+  - id: hypoglycaemia_level1_active
+    description: Proportion of patients on 20 mg with at least one level 1 hypoglycaemia
+    unit: proportion
+    planning: 0.05
+    truth_range: [0.02, 0.10]
+    sources: none
+    evidence: A judgement, consistent with the level 2 rate above and a drug that does not act on insulin secretion directly.
+  - id: alt_3uln_active
+    description: Proportion of patients on 20 mg with ALT above 3 times the upper limit of normal after baseline
+    unit: proportion
+    planning: 0.01
+    truth_range: [0.00, 0.03]
+    sources: none
+    evidence: >-
+      A judgement, so the hepatic safety analysis (SF5) has rare events to find. Placebo is
+      simulated at 0.5%.
 
 design_rules:
   - id: primary_timepoint

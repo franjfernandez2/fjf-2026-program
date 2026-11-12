@@ -45,6 +45,13 @@ placebo · B(t)
 - **Rescue:** the patient starts a rescue medication.
 - **Withdrawal from the study:** nothing is recorded afterwards. A share of withdrawals is missing not at random, chosen more often among the poorer responders.
 
+**Safety data** are drawn after all the efficacy data, so adding them did not change any efficacy value:
+
+- **Adverse events:** background events at the placebo rate, times the relative risk on the drug. On top of that, an early gastrointestinal excess proportional to the dose, serious events, and the event behind each discontinuation for an adverse event, with the drug withdrawn.
+- **Terms are verbatim:** "Headache", "HEADACHE", "Tension headache". They are coded in F3.
+- **Hypoglycaemia:** levels 1 to 3 from the glucose meter, more frequent after rescue with a sulfonylurea or insulin. Level 2 and 3 episodes are also reported as adverse events.
+- **Safety laboratory:** ALT, AST, bilirubin and creatinine, log-normal with a patient and a visit part. eGFR comes from creatinine by CKD-EPI 2021. Rare hepatic elevations above 3 × ULN are proportional to the dose.
+
 Operational settings (sites, recruitment, characteristics that no outcome depends on) are public judgements in `R/settings.R`.
 
 ## Use
@@ -65,6 +72,7 @@ The tests use public seeds and the planning values as truth (`simulator/tests/`)
 - the week-26 effect and the placebo change of 301, and the week-12 dose-response of 201;
 - the rates of intercurrent events;
 - the missing-not-at-random selection;
-- the rescue rule.
+- the rescue rule;
+- the safety rates and the link between discontinuations and adverse events.
 
 They run in their own environment, apart from the analysis tests.

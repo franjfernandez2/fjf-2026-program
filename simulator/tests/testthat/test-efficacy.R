@@ -35,8 +35,7 @@ test_that("every table has exactly the columns, types and codelists of the speci
   for (study in c("201", "301")) {
     tables <- simulate_study(design, planning, study, 20, seed = 5)
     lists <- study_codelists(study)
-    not_yet <- c("adverse_events", "hypoglycaemia")
-    expect_setequal(names(tables), setdiff(purrr::map_chr(design$raw_spec$tables, "name"), not_yet))
+    expect_identical(names(tables), purrr::map_chr(design$raw_spec$tables, "name"))
     for (t in design$raw_spec$tables) {
       if (!t$name %in% names(tables)) next
       d <- tables[[t$name]]

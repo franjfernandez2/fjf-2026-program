@@ -42,3 +42,57 @@ shared_settings <- list(
   rescue_drugs = c("GLICLAZIDE", "INSULIN GLARGINE", "EMPAGLIFLOZIN", "PIOGLITAZONE"),
   missed_dose_share = 0.05
 )
+
+# Safety: adverse event terms as an investigator might write them (coded in F3), and the
+# laboratory model. Terms are common words, not a coding dictionary.
+safety_settings <- list(
+  background_terms = list(
+    "HEADACHE" = c("Headache", "HEADACHE", "headache", "Tension headache"),
+    "NASOPHARYNGITIS" = c("Nasopharyngitis", "Common cold", "COLD"),
+    "UPPER RESPIRATORY TRACT INFECTION" = c("Upper respiratory tract infection", "URTI", "Chest cold"),
+    "BACK PAIN" = c("Back pain", "LOWER BACK PAIN", "Backache"),
+    "ARTHRALGIA" = c("Arthralgia", "Joint pain", "Knee pain"),
+    "URINARY TRACT INFECTION" = c("Urinary tract infection", "UTI", "Cystitis"),
+    "HYPERTENSION" = c("Hypertension", "High blood pressure", "WORSENING HYPERTENSION"),
+    "DIZZINESS" = c("Dizziness", "Dizzy", "DIZZINESS"),
+    "COUGH" = c("Cough", "COUGH", "Dry cough"),
+    "INFLUENZA" = c("Influenza", "Flu", "FLU-LIKE ILLNESS"),
+    "NAUSEA" = c("Nausea", "NAUSEA", "Feeling sick"),
+    "DIARRHOEA" = c("Diarrhoea", "Diarrhea", "LOOSE STOOLS")
+  ),
+  background_weights = c(12, 10, 9, 7, 6, 5, 5, 4, 4, 4, 2, 2),
+  gi_terms = list(
+    "NAUSEA" = c("Nausea", "NAUSEA", "Feeling sick", "Nausea after tablets"),
+    "DIARRHOEA" = c("Diarrhoea", "Diarrhea", "LOOSE STOOLS"),
+    "VOMITING" = c("Vomiting", "VOMITING", "Vomited"),
+    "ABDOMINAL PAIN" = c("Abdominal pain", "Stomach ache", "UPPER ABDOMINAL PAIN")
+  ),
+  serious_terms = list(
+    "PNEUMONIA" = c("Pneumonia", "PNEUMONIA", "Community acquired pneumonia"),
+    "MYOCARDIAL INFARCTION" = c("Myocardial infarction", "Heart attack", "NSTEMI"),
+    "CELLULITIS" = c("Cellulitis", "Cellulitis left leg"),
+    "ATRIAL FIBRILLATION" = c("Atrial fibrillation", "AF", "New onset atrial fibrillation"),
+    "OSTEOARTHRITIS" = c("Osteoarthritis", "OA knee, admitted for knee replacement")
+  ),
+  hepatic_terms = c("ALT increased", "Liver enzymes elevated", "Raised transaminases"),
+  hypo_terms = c("Hypoglycaemia", "Hypoglycemia", "Low blood sugar"),
+  extra_events = 0.7,
+  severity = c(MILD = 0.60, MODERATE = 0.30, SEVERE = 0.10),
+  related_gi = 0.70,
+  related_other = 0.15,
+  ongoing = 0.08,
+  interrupted = 0.03,
+  alt_placebo = 0.005,
+  hypo_level3 = 0.002,
+  # Hypoglycaemia after rescue with a sulfonylurea or insulin.
+  hypo_after_rescue = 0.30,
+  labs = list(
+    ALT = list(unit = "U/L", ref = c(7, 56), log_mean = log(24), patient_sd = 0.35, visit_sd = 0.20),
+    AST = list(unit = "U/L", ref = c(10, 40), log_mean = log(21), patient_sd = 0.30, visit_sd = 0.15),
+    BILI = list(unit = "mg/dL", ref = c(0.1, 1.2), log_mean = log(0.6), patient_sd = 0.30, visit_sd = 0.15)
+  ),
+  creatinine = list(
+    M = log(0.95), F = log(0.75), patient_sd = 0.15, visit_sd = 0.06,
+    ref_M = c(0.7, 1.3), ref_F = c(0.5, 1.1)
+  )
+)
