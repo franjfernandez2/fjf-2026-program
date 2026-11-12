@@ -19,6 +19,12 @@ _targets/
 
 # --- Generated data: every dataset is rebuilt by the pipeline ---
 data/raw/*
+# ...except the study raw data, generated once from the sealed seed and committed (ADR 0018).
+!data/raw/201/
+!data/raw/301/
+!data/raw/manifest.csv
+# Rehearsals of the generation with public seeds are never committed.
+data/rehearsal/
 data/sdtm/*
 data/adam/*
 !data/*/.gitkeep

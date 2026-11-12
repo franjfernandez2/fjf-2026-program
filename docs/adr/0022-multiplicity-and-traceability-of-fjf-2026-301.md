@@ -1,6 +1,6 @@
 # ADR 0022: Multiplicity, subgroups and output traceability of FJF-2026-301
 
-- **Status:** Proposed
+- **Status:** Accepted (reviewer's gate-2 review, 2026-11-12)
 - **Date:** 2026-11-12
 - **Decided by:** Francisco Fernández
 

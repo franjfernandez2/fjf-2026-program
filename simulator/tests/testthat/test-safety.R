@@ -39,7 +39,7 @@ test_that("each discontinuation for an adverse event has the event, with the dru
 })
 
 test_that("events lie inside each patient's time in the study", {
-  d <- function(x) as.Date(x, "%d-%b-%Y")
+  d <- parse_crf_date
   for (tab in c("adverse_events", "hypoglycaemia")) {
     x <- big$tables[[tab]]
     date <- d(if (tab == "adverse_events") x$start_date else x$event_date)

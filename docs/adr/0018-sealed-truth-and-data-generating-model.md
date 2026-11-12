@@ -1,6 +1,6 @@
 # ADR 0018: Sealed truth and the data-generating model
 
-- **Status:** Proposed
+- **Status:** Accepted (reviewer's gate-2 review, 2026-11-12)
 - **Date:** 2026-11-12
 - **Decided by:** Francisco Fernández
 
@@ -34,6 +34,8 @@ Both are justified from published trials ([design assumptions](../design/assumpt
 **Unblinding.** When the analyses of a study are final and tagged, the seed is used to regenerate the truth. The estimates are then compared with it, and the comparison is published together with the seed.
 
 **A limit, declared.** The reviewer asked the assistant to generate the seed (2026-11-12). The assistant generated it with a command that wrote it straight to the file and showed nothing, so the assistant does not know it. The file is on a disk the assistant can read, though. The protection therefore rests on a rule and on a test, not on an impossibility. A seed known only to the reviewer, typed in at generation time, would be stronger. This limit is stated in the README and in [docs/ai-assistance.md](../ai-assistance.md).
+
+**Update at the gate-2 review (2026-11-12).** The reviewer chose the stronger option. Before the generation, they replace the content of the seed file with a number only they know, and do not tell the assistant. The generation uses that seed. The assistant never saw the original seed either, but the replacement means the seed in use was never on the disk while the assistant worked from it. The rule and the isolation test still apply.
 
 ## Alternatives considered
 

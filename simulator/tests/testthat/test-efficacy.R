@@ -129,7 +129,7 @@ test_that("glucose follows the protocol's rescue rule", {
   expect_setequal(uns$subject_id, rescued_ids)
   cm <- t$concomitant_meds[t$concomitant_meds$rescue == "Y", ]
   expect_setequal(cm$subject_id, rescued_ids)
-  d <- function(x) as.Date(x, "%d-%b-%Y")
+  d <- parse_crf_date
   expect_true(all(d(cm$start_date) >= d(uns$collection_date[match(cm$subject_id, uns$subject_id)])))
 })
 

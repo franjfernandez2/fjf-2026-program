@@ -23,10 +23,11 @@ New records copy [0000-template.md](0000-template.md).
 | [0015](0015-third-party-pilot-data.md) | Third-party data for the benchmark: the CDISC pilot, downloaded and verified | Accepted |
 | [0016](0016-specifications-from-define-xml.md) | Benchmark specifications read from the pilot's Define-XML 1.0 | Accepted |
 | [0017](0017-benchmark-acceptance-criteria.md) | Acceptance criteria of the benchmark (gate 1) | Accepted |
-| [0018](0018-sealed-truth-and-data-generating-model.md) | Sealed truth and the data-generating model | Proposed |
-| [0019](0019-estimands-of-fjf-2026-301.md) | Estimands of FJF-2026-301 | Proposed |
-| [0020](0020-sample-size-by-simulation.md) | Sample size of FJF-2026-301 by simulation | Proposed |
-| [0021](0021-sap-dry-run-on-planning-data.md) | Missing data in FJF-2026-301, and a dry run of the SAP on planning data | Proposed |
-| [0022](0022-multiplicity-and-traceability-of-fjf-2026-301.md) | Multiplicity, subgroups and output traceability of FJF-2026-301 | Proposed |
-| [0023](0023-mcpmod-design-of-201.md) | MCP-Mod design and sample size of FJF-2026-201 | Proposed |
-| [0024](0024-raw-data-layer.md) | Tables of the raw data layer | Proposed |
+| [0018](0018-sealed-truth-and-data-generating-model.md) | Sealed truth and the data-generating model | Accepted |
+| [0019](0019-estimands-of-fjf-2026-301.md) | Estimands of FJF-2026-301 | Accepted |
+| [0020](0020-sample-size-by-simulation.md) | Sample size of FJF-2026-301 by simulation | Accepted |
+| [0021](0021-sap-dry-run-on-planning-data.md) | Missing data in FJF-2026-301, and a dry run of the SAP on planning data | Accepted |
+| [0022](0022-multiplicity-and-traceability-of-fjf-2026-301.md) | Multiplicity, subgroups and output traceability of FJF-2026-301 | Accepted |
+| [0023](0023-mcpmod-design-of-201.md) | MCP-Mod design and sample size of FJF-2026-201 | Accepted |
+| [0024](0024-raw-data-layer.md) | Tables of the raw data layer | Accepted |
+| [0025](0025-data-errors-and-generation.md) | Data errors in the raw data, and how the study data are generated and loaded | Accepted |

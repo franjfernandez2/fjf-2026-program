@@ -13,6 +13,18 @@ crf_date <- function(x) {
   out
 }
 
+#' Parse a complete CRF date (DD-MON-YYYY); partial dates give NA.
+#'
+#' @param x Character vector.
+#' @return A Date vector.
+parse_crf_date <- function(x) {
+  ok <- !is.na(x) & grepl("^[0-9]{2}-[A-Z]{3}-[0-9]{4}$", x)
+  out <- rep(as.Date(NA), length(x))
+  m <- match(substr(x[ok], 4, 6), toupper(month.abb))
+  out[ok] <- as.Date(sprintf("%s-%02d-%s", substr(x[ok], 8, 11), m, substr(x[ok], 1, 2)))
+  out
+}
+
 #' Put a table in the column order of the specification, with record ids.
 #'
 #' Columns the specification lists and the data lack are added as missing; columns the
