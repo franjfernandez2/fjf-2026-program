@@ -1,0 +1,176 @@
+# Specification of the raw data layer of studies FJF-2026-201 and FJF-2026-301: the tables
+# an EDC system and its vendors (central laboratory, randomisation system) would deliver.
+# The same tables exist in the schemas raw_201 and raw_301 (ADR 0006).
+#
+# This file is the single source of the raw layer:
+#   - R/raw_spec.R checks it and writes the DDL (db/init/04-raw-tables.sql);
+#   - the simulator writes data in exactly these tables and columns;
+#   - the SDTM programs of F3 read from them.
+#
+# Raw means as collected, not clean. Dates are text, because the CRF allows partial dates
+# ("UNK-03-2026", "2026"). Laboratory results are text, because laboratories report values
+# like "<5". Duplicated records can occur, so tables have no natural primary key: each row
+# has the EDC's own record_id, and the natural key is listed for the data checks of F3.
+#
+# Column types: text, integer, numeric. Every table starts with record_id and subject_id.
+
+version: "0.1"
+
+codelists:
+  yes_no: ["Y", "N"]
+  sex: [M, F]
+  race: [WHITE, BLACK OR AFRICAN AMERICAN, ASIAN, AMERICAN INDIAN OR ALASKA NATIVE, NATIVE HAWAIIAN OR OTHER PACIFIC ISLANDER, OTHER]
+  ethnicity: [HISPANIC OR LATINO, NOT HISPANIC OR LATINO, NOT REPORTED]
+  stratum: ["<=8.5", ">8.5"]
+  visit_status: [DONE, NOT DONE]
+  lab_test: [HBA1C, GLUC, ALT, AST, BILI, CREAT, EGFR]
+  weight_unit: [kg, lb]
+  severity: [MILD, MODERATE, SEVERE]
+  ae_action: [DOSE NOT CHANGED, DRUG INTERRUPTED, DRUG WITHDRAWN, NOT APPLICABLE]
+  ae_outcome: [RECOVERED, RECOVERING, NOT RECOVERED, RECOVERED WITH SEQUELAE, FATAL, UNKNOWN]
+  disposition_event: [TREATMENT, STUDY]
+  disposition_status: [COMPLETED, DISCONTINUED]
+  disposition_reason: [ADVERSE EVENT, LACK OF EFFICACY, WITHDRAWAL BY SUBJECT, LOST TO FOLLOW-UP, PHYSICIAN DECISION, PROTOCOL DEVIATION, DEATH, OTHER]
+  hypo_level: ["1", "2", "3"]
+
+tables:
+  - name: enrolment
+    label: Screening and eligibility (one record per screened patient)
+    natural_key: [subject_id]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number: site and sequence, e.g. 301-012-0007"}
+      - {name: site_id, type: text, nullable: false, description: "Site number"}
+      - {name: consent_date, type: text, nullable: true, description: "Date of informed consent (DD-MON-YYYY)"}
+      - {name: screening_date, type: text, nullable: true, description: "Date of the screening visit"}
+      - {name: eligible, type: text, nullable: true, codelist: yes_no, description: "All inclusion and no exclusion criteria met"}
+      - {name: failed_criterion, type: text, nullable: true, description: "First criterion not met, for screen failures"}
+
+  - name: randomisation
+    label: Randomisation system transfer (one record per randomised patient)
+    natural_key: [subject_id]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "Transfer record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: randomisation_number, type: text, nullable: false, description: "Randomisation number from the list"}
+      - {name: randomisation_date, type: text, nullable: false, description: "Date of randomisation"}
+      - {name: stratum, type: text, nullable: false, codelist: stratum, description: "Screening HbA1c stratum as entered in the randomisation system"}
+      - {name: arm_code, type: text, nullable: false, codelist: arm, description: "Assigned arm (released at unblinding)"}
+
+  - name: demography
+    label: Demography CRF
+    natural_key: [subject_id]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: birth_date, type: text, nullable: true, description: "Date of birth; year only or partial dates allowed"}
+      - {name: sex, type: text, nullable: true, codelist: sex, description: "Sex"}
+      - {name: race, type: text, nullable: true, codelist: race, description: "Race"}
+      - {name: ethnicity, type: text, nullable: true, codelist: ethnicity, description: "Ethnicity"}
+      - {name: height_cm, type: numeric, nullable: true, description: "Height at screening (cm)"}
+      - {name: diabetes_diagnosis_date, type: text, nullable: true, description: "Date of diagnosis of type 2 diabetes; partial dates allowed"}
+      - {name: metformin_daily_mg, type: integer, nullable: true, description: "Metformin dose at screening (mg/day)"}
+
+  - name: visits
+    label: Visit dates, one record per scheduled or unscheduled visit
+    natural_key: [subject_id, visit_code, visit_date]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: visit_code, type: text, nullable: false, codelist: visit, description: "Protocol visit code, or UNS for an unscheduled visit"}
+      - {name: visit_date, type: text, nullable: true, description: "Date of the visit"}
+      - {name: visit_status, type: text, nullable: false, codelist: visit_status, description: "Whether the visit took place"}
+
+  - name: lab_results
+    label: Central laboratory transfer
+    natural_key: [subject_id, visit_code, test_code, collection_date]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "Transfer record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: visit_code, type: text, nullable: false, codelist: visit, description: "Visit at which the sample was taken"}
+      - {name: collection_date, type: text, nullable: true, description: "Date of sample collection"}
+      - {name: test_code, type: text, nullable: false, codelist: lab_test, description: "Laboratory test"}
+      - {name: result, type: text, nullable: true, description: "Result as reported, possibly with a qualifier such as \"<\""}
+      - {name: unit, type: text, nullable: true, description: "Unit of the result as reported"}
+      - {name: ref_low, type: numeric, nullable: true, description: "Lower limit of the reference range"}
+      - {name: ref_high, type: numeric, nullable: true, description: "Upper limit of the reference range"}
+      - {name: fasting, type: text, nullable: true, codelist: yes_no, description: "Patient fasting at collection"}
+
+  - name: vital_signs
+    label: Vital signs and weight CRF
+    natural_key: [subject_id, visit_code]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: visit_code, type: text, nullable: false, codelist: visit, description: "Visit"}
+      - {name: measure_date, type: text, nullable: true, description: "Date of measurement"}
+      - {name: sysbp, type: integer, nullable: true, description: "Systolic blood pressure (mmHg)"}
+      - {name: diabp, type: integer, nullable: true, description: "Diastolic blood pressure (mmHg)"}
+      - {name: pulse, type: integer, nullable: true, description: "Heart rate (beats/min)"}
+      - {name: weight, type: numeric, nullable: true, description: "Body weight, in weight_unit"}
+      - {name: weight_unit, type: text, nullable: true, codelist: weight_unit, description: "Unit of weight as entered"}
+
+  - name: exposure
+    label: Study drug dispensing and accountability
+    natural_key: [subject_id, visit_code]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: visit_code, type: text, nullable: false, codelist: visit, description: "Visit at which the kit was dispensed"}
+      - {name: dispense_date, type: text, nullable: true, description: "Date the kit was dispensed"}
+      - {name: return_date, type: text, nullable: true, description: "Date the kit was returned"}
+      - {name: tablets_dispensed, type: integer, nullable: true, description: "Tablets dispensed"}
+      - {name: tablets_returned, type: integer, nullable: true, description: "Tablets returned"}
+
+  - name: disposition
+    label: End of treatment and end of study
+    natural_key: [subject_id, event]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: event, type: text, nullable: false, codelist: disposition_event, description: "End of study treatment or end of study"}
+      - {name: status, type: text, nullable: false, codelist: disposition_status, description: "Completed or discontinued"}
+      - {name: reason, type: text, nullable: true, codelist: disposition_reason, description: "Reason for discontinuation"}
+      - {name: event_date, type: text, nullable: true, description: "Date of last dose, or of the last study contact"}
+
+  - name: adverse_events
+    label: Adverse events CRF (verbatim terms, coded in F3)
+    natural_key: [subject_id, ae_seq]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: ae_seq, type: integer, nullable: false, description: "Sequence number of the event within the patient"}
+      - {name: verbatim_term, type: text, nullable: false, description: "Event as written by the investigator"}
+      - {name: start_date, type: text, nullable: true, description: "Start date; partial dates allowed"}
+      - {name: end_date, type: text, nullable: true, description: "End date; empty if ongoing"}
+      - {name: severity, type: text, nullable: true, codelist: severity, description: "Maximum severity"}
+      - {name: serious, type: text, nullable: true, codelist: yes_no, description: "Serious adverse event"}
+      - {name: related, type: text, nullable: true, codelist: yes_no, description: "Related to study drug in the investigator's opinion"}
+      - {name: action_taken, type: text, nullable: true, codelist: ae_action, description: "Action taken with study drug"}
+      - {name: outcome, type: text, nullable: true, codelist: ae_outcome, description: "Outcome"}
+
+  - name: concomitant_meds
+    label: Prior and concomitant medication CRF, including rescue
+    natural_key: [subject_id, cm_seq]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: cm_seq, type: integer, nullable: false, description: "Sequence number of the medication within the patient"}
+      - {name: drug_name, type: text, nullable: false, description: "Medication as written by the investigator"}
+      - {name: indication, type: text, nullable: true, description: "Reason for the medication"}
+      - {name: daily_dose, type: text, nullable: true, description: "Daily dose with unit, as written"}
+      - {name: start_date, type: text, nullable: true, description: "Start date; partial dates allowed"}
+      - {name: end_date, type: text, nullable: true, description: "End date; empty if ongoing"}
+      - {name: rescue, type: text, nullable: true, codelist: yes_no, description: "Started as rescue medication under the protocol rule"}
+
+  - name: hypoglycaemia
+    label: Hypoglycaemia CRF (from the glucose meter and diary)
+    natural_key: [subject_id, event_seq]
+    columns:
+      - {name: record_id, type: integer, nullable: false, description: "EDC record identifier"}
+      - {name: subject_id, type: text, nullable: false, description: "Subject number"}
+      - {name: event_seq, type: integer, nullable: false, description: "Sequence number of the episode within the patient"}
+      - {name: event_date, type: text, nullable: true, description: "Date of the episode"}
+      - {name: glucose_mg_dl, type: integer, nullable: true, description: "Lowest glucose measured (mg/dL)"}
+      - {name: level, type: text, nullable: true, codelist: hypo_level, description: "Level 1 (54 to 69 mg/dL), 2 (below 54) or 3 (needed assistance)"}
+      - {name: assistance, type: text, nullable: true, codelist: yes_no, description: "Needed the help of another person"}

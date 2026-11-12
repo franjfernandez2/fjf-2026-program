@@ -16,6 +16,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 | SAP de la 301, parte 1: eficacia, datos faltantes, sensibilidad y ensayo en seco | `docs/sap/fjf-2026-301-sap.yml`, `R/efficacy_301.R`, ADR 0021 | 18 |
 | SAP de la 301, parte 2: secundarias, multiplicidad, subgrupos, seguridad, salidas y trazabilidad | `docs/sap/fjf-2026-301-outputs.yml`, `R/secondary_301.R`, `R/outputs.R`, ADR 0022 | 19 |
 | Protocolo y SAP de la 201: búsqueda de dosis con MCP-Mod | `docs/protocols/fjf-2026-201.yml`, `docs/sap/fjf-2026-201-sap.yml`, `R/mcpmod_201.R`, ADR 0023 | 20 |
+| Especificación de la capa raw y sus tablas en PostgreSQL | `docs/specs/raw-layer.yml`, `R/raw_spec.R`, `db/init/04-raw-tables.sql`, ADR 0024 | 21 |
 
 # Por qué se ha hecho así
 
@@ -42,6 +43,11 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 - **Estimando hipotético en la 201.** Un estudio de búsqueda de dosis pregunta qué hace cada dosis cuando se toma, no qué pasa por asignarla. Por eso usa los valores en tratamiento y antes del rescate.
 - **95 pacientes por brazo.** Es el menor tamaño con potencia del 90 % para cualquiera de los cuatro modelos y para la curva de planificación. Con 300 ensayos en seco, la señal aparece en el 93 %; la dosis elegida es 20 mg en el 46 %, y las vecinas se reparten el resto. Un estudio así demuestra que el fármaco funciona y que la curva se aplana, pero no fija una sola dosis con certeza.
 
+- **La capa raw es como la de un EDC** ([ADR 0024](../adr/0024-raw-data-layer.md)). Once tablas, como los cuadernos de recogida de datos: inclusión, aleatorización, demografía, visitas, laboratorio, constantes, exposición, disposición, acontecimientos adversos, medicación y hipoglucemias. Las fechas y los resultados de laboratorio son texto, porque se recogen fechas parciales y valores como «<5».
+- **Sin clave natural.** Cada fila tiene su `record_id`, así que se pueden cargar duplicados. Encontrarlos es trabajo de la F3.
+- **Las listas de códigos se aplican en la base de datos**, como los controles de un EDC: un valor fuera de la lista no se puede cargar. Por eso los errores del simulador serán de los que un EDC deja pasar.
+- **Un solo fichero manda.** La DDL se escribe desde la especificación, y una prueba falla si no coinciden.
+
 # Lo que salió mal y cómo se resolvió
 
 1. **Los artículos completos no son accesibles.** Están tras un muro de pago. Se usaron los resúmenes y los resultados de ClinicalTrials.gov, y cada número dice de cuál de los dos sale.
@@ -54,6 +60,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 8. **Una prueba se comparaba consigo misma.** Comprobaba que los datos de HbA1c no cambiaban comparando un valor con él mismo. Se sustituyó por pruebas de estructura, y lo de no cambiar se comprobó a mano: el ensayo único sigue dando −0,659.
 9. **El modelo lineal desaparecía** (PR 20). Al construir los modelos candidatos, asignar `NULL` a un elemento de una lista en R lo borra, y el lineal no tiene parámetros. Una prueba exige ahora que estén los cuatro modelos del SAP.
 10. **La potencia de MCP-Mod pide un número entero de pacientes.** El tamaño efectivo, descontados los que no tienen valor en la semana 12, se redondea hacia abajo.
+11. **«Y» y «N» se leían como verdadero y falso** (PR 21). El lector de YAML sigue la versión 1.1, donde `Y` y `N` son booleanos, y la primera DDL tenía `CHECK (eligible IN ('TRUE', 'FALSE'))`. Además, las comas cortaban las descripciones sin comillas. Se entrecomillaron, y una prueba comprueba la lista `yes_no`.
 
 # Preguntas de control
 
@@ -65,8 +72,9 @@ Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas son 
 4. ¿Por qué un MMRM bajo «missing at random» responde a la pregunta hipotética y no a la de política de tratamiento? ¿Qué hace «jump to reference» con un paciente que deja FJF-2026 y sale del estudio? (PR 18)
 5. ¿Qué es un análisis de punto de inflexión, y cómo se lee su resultado? (PR 18)
 6. ¿Por qué se calcula el tamaño muestral por simulación, y qué es el error de Monte Carlo? (PR 17)
+7. En MCP-Mod, ¿qué hace el paso MCP y qué hace el paso Mod? ¿Por qué no basta con comparar cada dosis con placebo, y por qué la 201 demuestra el efecto con más seguridad que la dosis? (PR 20 y 21)
 
-Las demás se añaden con sus pull requests (7 en la 21; 8 en la 23).
+La 8 se añade con la PR 23.
 
 # Respuestas
 
@@ -81,4 +89,5 @@ Pendientes: las escribes tú.
 4.
 5.
 6.
+7.
 :::
