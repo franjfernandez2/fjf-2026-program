@@ -1,0 +1,13 @@
+Package: fjfsim
+Title: Data Simulator of the FJF-2026 Programme
+Version: 0.1.0
+Authors@R: person("Francisco", "Fernández", role = c("aut", "cre"))
+Description: Generates the raw, EDC-like data of the fictional studies FJF-2026-201 and
+    FJF-2026-301 from the programme's design files and a truth drawn from a sealed seed
+    (ADR 0018). The analysis code never loads this package.
+License: file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.4)
+Imports: purrr, stats, tibble, withr, yaml
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
