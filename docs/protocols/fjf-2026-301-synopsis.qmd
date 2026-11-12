@@ -196,7 +196,7 @@ The study keeps most of its power if the variability, discontinuation, rescue or
 - **Sensitivity:** a tipping-point analysis on the imputed values and other imputation assumptions.
 - **Multiplicity:** the key secondary endpoints are tested only after the primary one succeeds.
 
-The SAP gives the full detail and is frozen before any data exist.
+The [SAP](../sap/fjf-2026-301-sap.qmd) gives the full detail and is frozen before any data exist.
 
 # Schedule of assessments
 

@@ -33,6 +33,10 @@ services:
     environment:
       FJF_DB_HOST: db
       FJF_DB_PORT: "5432"
+      # One BLAS thread per R process. The dry run forks parallel workers; with threaded
+      # OpenBLAS each would start its own threads and swamp the CPUs (seen on CI runners).
+      # Results are identical either way.
+      OPENBLAS_NUM_THREADS: "1"
     volumes:
       - .:/project
     working_dir: /project

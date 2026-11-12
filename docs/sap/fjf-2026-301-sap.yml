@@ -1,0 +1,129 @@
+# Statistical analysis plan of study FJF-2026-301, part 1: efficacy of the primary
+# endpoint. The SAP document (fjf-2026-301-sap.qmd) renders this file, and the analysis
+# code reads its settings from it, so the text and the code cannot disagree. R/sap.R checks
+# it against the protocol and the estimands. Part 2 (PR 19) adds the secondary endpoints,
+# multiplicity, subgroups and safety.
+#
+# The SAP is frozen with the tag sap-301-v1.0 before any study data are generated (ADR 0018).
+
+study: FJF-2026-301
+version: "0.1"
+status: Draft, part 1 of 2
+
+analysis_sets:
+  - id: FAS
+    label: Full analysis set
+    definition: Every randomised patient, analysed in the arm they were randomised to.
+    use: All efficacy analyses.
+  - id: PPS
+    label: Per-protocol set
+    definition: >-
+      Patients of the full analysis set who took study drug for at least 80% of the days up
+      to their last dose, had no major protocol deviation that could affect HbA1c, and have
+      a week-26 HbA1c measured before rescue and on treatment.
+    use: A supportive analysis of the supplementary estimand (part 2).
+  - id: SAF
+    label: Safety set
+    definition: Every randomised patient who took at least one dose of study drug, analysed by the treatment taken.
+    use: All safety analyses (part 2).
+
+derivations:
+  study_day: >-
+    Day of assessment minus the day of randomisation, plus 1 if the assessment is on or after
+    randomisation. Randomisation is study day 1; there is no day 0.
+  baseline: >-
+    The last HbA1c on or before study day 1 (normally visit V2; visit V1 if V2 is missing).
+    A patient with no baseline HbA1c stays in the full analysis set and enters the analysis
+    with a baseline imputed by the mean of the stratum.
+  change: HbA1c at the analysis visit minus baseline, in percentage points.
+  visit_windows: >-
+    Each post-baseline HbA1c is assigned to the nearest scheduled HbA1c visit by study day,
+    so the window boundaries are the midpoints between target days. The last visit's window
+    ends as far after its target as half the gap to the visit before it. Within a window, the
+    value closest to the target day is used; if two are equally close, the later one. Values
+    from unscheduled and early-termination visits are windowed in the same way.
+  on_treatment: A value is on treatment if it was taken no later than 7 days after the last dose of study drug.
+  pre_rescue: A value is before rescue if it was taken on or before the day of the first dose of rescue medication.
+
+# Analyses of the primary endpoint. Each names its estimand (fjf-2026-301-estimands.yml).
+# Imputation and model settings are read by R/efficacy_301.R.
+analyses:
+  - id: A1
+    estimand: E1
+    role: primary
+    label: Multiple imputation, jump to reference
+    analysis_set: FAS
+    data: >-
+      Every observed HbA1c from week 4 to week 26, on or off treatment, before or after rescue.
+    missing_data: >-
+      Values missing after a patient leaves the study are imputed by jump to reference: the
+      patient's future follows the placebo arm, given their own observed values. Values missing
+      in between observed ones are imputed under missing at random.
+    imputation_model: >-
+      Change from baseline with baseline, stratum, visit, arm, arm by visit and baseline by
+      visit; unstructured covariance between visits. Approximate Bayesian imputation (rbmi).
+    analysis_model: Analysis of covariance at week 26, change on arm, baseline and stratum.
+    pooling: Rubin's rules.
+    test: Two-sided, 5% level. FJF-2026 is superior to placebo if the upper 95% limit is below 0.
+    settings:
+      reference: PBO
+      strategy_after_withdrawal: JR
+      imputations: 500
+      seed: 301001
+  - id: A2
+    estimand: E2
+    role: supplementary
+    label: Mixed model for repeated measures
+    analysis_set: FAS
+    data: >-
+      HbA1c values from week 4 to week 26 taken on treatment and before rescue. Later values
+      are set to missing, because E2 asks what would have happened without them.
+    missing_data: Missing at random given the observed values, which the model handles without imputation.
+    analysis_model: >-
+      Change from baseline on baseline, stratum, visit, arm, arm by visit and baseline by
+      visit; unstructured covariance; Kenward-Roger degrees of freedom.
+    summary_measure: Difference in least-squares means at week 26 (emmeans).
+    test: Two-sided, 5% level; supportive, no confirmatory claim.
+
+# Sensitivity analyses vary one assumption of the analysis they belong to and keep the rest.
+sensitivity:
+  - id: S1
+    of: A1
+    label: Missing at random
+    assumption: >-
+      Values missing after withdrawal follow the patient's own arm. Less conservative than
+      jump to reference for FJF-2026; it shows how much the primary result owes to J2R.
+    settings:
+      strategy_after_withdrawal: MAR
+  - id: S2
+    of: A1
+    label: Copy reference
+    assumption: >-
+      After withdrawal the patient's whole profile, past included, is treated as placebo's.
+      Less conservative than J2R when the effect builds up over time.
+    settings:
+      strategy_after_withdrawal: CR
+  - id: S3
+    of: A1
+    label: Tipping point
+    assumption: >-
+      Values imputed under missing at random on FJF-2026 are made worse by a shift delta (HbA1c
+      percentage points), placebo unchanged. The tipping point is the smallest delta at which
+      the upper 95% limit reaches 0. A tipping point far beyond what is clinically plausible
+      (more than the whole expected effect) means the conclusion does not rest on how the
+      missing values are imputed.
+    settings:
+      strategy_after_withdrawal: MAR
+      deltas: {from: 0, to: 5, by: 0.25}
+
+# Dry run: the analyses above are run on data generated from the planning values with a public
+# seed, before any study data exist. It checks that the code runs, that it recovers the
+# planning effect, and that the real primary analysis has the power the sample size assumed.
+dry_run:
+  seed: 301004
+  large_sample_per_arm: 3000
+  operating_characteristics:
+    trials: 200
+    imputations: 20
+  missing_at_visit: 0.03
+  washout_weeks: 12

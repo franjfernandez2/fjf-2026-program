@@ -26,3 +26,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0018](0018-sealed-truth-and-data-generating-model.md) | Sealed truth and the data-generating model | Proposed |
 | [0019](0019-estimands-of-fjf-2026-301.md) | Estimands of FJF-2026-301 | Proposed |
 | [0020](0020-sample-size-by-simulation.md) | Sample size of FJF-2026-301 by simulation | Proposed |
+| [0021](0021-sap-dry-run-on-planning-data.md) | Missing data in FJF-2026-301, and a dry run of the SAP on planning data | Proposed |
