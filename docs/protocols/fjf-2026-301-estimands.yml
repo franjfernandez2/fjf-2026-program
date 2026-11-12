@@ -1,0 +1,112 @@
+# Estimands of study FJF-2026-301 (ICH E9(R1)). The protocol synopsis and the SAP render
+# them from this file; R/estimands.R checks that each one has all five attributes and a
+# strategy for every intercurrent event of the study.
+
+study: FJF-2026-301
+
+intercurrent_events:
+  - id: rescue
+    label: Start of rescue medication
+    definition: >-
+      First dose of a glucose-lowering drug other than metformin and the study drug, given
+      under the protocol's rescue rule or for any other reason.
+  - id: discontinuation
+    label: Permanent discontinuation of study treatment
+    definition: Last dose of study drug before week 26, for any reason, with no restart.
+
+estimands:
+  - id: E1
+    role: primary
+    label: Treatment-policy estimand
+    question: >-
+      What is the effect on HbA1c at week 26 of being assigned FJF-2026 rather than placebo,
+      on top of metformin, whatever happens after randomisation?
+    population: Adults with type 2 diabetes inadequately controlled on metformin, as defined by the eligibility criteria.
+    treatment: >-
+      FJF-2026 20 mg once daily versus placebo, both added to stable metformin, with rescue
+      medication available under the protocol's rule.
+    variable: Change from baseline in HbA1c (%) at week 26.
+    intercurrent_events:
+      - event: rescue
+        strategy: treatment policy
+        rationale: Rescue is part of the treatment regimen any patient would receive in practice.
+      - event: discontinuation
+        strategy: treatment policy
+        rationale: >-
+          Stopping a drug is part of its real-world effect; HbA1c is still measured after it
+          and used.
+    summary: Difference in means between the two arms.
+    analysis: >-
+      Multiple imputation using all observed data; missing week-26 values imputed by jump to
+      reference; ANCOVA adjusted for baseline HbA1c and the stratum; combined by Rubin's rules.
+  - id: E2
+    role: supplementary
+    label: Hypothetical estimand
+    question: >-
+      What would the effect on HbA1c at week 26 be if no rescue medication were available and
+      every patient stayed on the treatment they were assigned?
+    population: As E1.
+    treatment: FJF-2026 20 mg once daily versus placebo, both added to stable metformin, without rescue medication.
+    variable: Change from baseline in HbA1c (%) at week 26.
+    intercurrent_events:
+      - event: rescue
+        strategy: hypothetical
+        rationale: Describes the effect of the drug itself, without the effect of a second drug.
+      - event: discontinuation
+        strategy: hypothetical
+        rationale: Describes the effect in patients who take the drug as assigned.
+    summary: Difference in means between the two arms.
+    analysis: >-
+      Mixed model for repeated measures on the values before rescue and before
+      discontinuation, unstructured covariance, assuming the missing values are missing at
+      random given the observed ones.
+  - id: E3
+    role: key secondary
+    label: Glycaemic target
+    question: How does assignment to FJF-2026 change the chance of HbA1c below 7.0% at week 26?
+    population: As E1.
+    treatment: As E1.
+    variable: HbA1c below 7.0% at week 26 (yes or no).
+    intercurrent_events:
+      - event: rescue
+        strategy: treatment policy
+        rationale: As E1.
+      - event: discontinuation
+        strategy: treatment policy
+        rationale: As E1.
+    summary: Odds ratio and difference in proportions between the arms.
+    analysis: Logistic regression on each dataset imputed for E1, combined by Rubin's rules.
+  - id: E4
+    role: key secondary
+    label: Body weight
+    question: What is the effect on body weight at week 26 of being assigned FJF-2026 rather than placebo?
+    population: As E1.
+    treatment: As E1.
+    variable: Change from baseline in body weight (kg) at week 26.
+    intercurrent_events:
+      - event: rescue
+        strategy: treatment policy
+        rationale: As E1.
+      - event: discontinuation
+        strategy: treatment policy
+        rationale: As E1.
+    summary: Difference in means between the two arms.
+    analysis: As E1, for body weight.
+  - id: E5
+    role: key secondary
+    label: Need for rescue
+    question: Does assignment to FJF-2026 delay the need for rescue medication?
+    population: As E1.
+    treatment: As E1, rescue medication available.
+    variable: Time from randomisation to the first rescue medication, up to week 26.
+    intercurrent_events:
+      - event: rescue
+        strategy: composite
+        rationale: Rescue is the event of interest itself.
+      - event: discontinuation
+        strategy: treatment policy
+        rationale: Patients who stop treatment stay in the study and can still need rescue.
+    summary: Hazard ratio between the arms.
+    analysis: >-
+      Cox model stratified by the stratum, with patients censored when they leave the study or
+      at week 26.

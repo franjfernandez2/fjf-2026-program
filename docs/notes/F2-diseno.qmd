@@ -12,6 +12,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 |---|---|---|
 | Supuestos de diseño con fuentes publicadas, y verdad sellada | `docs/design/assumptions.yml`, ADR 0018 | 15 |
 | Sinopsis del protocolo de la 301 y sus datos de diseño | `docs/protocols/fjf-2026-301.yml`, `fjf-2026-301-synopsis.qmd` | 16 |
+| Estimandos de la 301 y tamaño muestral por simulación | `docs/protocols/fjf-2026-301-estimands.yml`, `R/sample_size.R`, ADR 0019 y 0020 | 17 |
 
 # Por qué se ha hecho así
 
@@ -19,19 +20,27 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 - **Dos valores por parámetro.** El de planificación es público y es el que usa el protocolo. La verdad está en un rango, y el simulador la elige con la semilla sellada. En un ensayo real, el efecto supuesto y el real tampoco coinciden.
 - **El diseño es un fichero de datos, no solo texto.** Las visitas, sus ventanas, la regla de rescate y los criterios están en `fjf-2026-301.yml`. El protocolo, el SAP y el simulador leen ese fichero, así que no pueden contradecirse. Una prueba comprueba que el diseño es coherente: las ventanas no se solapan, se mide la glucosa en cada visita con regla de rescate y hay HbA1c en la basal y en la semana 26.
 - **Quien deja el tratamiento sigue en el estudio.** El estimando principal es de política de tratamiento, así que la HbA1c de esos pacientes forma parte de la variable y hay que medirla, no imputarla.
+- **Dos estimandos, dos preguntas** ([ADR 0019](../adr/0019-estimands-of-fjf-2026-301.md)). El principal (E1) pregunta qué pasa por asignar FJF-2026, ocurra lo que ocurra después: política de tratamiento para el rescate y para el abandono. El suplementario (E2) pregunta qué pasaría sin rescate y con todos tomando el tratamiento: estrategia hipotética para los dos. El dossier proponía la hipotética solo para el rescate; se usa para los dos porque así E2 es una sola pregunta, y su análisis natural, el MMRM sobre los datos previos, la responde.
+- **El tamaño muestral se calcula simulando** ([ADR 0020](../adr/0020-sample-size-by-simulation.md)). Con política de tratamiento, el efecto se diluye: quien abandona FJF-2026 pierde el efecto, el rescate ayuda más al placebo y lo que falta se imputa con «jump to reference». Ninguna fórmula recoge todo eso. Salen 150 pacientes por brazo (300 en total): el efecto esperado baja de −0,50 a unos −0,39.
+- **El error de Monte Carlo cuenta.** Con 140 por brazo la potencia simulada es justo del 90 %. Se elige el tamaño cuyo límite inferior, potencia menos 1,96 errores de Monte Carlo, llega al 90 %. Así una simulación con suerte no elige un estudio demasiado pequeño.
 
 # Lo que salió mal y cómo se resolvió
 
 1. **Los artículos completos no son accesibles.** Están tras un muro de pago. Se usaron los resúmenes y los resultados de ClinicalTrials.gov, y cada número dice de cuál de los dos sale.
 2. **El rescate se cuenta mal en el registro de la sitagliptina.** Solo cuenta a quien completó las primeras 24 semanas. La cifra se usa con un rango amplio y se dice por qué.
+3. **Las ventanas de visita se solapaban.** La prueba del diseño detectó que la ventana de seguimiento (semana 28) se solapaba con la de la semana 26. Se redujo a ±5 días.
+4. **Faltaban dos supuestos para el tamaño muestral.** El beneficio del rescate y la proporción de pacientes que salen del estudio. Se añadieron con sus fuentes.
 
 # Preguntas de control
 
 Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas son tuyas: escríbelas abajo con tus palabras.
 
+1. ¿Cuáles son los cinco atributos de un estimando? Aplícalos al estimando principal de la 301. (PR 17)
 2. ¿Qué es un acontecimiento intercurrente, y por qué el rescate lo es? (PR 16)
+3. Política de tratamiento frente a estrategia hipotética: ¿a qué pregunta responde cada una, y a quién le interesa cada respuesta? (PR 17)
+6. ¿Por qué se calcula el tamaño muestral por simulación, y qué es el error de Monte Carlo? (PR 17)
 
-Las demás se añaden con sus pull requests (1, 3 y 6 en la PR 17; 4 y 5 en la 18; 7 en la 21; 8 en la 23).
+Las demás se añaden con sus pull requests (4 y 5 en la 18; 7 en la 21; 8 en la 23).
 
 # Respuestas
 
@@ -40,5 +49,8 @@ Las demás se añaden con sus pull requests (1, 3 y 6 en la PR 17; 4 y 5 en la 1
 
 Pendientes: las escribes tú.
 
+1.
 2.
+3.
+6.
 :::

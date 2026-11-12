@@ -1,7 +1,8 @@
 # The FJF-2026 pipeline. Rebuild everything that is out of date with:
 #   docker compose run --rm analysis Rscript -e "targets::tar_make()"
 #
-# Each phase adds its targets here: F0 the smoke test, F1 the CDISC pilot benchmark.
+# Each phase adds its targets here: F0 the smoke test, F1 the CDISC pilot benchmark,
+# F2 the design checks and the sample size.
 
 library(targets)
 
@@ -137,5 +138,39 @@ list(
       qc = adsl_qc_vs_production,
       log = read_discrepancy_log(discrepancy_log_file)
     )
+  ),
+
+  # --- F2: design of the FJF-2026 studies ---
+  tar_target(assumptions_file, "docs/design/assumptions.yml", format = "file"),
+  tar_target(design_assumptions, read_assumptions(assumptions_file)),
+  tar_target(protocol_301_file, "docs/protocols/fjf-2026-301.yml", format = "file"),
+  tar_target(protocol_301, read_protocol(protocol_301_file)),
+  tar_target(estimands_301_file, "docs/protocols/fjf-2026-301-estimands.yml", format = "file"),
+  tar_target(estimands_301, read_estimands(estimands_301_file)),
+  # Every design file must pass its checks before anything is computed from it.
+  tar_target(
+    design_301_problems,
+    c(
+      check_assumptions(design_assumptions),
+      check_protocol(protocol_301, design_assumptions),
+      check_estimands(estimands_301, protocol_301)
+    )
+  ),
+  # Sample size by simulation (ADR 0020), with a public seed. Planning values only.
+  tar_target(sample_size_seed, 20261112L),
+  tar_target(
+    sample_size_301_power,
+    {
+      stopifnot(length(design_301_problems) == 0)
+      simulate_power_301(
+        seq(100, 220, by = 10), planning_values_301(design_assumptions),
+        reps = 5000, seed = sample_size_seed
+      )
+    }
+  ),
+  tar_target(sample_size_301, choose_sample_size(sample_size_301_power, target = 0.9)),
+  tar_target(
+    sample_size_301_robustness,
+    power_robustness_301(sample_size_301, design_assumptions, reps = 5000, seed = sample_size_seed)
   )
 )

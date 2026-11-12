@@ -148,6 +148,33 @@ parameters:
     truth_range: [0.02, 0.08]
     sources: [charbonnel2006]
     evidence: 16/415 = 0.04 of sitagliptin completers of the first 24 weeks (same caveat as above).
+  - id: rescue_benefit
+    description: >-
+      Additional change in HbA1c at week 26 in a patient who started rescue, compared with the
+      same patient without rescue
+    unit: "%"
+    planning: -0.4
+    truth_range: [-0.8, -0.2]
+    sources: [charbonnel2006, bailey2010, haring2014]
+    evidence: >-
+      An added oral drug lowers HbA1c by about 0.5 to 0.65 points over 24 weeks in these
+      trials. Rescue starts part-way through the study, so a patient has it for only part
+      of the 26 weeks; the planning value is smaller, and insulin rescue could give more,
+      hence the range.
+  - id: study_withdrawal
+    description: >-
+      Proportion of patients with no HbA1c at week 26 because they left the study (lost to
+      follow-up or consent withdrawn), when patients who stop treatment are kept in the study
+    unit: proportion
+    planning: 0.06
+    truth_range: [0.02, 0.10]
+    sources: [charbonnel2006, bailey2010, haring2014]
+    evidence: >-
+      Lost to follow-up plus withdrawal by the patient, in the first 24 weeks: placebo 15/237
+      = 0.063 and sitagliptin 14/464 = 0.030 (NCT00086515); placebo 12/137 = 0.088 and
+      dapagliflozin 10 mg 8/135 = 0.059 (NCT00528879); placebo 9/207 = 0.043 and
+      empagliflozin 10 mg 5/217 = 0.023 (NCT01159600, refusal to continue counted as
+      withdrawal). The same value is used in both arms.
   - id: weight_change_placebo
     description: Mean change in body weight with placebo added to metformin
     unit: kg
@@ -182,9 +209,9 @@ parameters:
     truth_range: [0.5, 0.85]
     sources: none
     evidence: >-
-      No published source gives this directly. The value is a working assumption. The MMRM
-      with unstructured covariance does not depend on it, and the sample size simulation
-      shows its effect over the whole range.
+      No published source gives this directly. The value is a working assumption for the
+      simulator's HbA1c trajectories. The sample size uses the week-26 value only, so it does
+      not depend on it, and neither does the MMRM with unstructured covariance.
   - id: mnar_share_of_dropouts
     description: Share of treatment discontinuations whose timing depends on the unobserved HbA1c
     unit: proportion

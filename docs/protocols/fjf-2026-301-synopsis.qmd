@@ -8,10 +8,16 @@ date: today
 ```{r}
 #| include: false
 root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
-for (f in c("assumptions.R", "protocol.R")) source(file.path(root, "R", f))
+knitr::opts_knit$set(root.dir = root)
+for (f in c("assumptions.R", "protocol.R", "estimands.R")) source(file.path(root, "R", f))
 a <- read_assumptions(file.path(root, "docs", "design", "assumptions.yml"))
 p <- read_protocol(file.path(root, "docs", "protocols", "fjf-2026-301.yml"))
-stopifnot(length(check_assumptions(a)) == 0, length(check_protocol(p, a)) == 0)
+e <- read_estimands(file.path(root, "docs", "protocols", "fjf-2026-301-estimands.yml"))
+stopifnot(length(check_assumptions(a)) == 0, length(check_protocol(p, a)) == 0, length(check_estimands(e, p)) == 0)
+# The sample size is read from the pipeline (targets), run with a public seed (ADR 0020).
+ss_n <- targets::tar_read(sample_size_301, store = file.path(root, "_targets"))
+ss_power <- targets::tar_read(sample_size_301_power, store = file.path(root, "_targets"))
+ss_robust <- targets::tar_read(sample_size_301_robustness, store = file.path(root, "_targets"))
 pv <- function(id) a$parameters$planning[a$parameters$id == id]
 fmt <- function(x, d = 2) formatC(x, format = "f", digits = d, drop0trailing = TRUE)
 pct <- function(x) paste0(round(100 * x), "%")
@@ -26,8 +32,9 @@ Every number on this page is read from the study's design data ([`fjf-2026-301.y
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-11-12 | Francisco Fernández | First draft (F2 · PR 16) |
+| 0.2 | 2026-11-12 | Francisco Fernández | Estimands and sample size (F2 · PR 17) |
 
-Estimands and sample size are completed in version 0.2 (PR 17). The synopsis is frozen with the SAP (tag `sap-301-v1.0`).
+The synopsis is frozen with the SAP (tag `sap-301-v1.0`).
 
 # Study identification
 
@@ -66,10 +73,29 @@ The key secondary endpoints are tested in a hierarchy, or a graphical procedure,
 
 Two events can happen after randomisation and change the meaning of a patient's week-26 HbA1c. ICH E9(R1) calls them **intercurrent events**:
 
-- **Starting rescue medication.** A second glucose-lowering drug lowers HbA1c on its own. A patient's HbA1c after rescue no longer shows the effect of the study treatment alone.
-- **Stopping study treatment.** A patient who stops FJF-2026 no longer receives it, but their HbA1c is still measured.
+```{r}
+#| results: asis
+for (ev in e$intercurrent_events) cat("- **", ev$label, ".** ", ev$definition, "\n", sep = "")
+```
 
-The primary estimand handles both with a **treatment-policy** strategy: it compares the arms whatever happened after randomisation. A supplementary estimand uses a **hypothetical** strategy for rescue: what would have happened if no rescue had been available. Version 0.2 defines both estimands in full, with all five attributes, from the programme's estimands file.
+The primary estimand uses a **treatment-policy** strategy for both: it compares the arms whatever happened after randomisation. The supplementary estimand uses a **hypothetical** strategy for both: what would have happened without rescue and with every patient on the assigned treatment ([ADR 0019](../adr/0019-estimands-of-fjf-2026-301.md)). The estimands are read from [`fjf-2026-301-estimands.yml`](fjf-2026-301-estimands.yml).
+
+```{r}
+#| results: asis
+labels <- stats::setNames(purrr::map_chr(e$intercurrent_events, "label"), purrr::map_chr(e$intercurrent_events, "id"))
+for (est in e$estimands) {
+  cat("\n## ", est$id, " · ", est$label, " (", est$role, ")\n\n", est$question, "\n\n", sep = "")
+  cat("- **Population:** ", est$population, "\n", sep = "")
+  cat("- **Treatment:** ", est$treatment, "\n", sep = "")
+  cat("- **Variable:** ", est$variable, "\n", sep = "")
+  cat("- **Intercurrent events:**\n")
+  for (x in est$intercurrent_events) {
+    cat("    - ", labels[[x$event]], ": *", x$strategy, "*. ", x$rationale, "\n", sep = "")
+  }
+  cat("- **Population-level summary:** ", est$summary, "\n", sep = "")
+  cat("- **Analysis:** ", est$analysis, "\n", sep = "")
+}
+```
 
 # Design
 
@@ -121,20 +147,52 @@ knitr::kable(data.frame(
 
 # Sample size
 
-Completed in version 0.2 (PR 17), by simulation. The planning assumptions are:
+The sample size is found by simulation, because the treatment-policy estimand dilutes the effect in ways no formula captures ([ADR 0020](../adr/0020-sample-size-by-simulation.md)). The simulation uses the planning values only:
 
 | Assumption | Planning value |
 |---|---|
 | Placebo-adjusted change in HbA1c on treatment, without rescue | `r fmt(pv("effect_target_dose"))`% |
-| Standard deviation of the change | `r fmt(pv("change_sd"))`% |
+| Placebo change | `r fmt(pv("placebo_change_week24"))`% |
+| Standard deviation of the change | `r sprintf("%.1f", pv("change_sd"))`% |
 | Treatment discontinuation by week 26 (placebo / FJF-2026) | `r pct(pv("discontinuation_placebo"))` / `r pct(pv("discontinuation_active"))` |
-| Rescue by week 26 (placebo / FJF-2026) | `r pct(pv("rescue_placebo"))` / `r pct(pv("rescue_active"))` |
-| Two-sided alpha; power | 5%; 90% |
+| Rescue by week 26 (placebo / FJF-2026), and its benefit | `r pct(pv("rescue_placebo"))` / `r pct(pv("rescue_active"))`; `r fmt(pv("rescue_benefit"))`% |
+| No week-26 HbA1c (left the study), imputed by jump to reference | `r pct(pv("study_withdrawal"))` |
+| Two-sided alpha; target power | 5%; 90% |
+
+With **`r ss_n` patients per arm (`r 2 * ss_n` in all)**, the simulated power is `r sprintf("%.1f%%", 100 * ss_power$power[ss_power$n_per_arm == ss_n])` (Monte Carlo standard error `r sprintf("%.1f", 100 * ss_power$mcse[ss_power$n_per_arm == ss_n])` points). That is the smallest size whose lower 95% Monte Carlo limit reaches 90%. The expected treatment-policy difference is `r fmt(ss_power$mean_difference[ss_power$n_per_arm == ss_n])`%, against `r fmt(pv("effect_target_dose"))`% on treatment. Each size was simulated `r format(ss_power$reps[1], big.mark = ",")` times, with seed `r ss_power$seed[1]`.
+
+```{r}
+#| fig-height: 3
+#| fig-width: 6
+library(ggplot2)
+ggplot(ss_power, aes(n_per_arm, power)) +
+  geom_hline(yintercept = 0.9, linetype = "dashed", colour = "grey50") +
+  geom_errorbar(aes(ymin = power - 1.96 * mcse, ymax = power + 1.96 * mcse), width = 2) +
+  geom_line() +
+  geom_point() +
+  geom_vline(xintercept = ss_n, colour = "firebrick") +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Patients per arm", y = "Simulated power") +
+  theme_minimal(base_size = 10)
+```
+
+**Robustness.** Power at `r ss_n` per arm when one planning value moves to the edge of its range:
+
+```{r}
+knitr::kable(data.frame(
+  Scenario = ss_robust$scenario,
+  Power = sprintf("%.1f%%", 100 * ss_robust$power),
+  `Expected difference` = fmt(ss_robust$mean_difference),
+  check.names = FALSE
+))
+```
+
+The study keeps most of its power if the variability, discontinuation, rescue or withdrawal are worse than planned. It is not powered for an on-treatment effect at the low end of the plausible range (−0.30). That is a deliberate choice, recorded in ADR 0020.
 
 # Statistical analysis overview
 
 - **Primary estimand (treatment policy):** multiple imputation of the missing week-26 values. It uses every observed HbA1c, including after rescue and after treatment discontinuation, and imputes the rest by jump to reference. An ANCOVA on each imputed dataset is adjusted for baseline HbA1c and the stratification factor.
-- **Supplementary estimand (hypothetical for rescue):** a mixed model for repeated measures, on the values before rescue.
+- **Supplementary estimand (hypothetical):** a mixed model for repeated measures, on the values before rescue and before treatment discontinuation.
 - **Sensitivity:** a tipping-point analysis on the imputed values and other imputation assumptions.
 - **Multiplicity:** the key secondary endpoints are tested only after the primary one succeeds.
 
