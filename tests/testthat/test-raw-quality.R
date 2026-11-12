@@ -46,6 +46,7 @@ test_that("check_raw_quality finds each kind of problem", {
   expect_identical(n("Qualified or non-numeric result", "lab_results"), 1L)
   expect_identical(n("Ends before it starts", "adverse_events"), 1L)
   expect_identical(n("Missing required value", "adverse_events"), 1L)
+  expect_setequal(unique(q$check), raw_quality_checks)
   # The checks must be readable before the database lock: they never use the treatment arm.
   expect_false(any(grepl("arm", deparse(check_raw_quality), fixed = TRUE)))
 })

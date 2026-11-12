@@ -11,6 +11,10 @@ root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
 knitr::opts_knit$set(root.dir = root)
 q <- targets::tar_read(raw_quality, store = file.path(root, "_targets"))
 manifest <- utils::read.csv(file.path(root, "data", "raw", "manifest.csv"))
+rules <- yaml::read_yaml(file.path(root, "docs", "specs", "cleaning-rules.yml"))$rules
+rule_of <- function(check) {
+  vapply(check, \(x) toString(purrr::map_chr(purrr::keep(rules, \(r) r$check == x), "id")), "")
+}
 fmt <- function(x) format(x, big.mark = " ")
 ```
 
@@ -45,8 +49,11 @@ for (s in c("201", "301")) {
   cat("\n## FJF-2026-", s, "\n\n", sep = "")
   d <- q[q$study == s & q$n > 0, ]
   print(knitr::kable(
-    data.frame(Check = d$check, Table = d$table, Findings = fmt(d$n), Rows = fmt(d$rows), Detail = d$detail),
-    align = "llrrl", row.names = FALSE
+    data.frame(
+      Check = d$check, Table = d$table, Findings = fmt(d$n), Rows = fmt(d$rows), Detail = d$detail,
+      Rule = rule_of(d$check)
+    ),
+    align = "llrrll", row.names = FALSE
   ))
   clean <- q[q$study == s & q$n == 0, ]
   where <- ifelse(clean$check == "Partial date", paste0(clean$table, ".", clean$detail), clean$table)
@@ -66,4 +73,4 @@ for (s in c("201", "301")) {
 
 # What happens next
 
-In F3, each kind of finding gets a cleaning rule with its reason, applied when the data are mapped to SDTM. The simulator's own log of the errors it planted is not stored ([ADR 0025](../adr/0025-data-errors-and-generation.md)). At the unblinding it is rebuilt from the seed and compared with what these checks and the F3 cleaning found.
+Each kind of finding has a cleaning rule with its reason, in [`cleaning-rules.yml`](cleaning-rules.yml) ([ADR 0026](../adr/0026-cleaning-rules-and-mapping.md)); the last column of the tables names it. The rules act when the data are mapped to SDTM or derived into ADaM. The simulator's own log of the errors it planted is not stored ([ADR 0025](../adr/0025-data-errors-and-generation.md)). At the unblinding it is rebuilt from the seed and compared with what these checks and the F3 cleaning found.
