@@ -10,6 +10,26 @@ blinding_seed: 301301
 # The CRF does not collect the country. COUNTRY stays empty and the reviewer's guide says so.
 country: null
 
+# Laboratory tests: name, category and standard unit. Results in another unit are converted
+# with value * factor + offset (CR06); a unit not listed leaves LBSTRESN missing (listed).
+lab_tests:
+  - {code: GLUC, name: Glucose, category: CHEMISTRY, unit: mg/dL, convert: [{from: mmol/L, factor: 18.016, offset: 0}]}
+  - {code: HBA1C, name: Hemoglobin A1C, category: CHEMISTRY, unit: "%", convert: [{from: mmol/mol, factor: 0.0915, offset: 2.15}]}
+  - {code: ALT, name: Alanine Aminotransferase, category: CHEMISTRY, unit: U/L, convert: []}
+  - {code: AST, name: Aspartate Aminotransferase, category: CHEMISTRY, unit: U/L, convert: []}
+  - {code: BILI, name: Bilirubin, category: CHEMISTRY, unit: mg/dL, convert: [{from: umol/L, factor: 0.05848, offset: 0}]}
+  - {code: CREAT, name: Creatinine, category: CHEMISTRY, unit: mg/dL, convert: [{from: umol/L, factor: 0.01131, offset: 0}]}
+  - {code: EGFR, name: "Glomerular Filtration Rate, Estimated", category: CHEMISTRY, unit: mL/min/1.73m2, convert: []}
+
+# Vital signs: the CRF column, test name and standard unit. Weight in pounds and height in
+# metres are converted (CR04, CR05).
+vital_signs:
+  - {code: SYSBP, column: sysbp, name: Systolic Blood Pressure, unit: mmHg}
+  - {code: DIABP, column: diabp, name: Diastolic Blood Pressure, unit: mmHg}
+  - {code: PULSE, column: pulse, name: Pulse Rate, unit: beats/min}
+  - {code: WEIGHT, column: weight, name: Weight, unit: kg}
+  - {code: HEIGHT, column: height_cm, name: Height, unit: cm}
+
 domains:
   - name: DM
     label: Demographics
@@ -173,6 +193,93 @@ domains:
   - name: SUPPAE
     label: Supplemental Qualifiers for AE
     structure: One record per supplemental qualifier per adverse event
+    keys: [STUDYID, RDOMAIN, USUBJID, IDVAR, IDVARVAL, QNAM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: RDOMAIN, label: Related Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: IDVAR, label: Identifying Variable, type: text, origin: Assigned}
+      - {name: IDVARVAL, label: Identifying Variable Value, type: text, origin: Derived}
+      - {name: QNAM, label: Qualifier Variable Name, type: text, origin: Assigned}
+      - {name: QLABEL, label: Qualifier Variable Label, type: text, origin: Assigned}
+      - {name: QVAL, label: Data Value, type: text, origin: Collected}
+      - {name: QORIG, label: Origin, type: text, origin: Assigned}
+      - {name: QEVAL, label: Evaluator, type: text, origin: Assigned}
+
+  - name: LB
+    label: Laboratory Test Results
+    structure: One record per lab test per visit per subject
+    keys: [STUDYID, USUBJID, LBTESTCD, VISITNUM, LBDTC]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: LBSEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: LBREFID, label: Specimen ID, type: text, origin: Collected, source: lab_results.record_id}
+      - {name: LBTESTCD, label: Lab Test or Examination Short Name, type: text, origin: Collected, source: lab_results.test_code}
+      - {name: LBTEST, label: Lab Test or Examination Name, type: text, origin: Assigned}
+      - {name: LBCAT, label: Category for Lab Test, type: text, origin: Assigned}
+      - {name: LBORRES, label: Result or Finding in Original Units, type: text, origin: Collected, source: lab_results.result}
+      - {name: LBORRESU, label: Original Units, type: text, origin: Collected, source: lab_results.unit}
+      - {name: LBORNRLO, label: Normal Range Lower Limit-Original Units, type: text, origin: Collected}
+      - {name: LBORNRHI, label: Normal Range Upper Limit-Original Units, type: text, origin: Collected}
+      - {name: LBSTRESC, label: Character Result/Finding in Std Format, type: text, origin: Derived, source: "CR06, CR07"}
+      - {name: LBSTRESN, label: Numeric Result/Finding in Standard Units, type: float, origin: Derived, source: "CR06, CR07"}
+      - {name: LBSTRESU, label: Standard Units, type: text, origin: Assigned}
+      - {name: LBSTNRLO, label: Normal Range Lower Limit-Std Units, type: float, origin: Derived}
+      - {name: LBSTNRHI, label: Normal Range Upper Limit-Std Units, type: float, origin: Derived}
+      - {name: LBNRIND, label: Reference Range Indicator, type: text, origin: Derived}
+      - {name: LBFAST, label: Fasting Status, type: text, origin: Collected, source: lab_results.fasting}
+      - {name: LBLOBXFL, label: Last Observation Before Exposure Flag, type: text, origin: Derived}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
+      - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: LBDTC, label: Date/Time of Specimen Collection, type: text, origin: Collected, source: lab_results.collection_date}
+      - {name: LBDY, label: Study Day of Specimen Collection, type: integer, origin: Derived}
+
+  - name: VS
+    label: Vital Signs
+    structure: One record per vital sign measurement per visit per subject
+    keys: [STUDYID, USUBJID, VSTESTCD, VISITNUM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: VSSEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: VSTESTCD, label: Vital Signs Test Short Name, type: text, origin: Assigned}
+      - {name: VSTEST, label: Vital Signs Test Name, type: text, origin: Assigned}
+      - {name: VSORRES, label: Result or Finding in Original Units, type: text, origin: Collected, source: "vital_signs; demography.height_cm"}
+      - {name: VSORRESU, label: Original Units, type: text, origin: Collected}
+      - {name: VSSTRESC, label: Character Result/Finding in Std Format, type: text, origin: Derived, source: "CR04, CR05"}
+      - {name: VSSTRESN, label: Numeric Result/Finding in Standard Units, type: float, origin: Derived, source: "CR04, CR05"}
+      - {name: VSSTRESU, label: Standard Units, type: text, origin: Assigned}
+      - {name: VSLOBXFL, label: Last Observation Before Exposure Flag, type: text, origin: Derived}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
+      - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: VSDTC, label: Date/Time of Measurements, type: text, origin: Collected, source: "vital_signs.measure_date; screening date for height"}
+      - {name: VSDY, label: Study Day of Vital Signs, type: integer, origin: Derived}
+
+  - name: CE
+    label: Clinical Events
+    structure: One record per hypoglycaemic event per subject
+    keys: [STUDYID, USUBJID, CETERM, CESTDTC]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: CESEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: CESPID, label: Sponsor-Defined Identifier, type: text, origin: Collected, source: hypoglycaemia.event_seq}
+      - {name: CETERM, label: Reported Term for the Clinical Event, type: text, origin: Assigned}
+      - {name: CEDECOD, label: Dictionary-Derived Term, type: text, origin: Assigned}
+      - {name: CECAT, label: Category for Clinical Event, type: text, origin: Assigned}
+      - {name: CESCAT, label: Subcategory for Clinical Event, type: text, origin: Derived, source: "hypoglycaemia.level (ADA level 1-3)"}
+      - {name: CEPRESP, label: Clinical Event Pre-specified, type: text, origin: Assigned}
+      - {name: CEOCCUR, label: Clinical Event Occurrence, type: text, origin: Assigned}
+      - {name: CESTDTC, label: Start Date/Time of Clinical Event, type: text, origin: Collected, source: hypoglycaemia.event_date}
+      - {name: CESTDY, label: Study Day of Start of Clinical Event, type: integer, origin: Derived}
+
+  - name: SUPPCE
+    label: Supplemental Qualifiers for CE
+    structure: One record per supplemental qualifier per clinical event
     keys: [STUDYID, RDOMAIN, USUBJID, IDVAR, IDVARVAL, QNAM]
     variables:
       - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
