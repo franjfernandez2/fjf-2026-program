@@ -1,0 +1,73 @@
+---
+title: "Raw data layer: specification"
+subtitle: "Studies FJF-2026-201 and FJF-2026-301"
+author: "Francisco Fernández"
+date: today
+---
+
+```{r}
+#| include: false
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+knitr::opts_knit$set(root.dir = root)
+for (f in c("protocol.R", "raw_spec.R")) source(file.path(root, "R", f))
+spec <- read_raw_spec(file.path(root, "docs", "specs", "raw-layer.yml"))
+protocols <- list(
+  raw_201 = read_protocol(file.path(root, "docs", "protocols", "fjf-2026-201.yml")),
+  raw_301 = read_protocol(file.path(root, "docs", "protocols", "fjf-2026-301.yml"))
+)
+stopifnot(length(check_raw_spec(spec, protocols)) == 0)
+cols <- raw_columns(spec)
+```
+
+This page renders [`raw-layer.yml`](raw-layer.yml). The same file writes the database tables ([`db/init/04-raw-tables.sql`](../../db/init/04-raw-tables.sql)), and the simulator writes its data into exactly these tables, so the three cannot disagree ([ADR 0024](../adr/0024-raw-data-layer.md)).
+
+# Document control
+
+| Version | Date | Author | Change |
+|---|---|---|---|
+| `r spec$version` | 2026-11-12 | Francisco Fernández | First version (F2 · PR 21) |
+
+# What "raw" means here
+
+The raw layer holds the data as an EDC system, a central laboratory and a randomisation system would deliver them, before any cleaning. It is the starting point of the SDTM programs of F3.
+
+- **Dates are text.** The CRF allows partial dates, such as an unknown day of an adverse event. They are converted, and imputed where the SAP says so, in SDTM and ADaM.
+- **Laboratory results are text.** A laboratory reports values such as `<5`, with its own units and reference ranges.
+- **No natural primary key.** EDC data can contain duplicated records, which F3 must find. Each row has the EDC's `record_id`. The natural key of each table is listed for those checks.
+- **Codelists are enforced.** A value outside its codelist is refused when loading, as an EDC edit check would refuse it at entry. Free text (verbatim terms, medication names) is not controlled; it is coded in F3.
+- **Every change is audited.** Every table gets the audit trail of [ADR 0013](../adr/0013-database-roles-and-audit-trail.md) when it is created.
+
+The same `r length(spec$tables)` tables exist in the schemas `raw_201` and `raw_301`. The arm and visit codelists come from each study's protocol.
+
+# Tables
+
+```{r}
+#| results: asis
+for (t in spec$tables) {
+  cat("\n## `", t$name, "`\n\n", t$label, ". Natural key: ", paste0("`", unlist(t$natural_key), "`", collapse = ", "), ".\n\n", sep = "")
+  d <- cols[cols$table == t$name, ]
+  print(knitr::kable(data.frame(
+    Column = paste0("`", d$column, "`"), Type = d$type, Required = ifelse(d$nullable, "", "yes"),
+    Codelist = ifelse(is.na(d$codelist), "", d$codelist), Description = d$description
+  ), align = "lllll"))
+  cat("\n")
+}
+```
+
+# Codelists
+
+```{r}
+#| results: asis
+for (study in names(protocols)) {
+  lists <- raw_codelists(spec, protocols[[study]])
+  if (study == names(protocols)[1]) {
+    for (n in names(spec$codelists)) cat("- **", n, ":** ", paste0("`", lists[[n]], "`", collapse = ", "), "\n", sep = "")
+  }
+  cat("- **arm, visit (", protocols[[study]]$study, "):** ", paste0("`", lists$arm, "`", collapse = ", "), "; ",
+      paste0("`", lists$visit, "`", collapse = ", "), "\n", sep = "")
+}
+```
+
+# From the protocol to the tables
+
+Every assessment of the protocols' schedules has a table: `r nrow(cols)` columns in all. The ECG has no raw table: its results are not analysed in this programme.
