@@ -164,6 +164,9 @@ datasets:
       - {name: AEBODSYS, label: Body System or Organ Class, type: text, origin: Predecessor, source: AE.AEBODSYS}
       - {name: AESOC, label: Primary System Organ Class, type: text, origin: Predecessor, source: AE.AESOC}
       - {name: AESEV, label: Severity/Intensity, type: text, origin: Predecessor, source: AE.AESEV}
+      - {name: ASEV, label: Analysis Severity/Intensity, type: text, origin: Derived, source: "AE.AESEV; missing counts as SEVERE (CR09)"}
+      - {name: ASEVN, label: Analysis Severity/Intensity (N), type: integer, origin: Derived, source: "1 MILD, 2 MODERATE, 3 SEVERE"}
+      - {name: ASEVIMFL, label: Analysis Severity Imputed Flag, type: text, origin: Derived, source: "Y when AESEV is missing and ASEV is imputed (CR09)"}
       - {name: AESER, label: Serious Event, type: text, origin: Predecessor, source: AE.AESER}
       - {name: AEACN, label: Action Taken with Study Treatment, type: text, origin: Predecessor, source: AE.AEACN}
       - {name: AEREL, label: Causality, type: text, origin: Predecessor, source: AE.AEREL}

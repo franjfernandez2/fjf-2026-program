@@ -120,3 +120,10 @@ test_that("the ADaM second programming agrees with production and catches a diff
   production$ADAE$TRTEMFL[1] <- NA
   expect_false(compare_adam_301(production, qc)$clean[4])
 })
+
+test_that("a missing severity counts as severe, flagged (CR09)", {
+  expect_identical(sdtm$AE$AESEV, c("MILD", NA, "MODERATE"))
+  expect_identical(adae$ASEV, c("MILD", "SEVERE", "MODERATE"))
+  expect_identical(adae$ASEVN, c(1L, 3L, 2L))
+  expect_identical(adae$ASEVIMFL, c(NA, "Y", NA))
+})

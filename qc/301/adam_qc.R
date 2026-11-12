@@ -156,6 +156,8 @@ qc_adam_301 <- function(dir, protocol) {
   }
   adae <- data.frame(
     USUBJID = ae$USUBJID, AESEQ = ae$AESEQ, ASTDT = st,
+    ASEV = ifelse(ae$AESEV %in% c("", NA), "SEVERE", ae$AESEV),
+    ASEVIMFL = ifelse(ae$AESEV %in% c("", NA), "Y", NA),
     TRTEMFL = ifelse(!is.na(trtsdt[i]) & st >= trtsdt[i] & st <= trtedt[i] + 14, "Y", NA)
   )
 
