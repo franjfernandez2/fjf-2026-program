@@ -15,6 +15,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 | Estimandos de la 301 y tamaño muestral por simulación | `docs/protocols/fjf-2026-301-estimands.yml`, `R/sample_size.R`, ADR 0019 y 0020 | 17 |
 | SAP de la 301, parte 1: eficacia, datos faltantes, sensibilidad y ensayo en seco | `docs/sap/fjf-2026-301-sap.yml`, `R/efficacy_301.R`, ADR 0021 | 18 |
 | SAP de la 301, parte 2: secundarias, multiplicidad, subgrupos, seguridad, salidas y trazabilidad | `docs/sap/fjf-2026-301-outputs.yml`, `R/secondary_301.R`, `R/outputs.R`, ADR 0022 | 19 |
+| Protocolo y SAP de la 201: búsqueda de dosis con MCP-Mod | `docs/protocols/fjf-2026-201.yml`, `docs/sap/fjf-2026-201-sap.yml`, `R/mcpmod_201.R`, ADR 0023 | 20 |
 
 # Por qué se ha hecho así
 
@@ -37,6 +38,10 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 - **Subgrupos descriptivos.** Cuatro variables binarias, con estimación por nivel e interacción. No se ajustan por multiplicidad y no sostienen ninguna afirmación.
 - **Las salidas también son datos.** Cada tabla y figura dice qué parte del SAP implementa, qué variables ADaM lee y qué programa la hará. Una prueba falla si un análisis no tiene salida o una salida no apunta a nada del SAP. De ese fichero sale la matriz de trazabilidad.
 
+- **La 201 busca la dosis con MCP-Mod** ([ADR 0023](../adr/0023-mcpmod-design-of-201.md)). Primero se pregunta si el efecto cambia con la dosis, sin apostar por una forma de curva: cuatro modelos candidatos y un contraste óptimo para cada uno. Después se ajusta el mejor modelo y se lee la dosis: la menor que da al menos el 80 % del efecto máximo y 0,3 puntos frente a placebo.
+- **Estimando hipotético en la 201.** Un estudio de búsqueda de dosis pregunta qué hace cada dosis cuando se toma, no qué pasa por asignarla. Por eso usa los valores en tratamiento y antes del rescate.
+- **95 pacientes por brazo.** Es el menor tamaño con potencia del 90 % para cualquiera de los cuatro modelos y para la curva de planificación. Con 300 ensayos en seco, la señal aparece en el 93 %; la dosis elegida es 20 mg en el 46 %, y las vecinas se reparten el resto. Un estudio así demuestra que el fármaco funciona y que la curva se aplana, pero no fija una sola dosis con certeza.
+
 # Lo que salió mal y cómo se resolvió
 
 1. **Los artículos completos no son accesibles.** Están tras un muro de pago. Se usaron los resúmenes y los resultados de ClinicalTrials.gov, y cada número dice de cuál de los dos sale.
@@ -47,6 +52,8 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 6. **El punto de inflexión era lento en el ensayo grande.** Cada delta vuelve a analizar todas las imputaciones. En el ensayo grande se usa una rejilla corta; en el del tamaño previsto, la del SAP.
 7. **La imputación no era reproducible por sí sola** (PR 19). rbmi usa números aleatorios en dos pasos, y solo el primero tenía semilla. Dentro del pipeline no se notaba, porque `targets` pone una semilla a cada objetivo. En los 200 ensayos en paralelo, los resultados cambiaban entre ejecuciones. Ahora la semilla del SAP cubre los dos pasos, y una prueba exige resultados idénticos con distinto estado previo y distinto número de núcleos. La conclusión no cambió: potencia implícita del 90,3 % (antes 90,5 %).
 8. **Una prueba se comparaba consigo misma.** Comprobaba que los datos de HbA1c no cambiaban comparando un valor con él mismo. Se sustituyó por pruebas de estructura, y lo de no cambiar se comprobó a mano: el ensayo único sigue dando −0,659.
+9. **El modelo lineal desaparecía** (PR 20). Al construir los modelos candidatos, asignar `NULL` a un elemento de una lista en R lo borra, y el lineal no tiene parámetros. Una prueba exige ahora que estén los cuatro modelos del SAP.
+10. **La potencia de MCP-Mod pide un número entero de pacientes.** El tamaño efectivo, descontados los que no tienen valor en la semana 12, se redondea hacia abajo.
 
 # Preguntas de control
 

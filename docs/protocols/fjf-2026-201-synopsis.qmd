@@ -1,0 +1,147 @@
+---
+title: "Protocol synopsis: FJF-2026-201"
+subtitle: "Phase II · Dose finding of FJF-2026 added to metformin in type 2 diabetes"
+author: "Francisco Fernández"
+date: today
+---
+
+```{r}
+#| include: false
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+knitr::opts_knit$set(root.dir = root)
+for (f in c("assumptions.R", "protocol.R", "estimands.R")) source(file.path(root, "R", f))
+a <- read_assumptions(file.path(root, "docs", "design", "assumptions.yml"))
+p <- read_protocol(file.path(root, "docs", "protocols", "fjf-2026-201.yml"))
+e <- read_estimands(file.path(root, "docs", "protocols", "fjf-2026-201-estimands.yml"))
+stopifnot(length(check_protocol(p, a)) == 0, length(check_estimands(e, p)) == 0)
+store <- file.path(root, "_targets")
+tr <- function(name) targets::tar_read_raw(name, store = store)
+ss_n <- tr("sample_size_201")
+ss_power <- tr("sample_size_201_power")
+curve <- tr("planning_curve_201_values")
+ref_dose <- tr("reference_dose_201")
+pv <- function(id) a$parameters$planning[a$parameters$id == id]
+fmt <- function(x, d = 2) formatC(x, format = "f", digits = d)
+pct <- function(x) paste0(round(100 * x), "%")
+doses <- purrr::map_dbl(p$arms, "dose_mg")
+k <- length(p$arms)
+```
+
+Every number on this page is read from the study's design data ([`fjf-2026-201.yml`](fjf-2026-201.yml)), its estimands ([`fjf-2026-201-estimands.yml`](fjf-2026-201-estimands.yml)) and the programme's [design assumptions](../design/assumptions.qmd).
+
+# Document control
+
+| Version | Date | Author | Change |
+|---|---|---|---|
+| 0.1 | 2026-11-12 | Francisco Fernández | First draft, with estimand and sample size (F2 · PR 20) |
+
+The synopsis is frozen with the SAP (tag `sap-201-v1.0`).
+
+# Study identification
+
+| Item | Value |
+|---|---|
+| Study number | `r p$study` |
+| Title | `r p$title` |
+| Phase | `r p$phase` |
+| Investigational product | FJF-2026 `r paste(doses[doses > 0], collapse = ", ")` mg, oral, once daily |
+| Comparator | Placebo, added to stable metformin |
+| Duration of treatment | `r p$treatment_weeks` weeks, then `r p$follow_up_weeks` weeks of follow-up |
+
+# Rationale
+
+FJF-2026 is a fictional once-daily oral drug for type 2 diabetes. Before a confirmatory study, the programme needs to know whether the drug lowers HbA1c at all, how the effect changes with the dose, and which dose gives most of the attainable effect. `r p$dose_rationale`
+
+In the programme's order of work, this study is built after the phase III study (ADR 0005). Both are simulated from the same true dose-response curve, sealed until the unblinding ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)), so the dose this study selects can be compared with the `r ref_dose` mg used in FJF-2026-301.
+
+# Objectives and endpoints
+
+| Type | Objective | Endpoint |
+|---|---|---|
+| Primary | Establish a dose-response signal and estimate the dose-response curve | Change from baseline in HbA1c at week `r p$primary_visit_week` |
+| Primary | Select the dose for phase III | Target dose: the smallest dose with at least 80% of the maximum effect and a clinically relevant effect |
+| Secondary | Describe the dose-response of fasting glucose and body weight | Change from baseline at week `r p$primary_visit_week` |
+| Safety | Describe safety and tolerability by dose | Adverse events; hypoglycaemia levels 1 to 3; laboratory values; vital signs |
+
+# Estimand
+
+```{r}
+#| results: asis
+labels <- stats::setNames(purrr::map_chr(e$intercurrent_events, "label"), purrr::map_chr(e$intercurrent_events, "id"))
+for (est in e$estimands) {
+  cat("\n## ", est$id, " · ", est$label, " (", est$role, ")\n\n", est$question, "\n\n", sep = "")
+  cat("- **Population:** ", est$population, "\n", sep = "")
+  cat("- **Treatment:** ", est$treatment, "\n", sep = "")
+  cat("- **Variable:** ", est$variable, "\n", sep = "")
+  cat("- **Intercurrent events:**\n")
+  for (x in est$intercurrent_events) {
+    cat("    - ", labels[[x$event]], ": *", x$strategy, "*. ", x$rationale, "\n", sep = "")
+  }
+  cat("- **Population-level summary:** ", est$summary, "\n", sep = "")
+  cat("- **Analysis:** ", est$analysis, "\n", sep = "")
+}
+```
+
+The phase III study asks a different question, under treatment policy: what happens after assigning the chosen dose, whatever follows. A dose-finding study asks what each dose does when it is taken, so its estimand is hypothetical.
+
+# Design
+
+- **Arms:** `r paste(purrr::map_chr(p$arms, "label"), collapse = "; ")`.
+- **Randomisation:** `r paste(unlist(p$randomisation$ratio), collapse = ":")`, stratified by screening HbA1c (`r paste(unlist(p$randomisation$stratification[[1]]$levels), collapse = " and ")`).
+- **Blinding:** `r p$randomisation$blinding`.
+- **Periods:** 2 weeks of screening, `r p$treatment_weeks` weeks of treatment and `r p$follow_up_weeks` weeks of follow-up.
+
+**Patients who stop study treatment stay in the study.** `r p$discontinuation$rule` `r p$discontinuation$reason`
+
+# Population
+
+The eligibility criteria are those of FJF-2026-301 ([synopsis](fjf-2026-301-synopsis.qmd)): adults aged `r paste(unlist(p$eligibility$age_years), collapse = " to ")` with type 2 diabetes, HbA1c `r paste(unlist(p$eligibility$hba1c_screening_pct), collapse = "% to ")`% on stable metformin. The same population lets the two studies be pooled for safety.
+
+# Treatments and rescue
+
+- **Study treatment:** FJF-2026 at the assigned dose or placebo, once daily, as two tablets (double dummy), with the patient's usual metformin.
+- **Rescue rule:** a confirmed fasting plasma glucose above `r paste(purrr::map_dbl(p$rescue$thresholds, "fpg_mg_dl"), collapse = " then ")` mg/dL (weeks `r paste(purrr::map_chr(p$rescue$thresholds, \(t) paste0(t$from_week, "-", t$to_week)), collapse = " and ")`), as in FJF-2026-301 for the same weeks. `r p$rescue$after_rescue`
+
+# Sample size
+
+The study must detect a dose-response signal (the MCP step) whatever the shape of the curve. Power is computed for each candidate dose-response model of the SAP and for the planning curve, an Emax curve with ED50 `r fmt(curve$ed50, 1)` mg and an effect of `r fmt(curve$emax * 40 / (curve$ed50 + 40))` percentage points at 40 mg at week `r p$primary_visit_week`:
+
+| Assumption | Planning value |
+|---|---|
+| Effect of `r ref_dose` mg at 24-26 weeks; share reached by week 12 | `r fmt(pv("effect_target_dose"))`%; `r pct(pv("effect_ratio_week12"))` |
+| Effect of 5 mg as a share of `r ref_dose` mg | `r pct(pv("lowest_dose_effect_ratio"))` |
+| Standard deviation of the change | `r sprintf("%.1f", pv("change_sd"))`% |
+| One-sided alpha of the MCP step; target power | 2.5%; 90% under every scenario |
+
+Patients who stop treatment, are rescued or leave before week `r p$primary_visit_week` contribute no week-`r p$primary_visit_week` value to the hypothetical estimand, and are taken off the effective number of patients. With **`r ss_n` patients per arm (`r k * ss_n` in all)**, the lowest power over the scenarios is `r pct(min(ss_power$power[ss_power$n_per_arm == ss_n]))`.
+
+```{r}
+#| fig-height: 3
+#| fig-width: 6
+library(ggplot2)
+ggplot(ss_power, aes(n_per_arm, power, colour = scenario)) +
+  geom_hline(yintercept = 0.9, linetype = "dashed", colour = "grey50") +
+  geom_line() +
+  geom_vline(xintercept = ss_n, colour = "firebrick") +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Patients per arm", y = "Power of the MCP step", colour = NULL) +
+  theme_minimal(base_size = 10)
+```
+
+The [SAP](../sap/fjf-2026-201-sap.qmd) checks this by simulating the whole analysis, and reports how often each dose is selected.
+
+# Statistical analysis overview
+
+- **MCP step:** a mixed model for repeated measures on the values on treatment and before rescue gives the mean change by dose at week `r p$primary_visit_week`. Optimal contrasts for four candidate shapes (linear, Emax, sigmoid Emax, quadratic) test for a dose-response signal, adjusted for multiplicity.
+- **Mod step:** the best-fitting significant model estimates the curve and the target dose.
+- **Sensitivity:** model averaging over the candidate models; the analysis on every observed value.
+
+# Schedule of assessments
+
+```{r}
+v <- p$visits
+codes <- names(p$assessments)
+grid <- sapply(seq_len(nrow(v)), function(i) ifelse(codes %in% v$assessments[[i]], "X", ""))
+colnames(grid) <- paste0(v$code, " (wk ", v$week, ")")
+knitr::kable(data.frame(Assessment = unlist(p$assessments), grid, check.names = FALSE, row.names = NULL), align = c("l", rep("c", nrow(v))))
+```

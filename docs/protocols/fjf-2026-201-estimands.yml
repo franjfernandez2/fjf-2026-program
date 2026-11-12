@@ -1,0 +1,40 @@
+# Estimands of study FJF-2026-201 (ICH E9(R1)). The protocol synopsis and the SAP render
+# them from this file; R/estimands.R checks each one.
+
+study: FJF-2026-201
+
+intercurrent_events:
+  - id: rescue
+    label: Start of rescue medication
+    definition: >-
+      First dose of a glucose-lowering drug other than metformin and the study drug, given
+      under the protocol's rescue rule or for any other reason.
+  - id: discontinuation
+    label: Permanent discontinuation of study treatment
+    definition: Last dose of study drug before week 12, for any reason, with no restart.
+
+estimands:
+  - id: E1
+    role: primary
+    label: Dose-response, hypothetical estimand
+    question: >-
+      How does the effect of FJF-2026 on HbA1c at week 12 change with the dose, if every patient
+      took the assigned dose and no rescue medication were available?
+    population: Adults with type 2 diabetes inadequately controlled on metformin, as in FJF-2026-301.
+    treatment: FJF-2026 5, 10, 20 or 40 mg once daily, or placebo, each added to stable metformin, without rescue medication.
+    variable: Change from baseline in HbA1c (%) at week 12.
+    intercurrent_events:
+      - event: rescue
+        strategy: hypothetical
+        rationale: A dose-finding question is about the drug itself; a second drug would mask the dose-response.
+      - event: discontinuation
+        strategy: hypothetical
+        rationale: >-
+          The dose must be chosen from what each dose does when taken; the effect of stopping
+          is studied in phase III, under treatment policy.
+    summary: >-
+      The dose-response curve of the mean difference from placebo, and the target dose: the
+      smallest dose in the study giving at least 80% of the maximum effect over the dose range.
+    analysis: >-
+      Mixed model for repeated measures on the values on treatment and before rescue; MCP-Mod
+      on its estimated means at week 12 and their covariance.
