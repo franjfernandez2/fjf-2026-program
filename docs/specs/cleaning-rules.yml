@@ -1,0 +1,107 @@
+# Cleaning rules of the FJF-2026 studies (F3, ADR 0026): what is done with each kind of
+# finding of the data-quality report (R/raw_quality.R, docs/specs/raw-quality.qmd).
+#
+# The raw layer is never changed: it stays as collected, with its audit trail. The rules
+# act when the data are mapped to SDTM, or when SDTM is derived into ADaM. Every finding
+# a rule touches is listed in the data-issues listing, so a reviewer sees each one. A test
+# fails if a check of the data-quality report has no rule here.
+#
+# Clinical content (imputation of partial dates, severity, units) is for the reviewer's
+# clinical review.
+
+version: "1.0"
+
+rules:
+  - id: CR01
+    check: Duplicated natural key
+    rule: >-
+      Rows that share the natural key of the raw specification are one record. If they are
+      identical apart from record_id, the first one entered (lowest record_id) is kept and
+      the others are dropped. If their values differ, the first one entered is still kept,
+      and the difference is listed as a data issue.
+    reason: >-
+      With no site to query, the first entry is the record the site confirmed first. A rule
+      that picks the value would choose by the result.
+    acts_in: SDTM
+
+  - id: CR02
+    check: Partial date
+    rule: >-
+      SDTM keeps the date as collected, in ISO 8601 truncated form (2028-03, or 2028).
+      Imputation happens only in ADaM, with its flag (for example ASTDTF). Adverse event and
+      medication start dates: a missing day becomes the first of the month, but never
+      before the first dose when the month is the month of the first dose; a missing month
+      becomes January, with the same limit. Birth and diagnosis dates: a missing day becomes
+      the 15th and a missing month becomes 1 July, for age and duration of diabetes only.
+    reason: >-
+      SDTM records what was collected. The adverse event rule is the usual conservative one:
+      an event in the month of the first dose counts as treatment-emergent. Mid-period
+      imputation keeps age and duration unbiased.
+    acts_in: ADaM
+
+  - id: CR03
+    check: Visit outside its window
+    rule: >-
+      SDTM keeps the nominal visit (VISIT, VISITNUM) as collected. ADaM assigns the analysis
+      visit by the SAP's windows (sap-301-v1.0, visit_windows), so a late visit can count
+      for another analysis visit. No measurement is dropped for being out of window.
+    reason: The SAP, frozen before the data existed, already defines which value counts for each analysis visit.
+    acts_in: ADaM
+
+  - id: CR04
+    check: Unexpected unit
+    applies_to: vital_signs (weight not in kg)
+    rule: >-
+      VSORRES and VSORRESU keep the value and unit as collected. VSSTRESN is in kg: pounds
+      divided by 2.20462, rounded to 0.1 kg.
+    reason: SDTM separates the collected value from the standardised one; nothing is retyped.
+    acts_in: SDTM
+
+  - id: CR05
+    check: Unexpected unit
+    applies_to: demography (height below 3, probably in metres)
+    rule: >-
+      The height is mapped to VS (HEIGHT) with VSORRES as collected and VSORRESU m.
+      VSSTRESN is the value times 100, in cm. A height that is still below 100 cm or above
+      230 cm after conversion is set missing in VSSTRESN and listed.
+    reason: A height below 3 cannot be in cm; metres is the only plausible unit.
+    acts_in: SDTM
+
+  - id: CR06
+    check: Unexpected unit
+    applies_to: lab_results (a test in a unit other than its usual one)
+    rule: >-
+      LBORRES and LBORRESU keep the value and unit as collected. LBSTRESN is converted to
+      the test's standard unit with a fixed factor (for example HbA1c mmol/mol to %:
+      0.0915 × value + 2.15). A unit with no factor leaves LBSTRESN missing, and the record
+      is listed.
+    reason: Standard units make results comparable; an unknown unit must not be guessed.
+    acts_in: SDTM
+
+  - id: CR07
+    check: Qualified or non-numeric result
+    rule: >-
+      LBORRES and LBSTRESC keep the result as reported (for example "<8"); LBSTRESN is
+      missing. In ADaM the value counts as below the limit when it is compared with the
+      reference range, and it is left out of means.
+    reason: A qualified result is not a number; replacing it by a number would invent precision.
+    acts_in: SDTM and ADaM
+
+  - id: CR08
+    check: Ends before it starts
+    rule: >-
+      The start date is kept. AEENDTC is set missing, and the end date as collected goes to
+      SUPPAE (QNAM AEENRAW). The event counts as one whose end is unknown, and it is listed.
+    reason: >-
+      One of the two dates is wrong, and the start date decides whether the event is
+      treatment-emergent, so it is the one kept.
+    acts_in: SDTM
+
+  - id: CR09
+    check: Missing required value
+    applies_to: adverse_events (severity)
+    rule: >-
+      AESEV stays missing in SDTM. In ADaM, ASEV counts it as severe, with a flag, in the
+      tables by severity.
+    reason: The worst case is the usual conservative rule; it never makes the drug look safer.
+    acts_in: ADaM

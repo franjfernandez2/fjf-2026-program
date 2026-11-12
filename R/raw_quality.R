@@ -3,6 +3,12 @@
 # written in F3, when the data are mapped to SDTM. The checks never use the treatment arm,
 # so they can be read before the database lock.
 
+#' The checks of the data-quality report. Each has a cleaning rule in docs/specs/cleaning-rules.yml.
+raw_quality_checks <- c(
+  "Duplicated natural key", "Partial date", "Visit outside its window", "Unexpected unit",
+  "Qualified or non-numeric result", "Ends before it starts", "Missing required value"
+)
+
 crf_months <- c("JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
 
 #' Parse complete CRF dates ("09-MAR-2028"), whatever the system locale.
@@ -103,5 +109,7 @@ check_raw_quality <- function(tables, spec, protocol, study) {
     study, "Missing required value", "adverse_events", sum(is.na(ae$severity)), nrow(ae), "severity"
   )
 
-  do.call(rbind, out)
+  out <- do.call(rbind, out)
+  stopifnot(all(out$check %in% raw_quality_checks))
+  out
 }
