@@ -12,10 +12,10 @@ read_sap <- function(path) yaml::read_yaml(path)
 #' One analysis or sensitivity analysis of the SAP, by id.
 #'
 #' @param sap The result of [read_sap()].
-#' @param id Its id, for example "A1" or "S3".
+#' @param id Its id, for example "A1", "S3", "B2" or "SF1".
 #' @return The list that defines it.
 sap_item <- function(sap, id) {
-  items <- c(sap$analyses, sap$sensitivity)
+  items <- c(sap$analyses, sap$sensitivity, sap$secondary, sap$safety)
   found <- purrr::keep(items, \(x) identical(x$id, id))
   if (length(found) != 1) stop("SAP item ", id, " not found exactly once")
   found[[1]]
@@ -40,7 +40,7 @@ check_sap <- function(sap, estimands, protocol) {
   est_roles <- stats::setNames(purrr::map_chr(estimands$estimands, "role"), est_ids)
   sets <- purrr::map_chr(sap$analysis_sets, "id")
   analyses <- sap$analyses
-  ids <- c(purrr::map_chr(analyses, "id"), purrr::map_chr(sap$sensitivity, "id"))
+  ids <- unlist(lapply(c(analyses, sap$sensitivity, sap$secondary, sap$safety), `[[`, "id"))
   if (anyDuplicated(ids)) add("duplicated analysis ids: %s", paste(unique(ids[duplicated(ids)]), collapse = ", "))
 
   for (a in analyses) {
@@ -69,6 +69,22 @@ check_sap <- function(sap, estimands, protocol) {
     }
   }
 
+  # Key secondary analyses: one per key secondary estimand.
+  directions <- c("lower", "higher")
+  for (b in sap$secondary) {
+    if (!b$estimand %in% est_ids) add("%s: unknown estimand %s", b$id, b$estimand)
+    if (!b$analysis_set %in% sets) add("%s: unknown analysis set %s", b$id, b$analysis_set)
+    if (!isTRUE(b$favourable %in% directions)) add("%s: favourable must be lower or higher", b$id)
+  }
+  for (e in names(est_roles)[est_roles == "key secondary"]) {
+    if (!e %in% purrr::map_chr(sap$secondary, "estimand")) add("key secondary estimand %s has no analysis", e)
+  }
+  problems_graph <- check_multiplicity(sap)
+  if (length(problems_graph) > 0) found$problems <- c(found$problems, problems_graph)
+  for (g in sap$subgroups$variables) {
+    if (length(g$levels) != 2) add("subgroup %s must have two levels", g$id)
+  }
+
   placebo <- purrr::keep(protocol$arms, \(a) a$dose_mg == 0)
   for (a in purrr::keep(analyses, \(a) !is.null(a$settings$reference))) {
     if (length(placebo) != 1 || a$settings$reference != placebo[[1]]$code) {
@@ -76,6 +92,45 @@ check_sap <- function(sap, estimands, protocol) {
     }
   }
   found$problems
+}
+
+#' Check the multiplicity graph of a SAP.
+#'
+#' The graph must test the primary analysis and every key secondary analysis; all the
+#' initial weight sits on the primary, so nothing else is tested unless it is rejected;
+#' transition weights lie in [0, 1], with no self-loops and no row above 1.
+#'
+#' @param sap The result of [read_sap()].
+#' @return A character vector of problems.
+check_multiplicity <- function(sap) {
+  m <- sap$multiplicity
+  if (is.null(m)) {
+    return("the SAP has no multiplicity section")
+  }
+  problems <- character()
+  ids <- purrr::map_chr(m$hypotheses, "id")
+  analyses <- purrr::map_chr(m$hypotheses, "analysis")
+  weights <- purrr::map_dbl(m$hypotheses, "weight")
+  primary <- purrr::keep(sap$analyses, \(a) a$role == "primary")
+  primary_id <- if (length(primary) == 1) primary[[1]]$id else NA
+  needed <- c(primary_id, purrr::map_chr(sap$secondary, "id"))
+  missing <- setdiff(needed, analyses)
+  if (length(missing) > 0) problems <- c(problems, sprintf("graph does not test %s", paste(missing, collapse = ", ")))
+  if (!isTRUE(all.equal(sum(weights), 1)) || !isTRUE(all.equal(weights[analyses == primary_id], 1))) {
+    problems <- c(problems, "all the initial weight must be on the primary hypothesis")
+  }
+  if (!setequal(names(m$transitions), ids)) {
+    problems <- c(problems, "transitions must have one row per hypothesis")
+  } else {
+    tm <- do.call(rbind, lapply(ids, \(h) as.numeric(unlist(m$transitions[[h]]))))
+    if (ncol(tm) != length(ids) || any(tm < 0 | tm > 1) || any(diag(tm) != 0) || any(rowSums(tm) > 1 + 1e-9)) {
+      problems <- c(problems, "transition weights must be in [0, 1], without self-loops, rows summing to at most 1")
+    }
+  }
+  if (!isTRUE(m$alpha_one_sided > 0 && m$alpha_one_sided <= 0.025)) {
+    problems <- c(problems, "one-sided alpha must be in (0, 0.025]")
+  }
+  problems
 }
 
 #' Analysis visit windows for HbA1c, derived from the protocol (SAP, visit windows).

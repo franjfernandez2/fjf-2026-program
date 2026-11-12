@@ -1,6 +1,6 @@
 ---
 title: "Statistical analysis plan: FJF-2026-301"
-subtitle: "Part 1 · Primary endpoint, intercurrent events and missing data"
+subtitle: "Phase III · FJF-2026 added to metformin in type 2 diabetes"
 author: "Francisco Fernández"
 date: today
 ---
@@ -9,13 +9,14 @@ date: today
 #| include: false
 root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
 knitr::opts_knit$set(root.dir = root)
-for (f in c("assumptions.R", "protocol.R", "estimands.R", "sample_size.R", "dry_run_301.R", "sap.R")) {
+for (f in c("assumptions.R", "protocol.R", "estimands.R", "sample_size.R", "dry_run_301.R", "sap.R", "outputs.R")) {
   source(file.path(root, "R", f))
 }
 p <- read_protocol(file.path(root, "docs", "protocols", "fjf-2026-301.yml"))
 e <- read_estimands(file.path(root, "docs", "protocols", "fjf-2026-301-estimands.yml"))
 s <- read_sap(file.path(root, "docs", "sap", "fjf-2026-301-sap.yml"))
-stopifnot(length(check_sap(s, e, p)) == 0)
+o <- read_outputs(file.path(root, "docs", "sap", "fjf-2026-301-outputs.yml"))
+stopifnot(length(check_sap(s, e, p)) == 0, length(check_outputs(o, s)) == 0)
 store <- file.path(root, "_targets")
 tr <- function(name) targets::tar_read_raw(name, store = store)
 ss_n <- tr("sample_size_301")
@@ -24,13 +25,16 @@ dry <- tr("dry_run_301_efficacy")
 large <- tr("dry_run_301_large_efficacy")
 large_data <- tr("dry_run_301_large")$adeff
 oc <- tr("dry_run_301_oc_summary")
+sec <- tr("dry_run_301_secondary")
+mult <- tr("dry_run_301_multiplicity")
+trace <- tr("traceability_301_table")
 pars <- tr("dry_run_301_pars")
 fmt <- function(x, d = 2) formatC(x, format = "f", digits = d)
 pct <- function(x, d = 1) paste0(formatC(100 * x, format = "f", digits = d), "%")
 pval <- function(x) ifelse(x < 0.001, "<0.001", formatC(x, format = "f", digits = 3))
 item <- function(id) sap_item(s, id)
 est_of <- function(id) purrr::keep(e$estimands, \(x) x$id == id)[[1]]
-wk26 <- large_data[large_data$AVISITN == p$primary_visit_week, ]
+wk26 <- large_data[large_data$AVISITN == p$primary_visit_week & large_data$PARAMCD == "HBA1C", ]
 e1_value <- mean(wk26$CHG_FULL[wk26$ARMCD == "FJF20"]) - mean(wk26$CHG_FULL[wk26$ARMCD == "PBO"])
 ```
 
@@ -41,8 +45,9 @@ Every setting in this plan is read from [`fjf-2026-301-sap.yml`](fjf-2026-301-sa
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-11-12 | Francisco Fernández | Part 1, primary endpoint (F2 · PR 18) |
+| 0.2 | 2026-11-12 | Francisco Fernández | Part 2: secondaries, multiplicity, subgroups, safety, outputs (F2 · PR 19) |
 
-Part 2 (PR 19) adds the key secondary endpoints, multiplicity, subgroups, safety and the table shells. The SAP becomes version 1.0 with the tag `sap-301-v1.0`, before any study data are generated ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)). After the tag, any change is an amendment with its date and reason, and is reported in the study report.
+The outputs and their traceability are in [`fjf-2026-301-outputs.yml`](fjf-2026-301-outputs.yml). The SAP becomes version 1.0 with the tag `sap-301-v1.0`, before any study data are generated ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)). After the tag, any change is an amendment with its date and reason, and is reported in the study report.
 
 # Study design in brief
 
@@ -124,6 +129,8 @@ for (k in c("data", "missing_data", "analysis_model", "summary_measure", "test")
 }
 ```
 
+If the unstructured covariance does not converge, the structures `r paste(unlist(a2$settings$covariance_fallback)[-1], collapse = ", ")` are tried in that order, and the one used is reported.
+
 **Why the MMRM answers E2 and not E1.** The MMRM estimates the mean at week `r p$primary_visit_week` from the observed values, assuming that the missing ones behave like those of similar patients who were observed (missing at random). On the values before rescue and on treatment, the patients it borrows from are patients still on their drug and not rescued, so it describes a world without those events: the hypothetical question. Applied to the treatment-policy question it would assume that patients who left kept the effect of the drug they had stopped. The dry run below shows the difference in numbers.
 
 # Sensitivity analyses
@@ -141,6 +148,63 @@ grid <- item("S3")$settings$deltas
 ```
 
 The tipping-point grid runs from `r grid$from` to `r grid$to` HbA1c points in steps of `r grid$by`. For scale, the planning effect of FJF-2026 is `r fmt(pars$effect_target_dose)`: a delta of `r fmt(abs(pars$effect_target_dose))` wipes out the planning effect in the patients whose values are imputed, and `r fmt(2 * abs(pars$effect_target_dose))` gives them the opposite effect.
+
+# Key secondary analyses
+
+```{r}
+#| results: asis
+for (b in s$secondary) {
+  cat("\n## ", b$id, " · ", b$label, "\n\n", sep = "")
+  cat("**Estimand:** ", b$estimand, ", ", est_of(b$estimand)$label, ". **Analysis set:** ", b$analysis_set, ".\n\n", sep = "")
+  for (k in intersect(c("data", "missing_data", "analysis_model", "summary_measure"), names(b))) {
+    cat("- **", c(
+      data = "Data", missing_data = "Missing data", analysis_model = "Model", summary_measure = "Summary"
+    )[[k]], ":** ", b[[k]], "\n", sep = "")
+  }
+  cat("- **Favourable direction:** ", b$favourable, ".\n", sep = "")
+}
+```
+
+# Multiplicity
+
+```{r}
+#| include: false
+m <- s$multiplicity
+hyp <- purrr::map_chr(m$hypotheses, "id")
+lab <- stats::setNames(purrr::map_chr(m$hypotheses, "label"), hyp)
+```
+
+The primary and the three key secondary hypotheses are tested with the graphical approach (Bretz and colleagues, 2009) and weighted Bonferroni tests, with `graphicalMCP`. The family-wise error rate is controlled at one-sided `r m$alpha_one_sided * 100`%, the same as two-sided 5% with the effect in favour of FJF-2026. All the alpha starts on H1, so no secondary claim is possible unless the primary succeeds. `r m$rationale`
+
+```{r}
+tm <- do.call(rbind, lapply(hyp, \(h) as.numeric(unlist(m$transitions[[h]]))))
+knitr::kable(data.frame(
+  Hypothesis = sprintf("%s · %s (%s)", hyp, lab, purrr::map_chr(m$hypotheses, "analysis")),
+  `Initial weight` = purrr::map_dbl(m$hypotheses, "weight"),
+  stats::setNames(as.data.frame(tm), paste("To", hyp)),
+  check.names = FALSE
+), align = "lrrrrr")
+```
+
+Each row gives the share of a rejected hypothesis's alpha that passes to each other hypothesis. One-sided p-values come from the two-sided ones in the favourable direction.
+
+# Subgroups
+
+`r s$subgroups$method` Subgroup results are descriptive: there is no adjustment for multiplicity and no claim is based on them.
+
+```{r}
+#| results: asis
+for (g in s$subgroups$variables) cat("- **", g$label, ":** ", paste(g$levels, collapse = " and "), ". ", g$derivation, ".\n", sep = "")
+```
+
+# Safety
+
+All safety analyses are on the safety set, by the treatment taken, and descriptive.
+
+```{r}
+#| results: asis
+for (x in s$safety) cat("- **", x$id, " · ", x$label, ":** ", x$method, "\n", sep = "")
+```
 
 # Dry run on planning data
 
@@ -167,7 +231,7 @@ res_table <- function(r) {
 knitr::kable(res_table(dry$results), align = "lrrr")
 ```
 
-Difference is FJF-2026 minus placebo in HbA1c change at week `r p$primary_visit_week` (percentage points). This trial happens to show a larger difference than the planning model expects: over the `r oc$trials[1]` trials of section 9.3 the primary analysis averages `r fmt(oc$mean_estimate[grepl("^A1", oc$analysis)])`, with a spread of `r fmt(oc$empirical_sd[grepl("^A1", oc$analysis)])`. One trial is one draw, which is why the dry run does not stop here. Its seed was fixed in the SAP file before it was run and is not changed for a nicer result. The tipping point of S3 is `r if (is.na(dry$tipping_point)) paste("beyond", grid$to) else fmt(dry$tipping_point)`.
+Difference is FJF-2026 minus placebo in HbA1c change at week `r p$primary_visit_week` (percentage points). This trial happens to show a larger difference than the planning model expects: over the `r oc$trials[1]` trials below, the primary analysis averages `r fmt(oc$mean_estimate[grepl("^A1", oc$analysis)])`, with a spread of `r fmt(oc$empirical_sd[grepl("^A1", oc$analysis)])`. One trial is one draw, which is why the dry run does not stop here. Its seed was fixed in the SAP file before it was run and is not changed for a nicer result. The tipping point of S3 is `r if (is.na(dry$tipping_point)) paste("beyond", grid$to) else fmt(dry$tipping_point)`.
 
 ```{r}
 #| fig-height: 3
@@ -229,6 +293,104 @@ a1oc <- oc[grepl("^A1", oc$analysis), ]
 - **The standard error is honest.** The mean standard error of the primary analysis (`r fmt(a1oc$mean_se, 3)`) matches the spread of its estimates (`r fmt(a1oc$empirical_sd, 3)`), so its confidence intervals have the coverage they claim.
 - **The real primary analysis has about `r pct(a1oc$implied_power, 0)` implied power** at `r ss_n` patients per arm, the 90% the sample size aimed for. On the same trials the simplified analysis has less (`r pct(oc$implied_power[!grepl("^A1", oc$analysis)], 0)`): the imputation uses each patient's earlier visits, while the simplified analysis draws a missing value at random from the placebo arm, so the estimates of the real analysis spread less. The sample size chosen with the simplified analysis is therefore not too small ([ADR 0021](../adr/0021-sap-dry-run-on-planning-data.md)).
 
-# Still to come (part 2, PR 19)
+## Key secondary analyses, multiplicity and subgroups
 
-Key secondary endpoints (E3 to E5) and their analyses, the multiplicity strategy, subgroups, safety analyses, table shells and the traceability of every table to a line of this plan.
+On the same trial of the planned size:
+
+```{r}
+r <- sec$results
+knitr::kable(data.frame(
+  Analysis = sprintf("%s · %s", r$analysis, purrr::map_chr(r$analysis, \(id) item(id)$label)),
+  Measure = r$parameter,
+  Estimate = fmt(r$estimate),
+  `95% CI` = sprintf("%s to %s", fmt(r$lower), fmt(r$upper)),
+  p = pval(r$p_value),
+  check.names = FALSE
+), align = "llrrr")
+```
+
+```{r}
+#| include: false
+b1 <- r[r$analysis == "B1", ]
+b3 <- r[r$analysis == "B3", ]
+```
+
+`r pct(b1$proportion_active, 0)` of patients on FJF-2026 and `r pct(b1$proportion_reference, 0)` on placebo reached HbA1c below 7% (a difference of `r round(100 * b1$difference)` percentage points). `r b3$events_active` patients on FJF-2026 and `r b3$events_reference` on placebo needed rescue.
+
+```{r}
+knitr::kable(data.frame(
+  Hypothesis = sprintf("%s · %s", mult$hypothesis, mult$label),
+  `One-sided p` = pval(mult$p_one_sided),
+  `Adjusted p` = pval(mult$adjusted_p),
+  Decision = ifelse(mult$rejected, "Rejected", "Not rejected"),
+  check.names = FALSE
+), align = "lrrl")
+```
+
+```{r}
+#| fig-height: 2.6
+#| fig-width: 6
+km <- sec$km
+km$Arm <- ifelse(km$ARMCD == "PBO", "Placebo", "FJF-2026 20 mg")
+ggplot(km, aes(time, survival, colour = Arm)) +
+  geom_step(linewidth = 0.7) +
+  scale_colour_manual(values = c("Placebo" = "#8a8a8a", "FJF-2026 20 mg" = "#4a7ab5")) +
+  labs(x = "Days since randomisation", y = "Without rescue", colour = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "top")
+```
+
+```{r}
+#| fig-height: 3.4
+#| fig-width: 6
+sg <- sec$subgroups
+sg$row <- factor(sprintf("%s: %s (n=%d)", sg$subgroup, sg$level, sg$n), levels = rev(sprintf("%s: %s (n=%d)", sg$subgroup, sg$level, sg$n)))
+ggplot(sg, aes(estimate, row)) +
+  geom_vline(xintercept = 0, colour = "grey50") +
+  geom_vline(xintercept = dry$results$estimate[dry$results$analysis == "A1"], colour = "#4a7ab5", linetype = "dashed") +
+  geom_errorbarh(aes(xmin = lower, xmax = upper), height = 0.2, colour = "#4a7ab5") +
+  geom_point(colour = "#4a7ab5", size = 2) +
+  labs(x = "Difference in HbA1c change at week 26 (95% CI)", y = NULL) +
+  theme_minimal(base_size = 10)
+```
+
+The dashed line is the overall estimate. No subgroup effect was built into the dry-run data, so differences between levels here are chance, which is why subgroups make no claim.
+
+# Outputs and traceability
+
+Every output names the SAP item it implements, the ADaM variables it reads and the program that will make it in F3. A check fails if an analysis has no output or an output points to nothing in this plan. The ADaM variables are checked against the ADaM specification when it is written.
+
+```{r}
+outs <- o$outputs
+knitr::kable(data.frame(
+  Output = purrr::map_chr(outs, "id"),
+  Title = purrr::map_chr(outs, "title"),
+  Set = purrr::map_chr(outs, "population"),
+  SAP = purrr::map_chr(outs, \(x) paste(unlist(x$sap), collapse = ", "))
+), align = "llll")
+```
+
+The full matrix has `r nrow(trace)` rows, one per output and ADaM variable; it is the target `traceability_301_table` and the appendix below.
+
+## Example shell: T-14.2.1
+
+```{r}
+knitr::kable(data.frame(
+  ` ` = c("Baseline HbA1c (%), n / mean (SD)", "Week 26 HbA1c (%), n / mean (SD)", "Change at week 26, LS mean (SE)",
+          "Difference vs placebo (95% CI)", "p-value"),
+  Placebo = c("xxx / x.xx (x.xx)", "xxx / x.xx (x.xx)", "x.xx (x.xx)", "", ""),
+  `FJF-2026 20 mg` = c("xxx / x.xx (x.xx)", "xxx / x.xx (x.xx)", "x.xx (x.xx)", "x.xx (x.xx, x.xx)", "x.xxx"),
+  check.names = FALSE
+), align = "lrr")
+```
+
+Full analysis set; multiple imputation with jump to reference (A1). Observed values in the first two rows; model-based values below.
+
+# Appendix: traceability matrix
+
+```{r}
+knitr::kable(
+  trace |> dplyr::transmute(Output = output, SAP = sap, `ADaM variable` = ifelse(is.na(adam), "(analysis results)", adam), Program = program),
+  align = "llll"
+)
+```

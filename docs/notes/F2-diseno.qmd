@@ -14,6 +14,7 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 | Sinopsis del protocolo de la 301 y sus datos de diseño | `docs/protocols/fjf-2026-301.yml`, `fjf-2026-301-synopsis.qmd` | 16 |
 | Estimandos de la 301 y tamaño muestral por simulación | `docs/protocols/fjf-2026-301-estimands.yml`, `R/sample_size.R`, ADR 0019 y 0020 | 17 |
 | SAP de la 301, parte 1: eficacia, datos faltantes, sensibilidad y ensayo en seco | `docs/sap/fjf-2026-301-sap.yml`, `R/efficacy_301.R`, ADR 0021 | 18 |
+| SAP de la 301, parte 2: secundarias, multiplicidad, subgrupos, seguridad, salidas y trazabilidad | `docs/sap/fjf-2026-301-outputs.yml`, `R/secondary_301.R`, `R/outputs.R`, ADR 0022 | 19 |
 
 # Por qué se ha hecho así
 
@@ -32,6 +33,10 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 - **Tres análisis de sensibilidad para E1.** «Missing at random», «copy reference» y un punto de inflexión: se empeoran los valores imputados de FJF-2026 hasta que la conclusión cambia.
 - **Ensayo en seco antes de congelar.** Todos los análisis se ejecutan sobre datos generados con los valores de planificación y una semilla pública. Un ensayo grande comprueba que cada análisis estima lo que pregunta su estimando; 200 ensayos del tamaño previsto comprueban la potencia del análisis real. No es el simulador ni toca la verdad sellada.
 
+- **Multiplicidad por grafo** ([ADR 0022](../adr/0022-multiplicity-and-traceability-of-fjf-2026-301.md)). Todo el alfa empieza en el primario: ninguna secundaria se puede afirmar si el primario no se rechaza. Al rechazarlo, pasa la mitad a la HbA1c < 7 % y la otra mitad al peso, y de ahí al tiempo hasta el rescate. Una prueba comprueba que el grafo está bien formado.
+- **Subgrupos descriptivos.** Cuatro variables binarias, con estimación por nivel e interacción. No se ajustan por multiplicidad y no sostienen ninguna afirmación.
+- **Las salidas también son datos.** Cada tabla y figura dice qué parte del SAP implementa, qué variables ADaM lee y qué programa la hará. Una prueba falla si un análisis no tiene salida o una salida no apunta a nada del SAP. De ese fichero sale la matriz de trazabilidad.
+
 # Lo que salió mal y cómo se resolvió
 
 1. **Los artículos completos no son accesibles.** Están tras un muro de pago. Se usaron los resúmenes y los resultados de ClinicalTrials.gov, y cada número dice de cuál de los dos sale.
@@ -40,6 +45,8 @@ Esta nota crece con la fase: cada pull request añade lo suyo. Se cierra en la P
 4. **Faltaban dos supuestos para el tamaño muestral.** El beneficio del rescate y la proporción de pacientes que salen del estudio. Se añadieron con sus fuentes.
 5. **Los paquetes del análisis no estaban en el entorno.** `mmrm`, `rbmi` y `emmeans` se añadieron al lockfile y se reconstruyó la imagen.
 6. **El punto de inflexión era lento en el ensayo grande.** Cada delta vuelve a analizar todas las imputaciones. En el ensayo grande se usa una rejilla corta; en el del tamaño previsto, la del SAP.
+7. **La imputación no era reproducible por sí sola** (PR 19). rbmi usa números aleatorios en dos pasos, y solo el primero tenía semilla. Dentro del pipeline no se notaba, porque `targets` pone una semilla a cada objetivo. En los 200 ensayos en paralelo, los resultados cambiaban entre ejecuciones. Ahora la semilla del SAP cubre los dos pasos, y una prueba exige resultados idénticos con distinto estado previo y distinto número de núcleos. La conclusión no cambió: potencia implícita del 90,3 % (antes 90,5 %).
+8. **Una prueba se comparaba consigo misma.** Comprobaba que los datos de HbA1c no cambiaban comparando un valor con él mismo. Se sustituyó por pruebas de estructura, y lo de no cambiar se comprobó a mano: el ensayo único sigue dando −0,659.
 
 # Preguntas de control
 

@@ -39,6 +39,6 @@ Two methods choices also need a record: how missing values are handled under eac
 
 - The plan is known to run, and to estimate what it says, before it is frozen.
 - The SAP shows the dry-run numbers in a section marked as not study results.
-- Each pipeline run spends a few minutes on the 200 dry-run trials. They run in parallel, and each trial has its own seed, so the result does not depend on the number of cores.
+- Each pipeline run spends a few minutes on the 200 dry-run trials. They run in parallel, and each trial has its own seed, so the result does not depend on the number of cores. The seed covers both rbmi steps: the draws of the imputation model and the imputation itself. Until PR 19 only the draws were seeded, so the imputation took whatever state the random number generator was in; a test now runs the same trials twice, from different states and with different numbers of cores, and requires identical results.
 - With 200 trials, the share of successful trials is known only within about ±5 percentage points. The power implied by the mean and spread of the estimates is far more precise, and is what the comparison uses.
-- First result (2026-11-12): the real primary analysis has about 90% implied power at 150 patients per arm, more than the simplified analysis on the same trials (about 85%), and its standard error matches the spread of its estimates. The sample size stands.
+- First result (2026-11-12, confirmed after the seeding fix): the real primary analysis has about 90% implied power at 150 patients per arm, more than the simplified analysis on the same trials (about 85%), and its standard error matches the spread of its estimates. The sample size stands.

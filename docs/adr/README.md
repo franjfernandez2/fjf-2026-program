@@ -27,3 +27,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0019](0019-estimands-of-fjf-2026-301.md) | Estimands of FJF-2026-301 | Proposed |
 | [0020](0020-sample-size-by-simulation.md) | Sample size of FJF-2026-301 by simulation | Proposed |
 | [0021](0021-sap-dry-run-on-planning-data.md) | Missing data in FJF-2026-301, and a dry run of the SAP on planning data | Proposed |
+| [0022](0022-multiplicity-and-traceability-of-fjf-2026-301.md) | Multiplicity, subgroups and output traceability of FJF-2026-301 | Proposed |
