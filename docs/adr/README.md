@@ -24,3 +24,5 @@ New records copy [0000-template.md](0000-template.md).
 | [0016](0016-specifications-from-define-xml.md) | Benchmark specifications read from the pilot's Define-XML 1.0 | Accepted |
 | [0017](0017-benchmark-acceptance-criteria.md) | Acceptance criteria of the benchmark (gate 1) | Accepted |
 | [0018](0018-sealed-truth-and-data-generating-model.md) | Sealed truth and the data-generating model | Proposed |
+| [0019](0019-estimands-of-fjf-2026-301.md) | Estimands of FJF-2026-301 | Proposed |
+| [0020](0020-sample-size-by-simulation.md) | Sample size of FJF-2026-301 by simulation | Proposed |
