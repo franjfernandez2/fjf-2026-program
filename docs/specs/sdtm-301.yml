@@ -1,0 +1,75 @@
+# SDTM specification of study FJF-2026-301 (SDTMIG 3.4). The mapping programs in
+# studies/301/sdtm read it, and a test checks that each dataset has exactly these variables,
+# in this order. Origins follow Define-XML 2.1: Collected, Derived, Assigned, Protocol.
+# Cleaning rules (CRnn) are in cleaning-rules.yml.
+
+study: FJF-2026-301
+sdtmig: "3.4"
+# Public seed of the dummy treatment assignment used until the database lock (ADR 0027).
+blinding_seed: 301301
+# The CRF does not collect the country. COUNTRY stays empty and the reviewer's guide says so.
+country: null
+
+domains:
+  - name: DM
+    label: Demographics
+    structure: One record per subject
+    keys: [STUDYID, USUBJID]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived, source: "STUDYID-subject_id"}
+      - {name: SUBJID, label: Subject Identifier for the Study, type: text, origin: Collected, source: enrolment.subject_id}
+      - {name: RFSTDTC, label: Subject Reference Start Date/Time, type: text, origin: Derived, source: first dispense_date}
+      - {name: RFENDTC, label: Subject Reference End Date/Time, type: text, origin: Derived, source: date of last dose}
+      - {name: RFXSTDTC, label: Date/Time of First Study Treatment, type: text, origin: Derived, source: first dispense_date}
+      - {name: RFXENDTC, label: Date/Time of Last Study Treatment, type: text, origin: Derived, source: disposition TREATMENT event_date}
+      - {name: RFICDTC, label: Date/Time of Informed Consent, type: text, origin: Collected, source: enrolment.consent_date}
+      - {name: RFPENDTC, label: Date/Time of End of Participation, type: text, origin: Derived, source: last disposition or screening date}
+      - {name: DTHFL, label: Subject Death Flag, type: text, origin: Derived, source: disposition reason DEATH}
+      - {name: SITEID, label: Study Site Identifier, type: text, origin: Collected, source: enrolment.site_id}
+      - {name: BRTHDTC, label: Date/Time of Birth, type: text, origin: Collected, source: demography.birth_date}
+      - {name: AGE, label: Age, type: integer, origin: Derived, source: "birth date to consent, CR02"}
+      - {name: AGEU, label: Age Units, type: text, origin: Assigned}
+      - {name: SEX, label: Sex, type: text, origin: Collected, source: demography.sex}
+      - {name: RACE, label: Race, type: text, origin: Collected, source: demography.race}
+      - {name: ETHNIC, label: Ethnicity, type: text, origin: Collected, source: demography.ethnicity}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Derived, source: randomisation.arm_code}
+      - {name: ARM, label: Description of Planned Arm, type: text, origin: Derived, source: protocol arms}
+      - {name: ACTARMCD, label: Actual Arm Code, type: text, origin: Derived, source: "ARMCD if dosed"}
+      - {name: ACTARM, label: Description of Actual Arm, type: text, origin: Derived, source: "ARM if dosed"}
+      - {name: ARMNRS, label: Reason Arm and/or Actual Arm is Null, type: text, origin: Derived}
+      - {name: COUNTRY, label: Country, type: text, origin: Assigned, source: not collected}
+
+  - name: DS
+    label: Disposition
+    structure: One record per disposition status or protocol milestone per subject
+    keys: [STUDYID, USUBJID, DSSTDTC, DSDECOD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: DSSEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: DSTERM, label: Reported Term for the Disposition Event, type: text, origin: Collected}
+      - {name: DSDECOD, label: Standardized Disposition Term, type: text, origin: Derived}
+      - {name: DSCAT, label: Category for Disposition Event, type: text, origin: Assigned}
+      - {name: DSSCAT, label: Subcategory for Disposition Event, type: text, origin: Assigned}
+      - {name: DSSTDTC, label: Start Date/Time of Disposition Event, type: text, origin: Collected}
+      - {name: DSSTDY, label: Study Day of Start of Disposition Event, type: integer, origin: Derived}
+
+  - name: SV
+    label: Subject Visits
+    structure: One record per planned or unscheduled visit per subject
+    keys: [STUDYID, USUBJID, VISITNUM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Derived, source: "protocol order; unscheduled = previous + 0.1"}
+      - {name: VISIT, label: Visit Name, type: text, origin: Derived, source: protocol visit label}
+      - {name: SVPRESP, label: Pre-specified, type: text, origin: Assigned}
+      - {name: SVOCCUR, label: Occurrence, type: text, origin: Collected, source: visits.visit_status}
+      - {name: SVSTDTC, label: Start Date/Time of Observation, type: text, origin: Collected, source: visits.visit_date}
+      - {name: SVENDTC, label: End Date/Time of Observation, type: text, origin: Derived, source: SVSTDTC}
+      - {name: SVSTDY, label: Study Day of Start of Observation, type: integer, origin: Derived}
+      - {name: SVENDY, label: Study Day of End of Observation, type: integer, origin: Derived}
