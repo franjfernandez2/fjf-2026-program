@@ -146,13 +146,6 @@ La puerta 2 es «SAP congelados». Todo lo que había que programar en la F2 est
 2. ~~Fusionar las PR 15 a 24~~: hecho el 2026-11-12, en orden y con la CI en verde.
 3. ~~Responder las preguntas de control 1 a 8~~: respondidas por el asistente a petición de Francisco (2026-11-12). Desviación registrada; quedan para estudiarlas.
 4. ~~Congelar los SAP~~: hecho el 2026-11-12 (versión 1.0). Etiquetas `sap-301-v1.0` y `sap-201-v1.0` sobre main. Desde ese momento, cualquier cambio es una enmienda con fecha y motivo.
-5. **Generar los datos tú mismo**, desde una copia limpia de main:
-
-   ```sh
-   tools/generate-study-data.sh
-   docker compose run --rm analysis Rscript tools/load-raw-data.R
-   ```
-
-   Después hay que hacer commit de `data/raw`. Si quieres una semilla que solo conozcas tú ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)), cambia el contenido de `~/.fjf-2026/truth-seed` antes del primer comando y no se lo digas al asistente.
+5. ~~Generar los datos~~: hecho el 2026-11-12. Francisco sustituyó la semilla por una que solo conoce él y lanzó `tools/generate-study-data.sh` en `cc37859`: 475 pacientes aleatorizados en la 201 y 300 en la 301, en 22 ficheros con su manifiesto de hashes, comprobados antes del commit (PR 27). La carga con `tools/load-raw-data.R` dejó 24 824 filas en `raw_201` y 20 698 en `raw_301`, las del manifiesto, cada estudio en una sola transacción de `fjf_loader` y con cada fila en el registro de auditoría.
 6. **Etiqueta `gate-2`.** Con ella termina la F2 y se escribe el plan detallado de la F3.
 
