@@ -33,4 +33,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0025](0025-data-errors-and-generation.md) | Data errors in the raw data, and how the study data are generated and loaded | Accepted |
 | [0026](0026-cleaning-rules-and-mapping.md) | Cleaning rules, and where cleaning happens | Accepted |
 | [0027](0027-blinded-data-review-and-lock.md) | Blinded data review, and the database lock | Accepted |
-| [0028](0028-pre-lock-analysis-decisions-301.md) | Analysis decisions of FJF-2026-301 taken on blinded data, before the lock | Accepted (1-3); 4-7 proposed |
+| [0028](0028-pre-lock-analysis-decisions-301.md) | Analysis decisions of FJF-2026-301 taken on blinded data, before the lock | Accepted |

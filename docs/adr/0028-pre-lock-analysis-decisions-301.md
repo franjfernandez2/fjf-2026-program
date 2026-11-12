@@ -1,8 +1,8 @@
 # ADR 0028: Analysis decisions of FJF-2026-301 taken on blinded data, before the lock
 
-- **Status:** Accepted for items 1-3 (reviewer, 2026-11-13); items 4-7 proposed, for the reviewer's review
+- **Status:** Accepted (reviewer, 2026-11-13: items 1-3 first, items 4-7 after review)
 - **Date:** 2026-11-13
-- **Decided by:** Francisco Fernández (items 1-3); proposed by the programmer (items 4-7)
+- **Decided by:** Francisco Fernández (items 4-7 proposed by the programmer)
 
 ## Context
 
@@ -40,5 +40,4 @@ The lock freezes them all.
 
 - Each decision is in a specification, a cleaning rule or a program, and both second
   programmings check the ones they cover.
-- Items 4-7 can still change before the lock, if the reviewer decides otherwise; after the
-  lock, a change is a deviation (ADR 0027).
+- After the lock, a change to any of them is a deviation (ADR 0027).
