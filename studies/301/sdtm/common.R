@@ -126,3 +126,62 @@ planned_visit <- function(code, protocol) {
 #' @param usubjid Subject identifiers, already in the wanted order.
 #' @return Integer vector.
 sdtm_seq <- function(usubjid) as.integer(stats::ave(seq_along(usubjid), usubjid, FUN = seq_along))
+
+#' Keep the first entry of rows that share a natural key (CR01).
+#'
+#' @param d A raw table with `record_id`.
+#' @param key Columns of the natural key.
+#' @param table Table name, for the issues listing.
+#' @return A list with `data` (one row per key, lowest record_id) and `issues` (one row per
+#'   dropped duplicate, saying whether its values differ from the kept one).
+keep_first_entry <- function(d, key, table) {
+  d <- d[order(d$record_id), ]
+  drop <- duplicated(d[key])
+  kept <- d[!drop, ]
+  dropped <- d[drop, ]
+  values <- setdiff(names(d), c("record_id", key))
+  k <- match(do.call(paste, dropped[key]), do.call(paste, kept[key]))
+  differs <- vapply(seq_len(nrow(dropped)), \(i) {
+    !identical(unlist(dropped[i, values]), unlist(kept[k[i], values]))
+  }, logical(1))
+  issues <- data.frame(
+    rule = rep("CR01", nrow(dropped)), table = rep(table, nrow(dropped)),
+    subject_id = dropped$subject_id, record_id = dropped$record_id,
+    detail = sprintf(
+      "duplicate of record %s, %s; first entry kept", kept$record_id[k],
+      ifelse(differs, "with different values", "identical")
+    )
+  )
+  list(data = kept, issues = issues)
+}
+
+#' Last non-missing observation on or before the first dose, per subject and test.
+#'
+#' @param usubjid,testcd,dtc Subject, test and ISO 8601 date of each record.
+#' @param result Numeric result; missing results are not flagged.
+#' @param dm The DM dataset, for RFXSTDTC.
+#' @return "Y" or NA for each record.
+last_before_exposure <- function(usubjid, testcd, dtc, result, dm) {
+  first_dose <- iso_date(dm$RFXSTDTC[match(usubjid, dm$USUBJID)])
+  date <- iso_date(dtc)
+  ok <- !is.na(result) & !is.na(date) & !is.na(first_dose) & date <= first_dose
+  flag <- rep(NA_character_, length(usubjid))
+  if (!any(ok)) {
+    return(flag)
+  }
+  idx <- which(ok)
+  idx <- idx[order(usubjid[idx], testcd[idx], date[idx])]
+  last <- idx[!duplicated(paste(usubjid[idx], testcd[idx]), fromLast = TRUE)]
+  flag[last] <- "Y"
+  flag
+}
+
+#' Natural key of a raw table.
+#'
+#' @param raw_spec The raw layer specification ([read_raw_spec()]).
+#' @param table Table name.
+#' @return Character vector of column names.
+natural_key <- function(raw_spec, table) {
+  t <- purrr::keep(raw_spec$tables, \(x) x$name == table)
+  unlist(t[[1]]$natural_key)
+}
