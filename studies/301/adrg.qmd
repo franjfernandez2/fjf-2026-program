@@ -1,0 +1,90 @@
+---
+title: "FJF-2026-301: Analysis Data Reviewer's Guide (draft)"
+subtitle: "ADaM analysis datasets, ADaMIG 1.3"
+format: html
+---
+
+::: {.callout-note}
+Draft written with the ADaM (F3 day 9), before the database lock: every count here is from
+the blinded data. It is completed with the CSR on day 14. The structure follows the PHUSE ADRG
+template. The data are simulated and the sponsor is fictional.
+:::
+
+## 1. Introduction
+
+The package holds the ADaM datasets of FJF-2026-301. They are SAS transport v5 files with
+Parquet copies, described by `define.xml` (Define-XML 2.1). Standards: ADaMIG 1.3, CDISC ADaM
+terminology 2024-03-29. Each dataset is derived from the SDTM package (`../sdtm`) by the
+programs in `studies/301/adam`, following the specification `docs/specs/adam-301.yml` and the
+frozen SAP (tag `sap-301-v1.0`). Analysis results metadata and value-level metadata are not in
+the define.xml; the outputs specification (`docs/sap/fjf-2026-301-outputs.yml`) links each
+table and figure to the variables it uses.
+
+## 2. Protocol description
+
+See the cSDRG, section 2. The analysis sets are those of the SAP:
+
+| Set | Flag | Definition | Patients (blinded) |
+| --- | --- | --- | ---: |
+| Full analysis | FASFL | Randomised | 300 |
+| Safety | SAFFL | Randomised and dosed; by treatment taken | 300 |
+| Per protocol | PPROTFL | FAS, compliance ≥ 80%, week-26 HbA1c on treatment and before rescue | 214 |
+
+Protocol deviations are not collected in this study, so no patient is excluded from the
+per-protocol set for a deviation.
+
+## 3. Analysis considerations
+
+- **Study day** counts from randomisation (day 1, no day 0), as the SAP says. The SDTM --DY
+  variables count from the first dose, so ADY and --DY can differ.
+- **Visit windows** (ADEFF): each value goes to the nearest scheduled visit by study day
+  (target 7 × week + 1). Window boundaries are the midpoints between targets, and a value
+  exactly on a midpoint goes to the earlier visit. The last window ends half the previous gap
+  after its target. Within a window, the closest value is selected (ANL01FL), the later one on
+  a tie. Body weight is windowed with the same rule at its scheduled visits (weeks 12 and 26).
+- **Missing visits** are records with DTYPE = PHANTOM: AVAL and CHG are empty, and the
+  on-treatment and pre-rescue flags are judged at the target day. The multiple-imputation
+  models then see every scheduled visit.
+- **Baselines**: for efficacy, the last value on or before randomisation, with a missing
+  HbA1c baseline replaced by the stratum mean (BIMPFL; none on the blinded data). For safety
+  (ADLB, ADVS), the last value on or before the first dose.
+- **Intercurrent events**:
+  - ONTRTFL marks values on treatment (up to 7 days after the last dose).
+  - PRERESFL marks values on or before the first rescue dose.
+  - ANL02FL selects the values of the hypothetical estimand.
+  - Record-level flags are Y or empty.
+- **Treatment-emergent AEs**: onset on or after the first dose and up to 14 days after the
+  last. Partial start dates (17) are imputed to the first dose when the period contains it
+  and the event did not end before it; otherwise to the first day of the period (ASTDTF).
+- **Worst laboratory value** (WORSTFL): the on-treatment value furthest outside its range, as
+  a multiple of the limit crossed; if none is outside, the last on treatment. 33 patients
+  stopped treatment before week 12, the first chemistry visit after baseline, so they have no
+  worst value for the chemistry tests.
+- **Blinding**: until the lock, the arms are a dummy assignment (ADR 0027). The datasets are
+  rebuilt with the real assignment after the lock, with the same programs.
+
+## 4. Data conformance
+
+See `studies/301/conformance.md`, section *Conformance of the ADaM*. P21 (ADaM-IG 1.3, FDA)
+has no rejects. Two items are explained there: there are no MedDRA codes (licence), and the
+traceability rules are not run by P21. A second programming (`qc/301/adam_qc.R`) agrees with
+production on all datasets.
+
+## 5. Datasets
+
+| Dataset | Class | Records (blinded) | Key variables |
+| --- | --- | ---: | --- |
+| ADSL | Subject level | 300 | analysis sets, treatment dates, intercurrent-event dates, baselines |
+| ADEFF | BDS | HbA1c and weight by analysis visit | PARAMCD, AVISITN, ANL01FL, ANL02FL, CRIT1FL |
+| ADTTE | BDS | 600 | TTRESC (FAS), TTHYPO23 (SAF) |
+| ADEX | Other | 300 | TRTDURD, TRTDURY, COMPLPCT |
+| ADAE | OCCDS | 400 | TRTEMFL, ASTDT, ASTDTF |
+| ADHYPO | OCCDS | 45 | HYPOLVL, ONTRTFL, PRERESFL |
+| ADLB | BDS | 10,808 | BASE, BNRIND, ANRIND, WORSTFL |
+| ADVS | BDS | 9,848 | BASE, CHG, ANL01FL |
+
+## 6. Open points before the lock
+
+- The SAP's "predefined limits" for vital signs (SF4) are not defined. They must be fixed
+  before unblinding, or the table reports change from baseline only.
+- CDISC CORE has not been run on SDTM or ADaM yet.

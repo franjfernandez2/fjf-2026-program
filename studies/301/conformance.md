@@ -62,3 +62,43 @@ The first comparison found one difference, in the QC program: it read year-only 
 double programmed: they copy or reshape one raw column, or the protocol file, and their tests
 check them. Both programs have the same author, which limits their independence (F3 risk
 register).
+
+# Conformance of the ADaM of FJF-2026-301
+
+The ADaM package (targets `adam_301_files` and `adam_301_define`, folder `data/adam/301`) was
+validated with Pinnacle 21 Community, engine 2304.3, configuration *ADaM-IG 1.3 (FDA)*, CDISC
+ADaM terminology 2024-03-29, by [`tools/run-p21-adam.sh`](../../tools/run-p21-adam.sh). The
+data were still blinded.
+
+## What changed after the first run
+
+- Record-level flags (ONTRTFL, PRERESFL, TRTEMFL) were Y/N. ADaMIG wants Y or null, so they
+  are now Y or empty. The analysis input (`adeff_analysis_301()`) turns empty back into N
+  for the F2 models.
+- Three labels differed from ADaMIG: AWHI (*Analysis Window Ending Timepoint*), STARTDT
+  (*Time-to-Event Origin Date for Subject*) and STRATAR (*Strata Used for Randomization*).
+- Before that run, the names were aligned with the frozen outputs specification
+  (`docs/sap/fjf-2026-301-outputs.yml`): STRATAR instead of STRAT1R, RANDFL in ADSL,
+  CRIT1/CRIT1FL in ADEFF. A test checks that every `AD*.VAR` named there exists.
+
+## Issues that remain, and why
+
+| Dataset | Rule | Issue | Found | Explanation |
+| --- | --- | --- | ---: | --- |
+| ADAE | AD0047 | Required variable AEBDSYCD (and the other MedDRA codes) not present | 1 | The project's dictionary has no MedDRA codes: MedDRA needs a licence (as SD0057 in SDTM). |
+| GLOBAL | AD1024-AD1026 | Traceability rules not executed (no DM, AE, EX) | 3 | Giving P21 the SDTM folder makes it validate the SDTM domains as ADaM. Traceability is checked by the second programming instead (below). |
+
+## Second programming
+
+`qc/301/adam_qc.R` derives the analysis-critical variables again from the SDTM XPT files. It
+uses base R and none of the production helpers:
+- ADSL: dates, compliance, baselines, PPROTFL;
+- ADEFF: windows, the selected values, BASE/CHG, flags, CRIT1FL;
+- ADTTE: both parameters;
+- ADAE: start-date imputation and TRTEMFL;
+- ADHYPO;
+- ADLB and ADVS: baseline, change, flags, WORSTFL.
+
+`compare_adam_301()` compares the two with diffdf, and the target `adam_301_qc_check` stops
+the pipeline on any difference. On the blinded data all seven datasets agree on the first
+run: 300 + 2,400 + 600 + 400 + 45 + 10,808 + 9,848 records.

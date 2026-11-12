@@ -115,12 +115,13 @@ derive_adeff_301 <- function(sdtm, adsl, protocol, spec) {
   a <- adsl[match(out$USUBJID, adsl$USUBJID), ]
   # A missing visit is judged at its target day.
   day <- ifelse(is.na(out$ADT), out$RANDDT + out$AWTARGET - 1, out$ADT)
-  out$ONTRTFL <- ifelse(!is.na(a$TRTEDT) & day <= a$TRTEDT + 7 & !is.na(a$TRTSDT) & day >= a$TRTSDT, "Y", "N")
+  # Record-level flags are Y or null (ADaMIG); adeff_analysis_301() gives the models Y or N.
+  out$ONTRTFL <- ifelse(!is.na(a$TRTEDT) & day <= a$TRTEDT + 7 & !is.na(a$TRTSDT) & day >= a$TRTSDT, "Y", NA)
   out$ONTRTFL[!is.na(out$ABLFL)] <- NA
-  out$PRERESFL <- ifelse(is.na(a$RESCDT) | day <= a$RESCDT, "Y", "N")
+  out$PRERESFL <- ifelse(is.na(a$RESCDT) | day <= a$RESCDT, "Y", NA)
   out$PRERESFL[!is.na(out$ABLFL)] <- NA
   out$ANL02FL <- ifelse(
-    !is.na(out$ANL01FL) & is.na(out$ABLFL) & out$ONTRTFL == "Y" & out$PRERESFL == "Y" & !is.na(out$AVAL), "Y", NA
+    !is.na(out$ANL01FL) & is.na(out$ABLFL) & out$ONTRTFL %in% "Y" & out$PRERESFL %in% "Y" & !is.na(out$AVAL), "Y", NA
   )
   # SAP B1: HbA1c below 7.0%, evaluated on post-baseline HbA1c records that have a value.
   b1 <- out$PARAMCD == "HBA1C" & is.na(out$ABLFL) & !is.na(out$AVAL)
@@ -163,6 +164,8 @@ add_pps_301 <- function(adsl, adeff, protocol) {
 adeff_analysis_301 <- function(adeff, paramcd) {
   d <- adeff[adeff$PARAMCD == paramcd & !is.na(adeff$ANL01FL) & adeff$AVISITN > 0 & adeff$FASFL == "Y", ]
   d$STRATUM <- d$STRATAR
+  d$ONTRTFL <- ifelse(d$ONTRTFL %in% "Y", "Y", "N")
+  d$PRERESFL <- ifelse(d$PRERESFL %in% "Y", "Y", "N")
   as.data.frame(d[c(
     "USUBJID", "ARMCD", "STRATUM", "PARAMCD", "BASE", "AVISITN", "AVISIT", "AVAL", "CHG", "ONTRTFL", "PRERESFL"
   )])

@@ -1,23 +1,26 @@
 #!/usr/bin/env bash
-# Runs Pinnacle 21 Community's validator (ADaM-IG 1.0, FDA engine) on our ADaM XPT files and
-# on the official ones, with the pilot's SDTM (for the traceability rules) and its ADaM
-# define.xml, and prints both issue summaries. See studies/benchmark/conformance.md.
+# Runs Pinnacle 21 Community's validator (ADaM-IG 1.3, FDA engine 2304.3) on the ADaM XPT
+# files of a study, with their define.xml, and prints the issue summary. The ADaM-to-SDTM
+# traceability rules need SDTM given as ADaM input, which P21 then validates as ADaM, so they
+# are left out (AD1024-AD1026); the second programming checks traceability instead. The report stays
+# local (studies/<study>/output/p21, ignored by git); studies/<study>/conformance.md explains
+# each issue.
 #
-# Needs Pinnacle 21 Community installed and set up once from its window (that downloads the
-# engines into ~/Documents/Pinnacle 21 Community). Its logs are kept local: the client's own
-# logging configuration would also send them to Pinnacle 21.
+# Needs Pinnacle 21 Community installed and set up once from its window. Its logs are kept
+# local: the client's own logging configuration would also send them to Pinnacle 21.
 #
-#   tools/run-p21-adam.sh [output-dir]     (default: studies/benchmark/output/p21, ignored by git)
+#   tools/run-p21-adam.sh <study>     (for example 301; build the target adam_<study>_define first)
 set -euo pipefail
 
+study=${1:?usage: tools/run-p21-adam.sh <study>}
 repo=$(cd "$(dirname "$0")/.." && pwd)
-out=${1:-$repo/studies/benchmark/output/p21}
+data="$repo/data/adam/$study"
+out="$repo/studies/$study/output/p21"
 mkdir -p "$out"
-out=$(cd "$out" && pwd)
 
 app="/Applications/Pinnacle 21 Community.app/Contents/Resources/app.asar.unpacked/components"
 engines="$HOME/Documents/Pinnacle 21 Community/configs"
-pilot="$repo/data/external/cdiscpilot01"
+ct=${P21_ADAM_CT:-2024-03-29}
 
 logback="$out/logback-local.xml"
 cat > "$logback" <<'XML'
@@ -29,35 +32,21 @@ cat > "$logback" <<'XML'
 </configuration>
 XML
 
-run() {
-  "$app/java/bin/java" -Dlogback.configurationFile="$logback" -jar "$app/lib/p21-client-1.0.8.jar" \
-    --engine.folder="$engines/lib" --engine.version=2204.1 --filter=FDA \
-    --standard=ADaM --standard.version=1.0 --config="$engines/2204.1/ADaM-IG 1.0 (FDA).xml" \
-    --cdisc.ct.adam.version=2024-03-29 \
-    --source.adam="$2" --source.sdtm="$pilot/sdtm" --source.define="$pilot/adam/define.xml" \
-    --report="$out/$1-full.xlsx" > "$out/$1-full.log" 2>&1 || true
-  # The client exits with a non-zero status when its installation check warns (an old Mac
-  # build and a legacy engine; see conformance.md), even after a complete validation. The
-  # log says whether the validation itself completed.
-  grep -q "Process completed" "$out/$1-full.log" || { echo "Validation of $1 failed: see $out/$1-full.log"; exit 1; }
-}
-run ours "$repo/data/adam/cdiscpilot01"
-run official "$pilot/adam"
+"$app/java/bin/java" -Dlogback.configurationFile="$logback" -jar "$app/lib/p21-client-1.0.8.jar" \
+  --engine.folder="$engines/lib" --engine.version=2304.3 --filter=FDA \
+  --standard=ADaM --standard.version=1.3 --config="$engines/2304.3/ADaM-IG 1.3 (FDA).xml" \
+  --cdisc.ct.adam.version="$ct" --source.adam="$data" --source.define="$data/define.xml" \
+  --report="$out/adam-$study.xlsx" > "$out/adam-$study.log" 2>&1 || true
+# The client can exit non-zero after a complete validation when its installation check warns
+# (see studies/benchmark/conformance.md); the log says whether the validation completed.
+grep -q "Process completed" "$out/adam-$study.log" || { echo "Validation failed: see $out/adam-$study.log"; exit 1; }
 
-# The issue summaries side by side, read in the project's R environment.
 cd "$repo"
 docker compose run --rm -T --no-deps analysis Rscript -e '
-summary_of <- function(path) {
-  x <- suppressMessages(readxl::read_excel(path, sheet = "Issue Summary", col_names = FALSE, skip = 4))
-  source <- x[[1]]
-  for (i in seq_along(source)[-1]) if (is.na(source[i])) source[i] <- source[i - 1]
-  data.frame(dataset = source, rule = x[[2]], message = x[[3]], found = x[[5]])[!is.na(x[[2]]), ]
-}
-dir <- "studies/benchmark/output/p21"
-both <- merge(
-  summary_of(file.path(dir, "ours-full.xlsx")), summary_of(file.path(dir, "official-full.xlsx")),
-  by = c("dataset", "rule", "message"), all = TRUE, suffixes = c("_ours", "_official")
-)
-print(both, right = FALSE)
-cat("Issues only in ours:", sum(is.na(both$found_official) | both$found_ours != both$found_official), "\n")
-'
+args <- commandArgs(trailingOnly = TRUE)
+x <- suppressMessages(readxl::read_excel(args[1], sheet = "Issue Summary", col_names = FALSE, skip = 4))
+source <- x[[1]]
+for (i in seq_along(source)[-1]) if (is.na(source[i])) source[i] <- source[i - 1]
+s <- data.frame(dataset = source, rule = x[[2]], message = x[[3]], severity = x[[4]], found = x[[5]])
+print(s[!is.na(s$rule), ], right = FALSE, row.names = FALSE)
+' "studies/$study/output/p21/adam-$study.xlsx"

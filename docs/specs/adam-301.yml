@@ -33,7 +33,7 @@ datasets:
       - {name: TRT01PN, label: Planned Treatment for Period 01 (N), type: integer, origin: Derived, source: protocol dose in mg}
       - {name: TRT01A, label: Actual Treatment for Period 01, type: text, origin: Derived, source: DM.ACTARM}
       - {name: TRT01AN, label: Actual Treatment for Period 01 (N), type: integer, origin: Derived, source: protocol dose in mg}
-      - {name: STRATAR, label: Randomisation Stratum, type: text, origin: Predecessor, source: "SUPPDM.QVAL where QNAM = STRATUM"}
+      - {name: STRATAR, label: Strata Used for Randomization, type: text, origin: Predecessor, source: "SUPPDM.QVAL where QNAM = STRATUM"}
       - {name: RANDDT, label: Date of Randomization, type: date, origin: Derived, source: "DS.DSSTDTC where DSDECOD = RANDOMIZED"}
       - {name: RANDFL, label: Randomized Population Flag, type: text, origin: Derived, source: "Y: ADSL has one record per randomised subject"}
       - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Derived, source: "Y if randomised (SAP FAS)"}
@@ -71,7 +71,7 @@ datasets:
       - {name: TRTP, label: Planned Treatment, type: text, origin: Predecessor, source: ADSL.TRT01P}
       - {name: TRTPN, label: Planned Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01PN}
       - {name: ARMCD, label: Planned Arm Code, type: text, origin: Predecessor, source: ADSL.ARMCD}
-      - {name: STRATAR, label: Randomisation Stratum, type: text, origin: Predecessor, source: ADSL.STRATAR}
+      - {name: STRATAR, label: Strata Used for Randomization, type: text, origin: Predecessor, source: ADSL.STRATAR}
       - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Predecessor, source: ADSL.FASFL}
       - {name: PPROTFL, label: Per-Protocol Population Flag, type: text, origin: Predecessor, source: ADSL.PPROTFL}
       - {name: PARAMCD, label: Parameter Code, type: text, origin: Assigned, source: "HBA1C (LB), WEIGHT (VS)"}
@@ -81,7 +81,7 @@ datasets:
       - {name: AVISITN, label: Analysis Visit (N), type: integer, origin: Derived, source: "week of the scheduled visit; 0 for baseline"}
       - {name: AWTARGET, label: Analysis Window Target, type: integer, origin: Derived, source: "study day 7 x week + 1"}
       - {name: AWLO, label: Analysis Window Beginning Timepoint, type: integer, origin: Derived}
-      - {name: AWHI, label: Analysis Window End Timepoint, type: integer, origin: Derived}
+      - {name: AWHI, label: Analysis Window Ending Timepoint, type: integer, origin: Derived}
       - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: "LB.LBDTC, VS.VSDTC"}
       - {name: ADY, label: Analysis Relative Day, type: integer, origin: Derived, source: "from randomisation, no day 0"}
       - {name: AVAL, label: Analysis Value, type: float, origin: Derived, source: "LB.LBSTRESN, VS.VSSTRESN"}
@@ -111,7 +111,7 @@ datasets:
       - {name: TRTP, label: Planned Treatment, type: text, origin: Predecessor, source: ADSL.TRT01P}
       - {name: TRTPN, label: Planned Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01PN}
       - {name: ARMCD, label: Planned Arm Code, type: text, origin: Predecessor, source: ADSL.ARMCD}
-      - {name: STRATAR, label: Randomisation Stratum, type: text, origin: Predecessor, source: ADSL.STRATAR}
+      - {name: STRATAR, label: Strata Used for Randomization, type: text, origin: Predecessor, source: ADSL.STRATAR}
       - {name: FASFL, label: Full Analysis Set Population Flag, type: text, origin: Predecessor, source: ADSL.FASFL}
       - {name: PPROTFL, label: Per-Protocol Population Flag, type: text, origin: Predecessor, source: ADSL.PPROTFL}
       - {name: SAFFL, label: Safety Population Flag, type: text, origin: Predecessor, source: ADSL.SAFFL}
@@ -119,7 +119,7 @@ datasets:
       - {name: TRTAN, label: Actual Treatment (N), type: integer, origin: Predecessor, source: ADSL.TRT01AN}
       - {name: PARAMCD, label: Parameter Code, type: text, origin: Assigned, source: "TTRESC (FAS), TTHYPO23 (SAF)"}
       - {name: PARAM, label: Parameter, type: text, origin: Assigned}
-      - {name: STARTDT, label: Time to Event Origin Date for Subject, type: date, origin: Derived, source: "ADSL.RANDDT (TTRESC), ADSL.TRTSDT (TTHYPO23)"}
+      - {name: STARTDT, label: Time-to-Event Origin Date for Subject, type: date, origin: Derived, source: "ADSL.RANDDT (TTRESC), ADSL.TRTSDT (TTHYPO23)"}
       - {name: ADT, label: Analysis Date, type: date, origin: Derived, source: "first rescue or level 2-3 hypoglycaemia, or the censoring date"}
       - {name: AVAL, label: Analysis Value, type: float, origin: Derived, source: "ADT - STARTDT + 1 (days)"}
       - {name: CNSR, label: Censor, type: integer, origin: Derived, source: "TTRESC: 0 rescue, 1 censored at the end of study or week 26, whichever first (SAP B3). TTHYPO23: 0 first level 2 or 3 episode, 1 censored at the last contact (SAP SF2)"}
