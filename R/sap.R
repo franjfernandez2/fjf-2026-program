@@ -9,6 +9,19 @@ sap_withdrawal_strategies <- c("MAR", "JR", "CR", "CIR", "LMCF")
 #' @return The parsed list.
 read_sap <- function(path) yaml::read_yaml(path)
 
+#' Document-control fields of a SAP file: they describe the document, not the analysis.
+sap_document_fields <- c("version", "status")
+
+#' The analysis content of a SAP, without its document-control fields.
+#'
+#' The pipeline's analyses depend on this, not on the whole file. A new version number or
+#' status (an amendment's cover page) then leaves every analysis result valid, while any
+#' change to an analysis setting still reruns what depends on it.
+#'
+#' @param sap The result of [read_sap()].
+#' @return `sap` without the fields in `sap_document_fields`.
+sap_analysis_content <- function(sap) sap[setdiff(names(sap), sap_document_fields)]
+
 #' One analysis or sensitivity analysis of the SAP, by id.
 #'
 #' @param sap The result of [read_sap()].
