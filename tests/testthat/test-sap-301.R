@@ -55,3 +55,16 @@ test_that("windowing keeps the value closest to the target, the later one on a t
   expect_identical(out$ADY[out$AVISIT == "Week 4"], 31)
   expect_identical(out$ANL01FL, c("Y", "Y"))
 })
+
+test_that("the analyses do not depend on the SAP's document-control fields", {
+  content <- sap_analysis_content(sap)
+  expect_false(any(sap_document_fields %in% names(content)))
+  expect_identical(content, sap[setdiff(names(sap), sap_document_fields)])
+  amended <- sap
+  amended$version <- "1.1"
+  amended$status <- "Amended"
+  expect_identical(sap_analysis_content(amended), content)
+  changed <- sap
+  changed$dry_run$seed <- changed$dry_run$seed + 1
+  expect_false(identical(sap_analysis_content(changed), content))
+})

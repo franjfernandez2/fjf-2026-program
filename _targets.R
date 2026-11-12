@@ -177,11 +177,13 @@ list(
   # SAP of FJF-2026-301, part 1 (efficacy), checked against the estimands and the protocol.
   tar_target(sap_301_file, "docs/sap/fjf-2026-301-sap.yml", format = "file"),
   tar_target(sap_301, read_sap(sap_301_file)),
+  # What the analyses read: a new version number or status alone reruns nothing.
+  tar_target(sap_301_content, sap_analysis_content(sap_301)),
   tar_target(outputs_301_file, "docs/sap/fjf-2026-301-outputs.yml", format = "file"),
   tar_target(outputs_301, read_outputs(outputs_301_file)),
   tar_target(
     sap_301_problems,
-    c(check_sap(sap_301, estimands_301, protocol_301), check_outputs(outputs_301, sap_301))
+    c(check_sap(sap_301_content, estimands_301, protocol_301), check_outputs(outputs_301, sap_301_content))
   ),
   tar_target(traceability_301_table, traceability_301(outputs_301)),
   tar_target(analysis_windows_301_table, analysis_windows_301(protocol_301)),
@@ -193,7 +195,7 @@ list(
     dry_run_301,
     {
       stopifnot(length(sap_301_problems) == 0)
-      d <- sap_301$dry_run
+      d <- sap_301_content$dry_run
       simulate_dry_run_301(
         sample_size_301, dry_run_301_pars, protocol_301, d$seed, d$missing_at_visit, d$washout_weeks,
         covariates = d$covariates
@@ -204,24 +206,29 @@ list(
   tar_target(
     dry_run_301_hba1c_draws,
     {
-      a1 <- sap_item(sap_301, "A1")
+      a1 <- sap_item(sap_301_content, "A1")
       draws_301(hba1c_data_301(dry_run_301, a1$settings$reference), a1$settings$imputations, a1$settings$seed)
     }
   ),
   tar_target(
     dry_run_301_efficacy,
-    analyse_efficacy_301(dry_run_301$adeff, sap_301, protocol_301, draws = dry_run_301_hba1c_draws)
+    analyse_efficacy_301(dry_run_301$adeff, sap_301_content, protocol_301, draws = dry_run_301_hba1c_draws)
   ),
-  tar_target(dry_run_301_secondary, analyse_secondary_301(dry_run_301, sap_301, protocol_301, dry_run_301_hba1c_draws)),
+  tar_target(
+    dry_run_301_secondary,
+    analyse_secondary_301(dry_run_301, sap_301_content, protocol_301, dry_run_301_hba1c_draws)
+  ),
   tar_target(
     dry_run_301_multiplicity,
-    test_multiplicity_301(multiplicity_inputs_301(dry_run_301_efficacy, dry_run_301_secondary, sap_301), sap_301)
+    test_multiplicity_301(
+      multiplicity_inputs_301(dry_run_301_efficacy, dry_run_301_secondary, sap_301_content), sap_301_content
+    )
   ),
   # A large trial: does each analysis recover the value of its own estimand?
   tar_target(
     dry_run_301_large,
     {
-      d <- sap_301$dry_run
+      d <- sap_301_content$dry_run
       simulate_dry_run_301(
         d$large_sample_per_arm, dry_run_301_pars, protocol_301, d$seed + 1, d$missing_at_visit, d$washout_weeks,
         covariates = d$covariates
@@ -230,16 +237,16 @@ list(
   ),
   tar_target(
     dry_run_301_large_efficacy,
-    analyse_efficacy_301(dry_run_301_large$adeff, sap_301, protocol_301, imputations = 20, deltas = c(0, 1, 2))
+    analyse_efficacy_301(dry_run_301_large$adeff, sap_301_content, protocol_301, imputations = 20, deltas = c(0, 1, 2))
   ),
   # Many trials of the planned size: the power of the real primary analysis (ADR 0020).
   tar_target(
     dry_run_301_oc,
     {
-      oc <- sap_301$dry_run$operating_characteristics
+      oc <- sap_301_content$dry_run$operating_characteristics
       operating_characteristics_301(
-        sample_size_301, dry_run_301_pars, protocol_301, sap_301,
-        trials = oc$trials, imputations = oc$imputations, seed = sap_301$dry_run$seed + 1000,
+        sample_size_301, dry_run_301_pars, protocol_301, sap_301_content,
+        trials = oc$trials, imputations = oc$imputations, seed = sap_301_content$dry_run$seed + 1000,
         cores = min(4L, parallel::detectCores())
       )
     }
@@ -253,6 +260,7 @@ list(
   tar_target(estimands_201, read_estimands(estimands_201_file)),
   tar_target(sap_201_file, "docs/sap/fjf-2026-201-sap.yml", format = "file"),
   tar_target(sap_201, read_sap(sap_201_file)),
+  tar_target(sap_201_content, sap_analysis_content(sap_201)),
   # The phase III dose is read from the 301 design, so the two studies cannot disagree.
   tar_target(reference_dose_201, max(purrr::map_dbl(protocol_301$arms, "dose_mg"))),
   tar_target(
@@ -260,7 +268,7 @@ list(
     c(
       check_protocol(protocol_201, design_assumptions),
       check_estimands(estimands_201, protocol_201),
-      check_sap_201(sap_201, estimands_201, protocol_201)
+      check_sap_201(sap_201_content, estimands_201, protocol_201)
     )
   ),
   tar_target(
@@ -273,23 +281,23 @@ list(
     sample_size_201_power,
     {
       stopifnot(length(design_201_problems) == 0)
-      power_mcp_201(design_assumptions, protocol_201, sap_201, reference_dose_201)
+      power_mcp_201(design_assumptions, protocol_201, sap_201_content, reference_dose_201)
     }
   ),
-  tar_target(sample_size_201, choose_sample_size_201(sample_size_201_power, sap_201$sample_size$target_power)),
+  tar_target(sample_size_201, choose_sample_size_201(sample_size_201_power, sap_201_content$sample_size$target_power)),
   tar_target(
     dry_run_201,
     simulate_dry_run_201(
-      sample_size_201, design_assumptions, protocol_201, reference_dose_201, sap_201$dry_run$seed,
-      sap_201$dry_run$missing_at_visit
+      sample_size_201, design_assumptions, protocol_201, reference_dose_201, sap_201_content$dry_run$seed,
+      sap_201_content$dry_run$missing_at_visit
     )
   ),
-  tar_target(dry_run_201_analysis, analyse_201(dry_run_201$adeff, sap_201, protocol_201)),
+  tar_target(dry_run_201_analysis, analyse_201(dry_run_201$adeff, sap_201_content, protocol_201)),
   tar_target(
     dry_run_201_oc,
     operating_characteristics_201(
-      sample_size_201, design_assumptions, protocol_201, sap_201, reference_dose_201,
-      trials = sap_201$dry_run$operating_characteristics$trials, seed = sap_201$dry_run$seed + 1000,
+      sample_size_201, design_assumptions, protocol_201, sap_201_content, reference_dose_201,
+      trials = sap_201_content$dry_run$operating_characteristics$trials, seed = sap_201_content$dry_run$seed + 1000,
       cores = min(4L, parallel::detectCores())
     )
   ),
