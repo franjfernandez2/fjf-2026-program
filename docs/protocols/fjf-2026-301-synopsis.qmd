@@ -33,6 +33,7 @@ Every number on this page is read from the study's design data ([`fjf-2026-301.y
 |---|---|---|---|
 | 0.1 | 2026-11-12 | Francisco Fernández | First draft (F2 · PR 16) |
 | 0.2 | 2026-11-12 | Francisco Fernández | Estimands and sample size (F2 · PR 17) |
+| 1.0 | 2026-11-12 | Francisco Fernández | Final: approved at the gate-2 review and frozen (tag `sap-301-v1.0`) |
 
 The synopsis is frozen with the SAP (tag `sap-301-v1.0`).
 

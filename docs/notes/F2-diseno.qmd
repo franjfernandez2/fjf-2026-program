@@ -140,7 +140,7 @@ La puerta 2 es «SAP congelados». Todo lo que había que programar en la F2 est
 1. ~~Decidir los puntos de diseño y aceptar los ADR 0018 a 0025~~: hecho en la revisión de arriba.
 2. **Fusionar las PR 15 a 24** en orden, con el CI en verde.
 3. **Responder las preguntas de control 1 a 8**, arriba, con tus palabras.
-4. **Congelar los SAP**, con las etiquetas `sap-301-v1.0` y `sap-201-v1.0` sobre main. Desde ese momento, cualquier cambio es una enmienda con fecha y motivo.
+4. ~~Congelar los SAP~~: hecho el 2026-11-12 (versión 1.0). Etiquetas `sap-301-v1.0` y `sap-201-v1.0` sobre main. Desde ese momento, cualquier cambio es una enmienda con fecha y motivo.
 5. **Generar los datos tú mismo**, desde una copia limpia de main:
 
    ```sh

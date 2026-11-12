@@ -46,8 +46,9 @@ Every setting in this plan is read from [`fjf-2026-301-sap.yml`](fjf-2026-301-sa
 |---|---|---|---|
 | 0.1 | 2026-11-12 | Francisco Fernández | Part 1, primary endpoint (F2 · PR 18) |
 | 0.2 | 2026-11-12 | Francisco Fernández | Part 2: secondaries, multiplicity, subgroups, safety, outputs (F2 · PR 19) |
+| 1.0 | 2026-11-12 | Francisco Fernández | Final: approved at the gate-2 review and frozen (tag `sap-301-v1.0`) |
 
-The outputs and their traceability are in [`fjf-2026-301-outputs.yml`](fjf-2026-301-outputs.yml). The SAP becomes version 1.0 with the tag `sap-301-v1.0`, before any study data are generated ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)). After the tag, any change is an amendment with its date and reason, and is reported in the study report.
+The outputs and their traceability are in [`fjf-2026-301-outputs.yml`](fjf-2026-301-outputs.yml). The SAP is version 1.0, frozen with the tag `sap-301-v1.0` before any study data were generated ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)). After the tag, any change is an amendment with its date and reason, and is reported in the study report.
 
 # Study design in brief
 

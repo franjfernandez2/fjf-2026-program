@@ -37,8 +37,9 @@ Every setting in this plan is read from [`fjf-2026-201-sap.yml`](fjf-2026-201-sa
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-11-12 | Francisco Fernández | Complete draft (F2 · PR 20) |
+| 1.0 | 2026-11-12 | Francisco Fernández | Final: approved at the gate-2 review and frozen (tag `sap-201-v1.0`) |
 
-The SAP becomes version 1.0 with the tag `sap-201-v1.0`, before any study data are generated ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)).
+The SAP is version 1.0, frozen with the tag `sap-201-v1.0` before any study data were generated ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)).
 
 # Study design in brief
 

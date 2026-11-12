@@ -7,8 +7,8 @@
 # The SAP is frozen with the tag sap-301-v1.0 before any study data are generated (ADR 0018).
 
 study: FJF-2026-301
-version: "0.2"
-status: Draft, complete; frozen as 1.0 after the reviewer's review
+version: "1.0"
+status: Final, frozen with the tag sap-301-v1.0 after the reviewer's gate-2 review (2026-11-12)
 
 analysis_sets:
   - id: FAS
