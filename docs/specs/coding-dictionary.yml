@@ -1,0 +1,57 @@
+# Reduced coding dictionary of the FJF-2026 programme. MedDRA and WHODrug need a licence,
+# so this file is the project's own: it uses the structure of MedDRA (lowest level term,
+# preferred term, system organ class) and the ATC classification for medications, but no
+# MedDRA or WHODrug codes. The reviewer's guide says so. Verbatim terms are matched without
+# case and surrounding blanks; a term that is not here stops the SDTM build, as an uncoded
+# term would raise a query in a real study.
+
+version: "1.0"
+
+adverse_events:
+  - {verbatim: [Headache], llt: Headache, pt: Headache, soc: Nervous system disorders}
+  - {verbatim: [Tension headache], llt: Tension headache, pt: Tension headache, soc: Nervous system disorders}
+  - {verbatim: [Dizziness], llt: Dizziness, pt: Dizziness, soc: Nervous system disorders}
+  - {verbatim: [Dizzy], llt: Dizzy, pt: Dizziness, soc: Nervous system disorders}
+  - {verbatim: [URTI], llt: URTI, pt: Upper respiratory tract infection, soc: Infections and infestations}
+  - {verbatim: [Upper respiratory tract infection], llt: Upper respiratory tract infection, pt: Upper respiratory tract infection, soc: Infections and infestations}
+  - {verbatim: [Common cold, Cold], llt: Common cold, pt: Nasopharyngitis, soc: Infections and infestations}
+  - {verbatim: [Nasopharyngitis], llt: Nasopharyngitis, pt: Nasopharyngitis, soc: Infections and infestations}
+  - {verbatim: [Chest cold], llt: Chest cold, pt: Lower respiratory tract infection, soc: Infections and infestations}
+  - {verbatim: [Flu, Influenza], llt: Influenza, pt: Influenza, soc: Infections and infestations}
+  - {verbatim: [Flu-like illness], llt: Flu-like illness, pt: Influenza like illness, soc: General disorders and administration site conditions}
+  - {verbatim: [Pneumonia], llt: Pneumonia, pt: Pneumonia, soc: Infections and infestations}
+  - {verbatim: [Urinary tract infection], llt: Urinary tract infection, pt: Urinary tract infection, soc: Infections and infestations}
+  - {verbatim: [UTI], llt: UTI, pt: Urinary tract infection, soc: Infections and infestations}
+  - {verbatim: [Cystitis], llt: Cystitis, pt: Cystitis, soc: Infections and infestations}
+  - {verbatim: [Cellulitis, Cellulitis left leg], llt: Cellulitis, pt: Cellulitis, soc: Infections and infestations}
+  - {verbatim: [Arthralgia], llt: Arthralgia, pt: Arthralgia, soc: Musculoskeletal and connective tissue disorders}
+  - {verbatim: [Joint pain], llt: Joint pain, pt: Arthralgia, soc: Musculoskeletal and connective tissue disorders}
+  - {verbatim: [Knee pain], llt: Knee pain, pt: Arthralgia, soc: Musculoskeletal and connective tissue disorders}
+  - {verbatim: [Back pain, Backache], llt: Back pain, pt: Back pain, soc: Musculoskeletal and connective tissue disorders}
+  - {verbatim: [Lower back pain], llt: Low back pain, pt: Back pain, soc: Musculoskeletal and connective tissue disorders}
+  - {verbatim: [Osteoarthritis], llt: Osteoarthritis, pt: Osteoarthritis, soc: Musculoskeletal and connective tissue disorders}
+  - {verbatim: ["OA knee, admitted for knee replacement"], llt: Osteoarthritis of knee, pt: Osteoarthritis, soc: Musculoskeletal and connective tissue disorders}
+  - {verbatim: [High blood pressure, Hypertension], llt: Hypertension, pt: Hypertension, soc: Vascular disorders}
+  - {verbatim: [Worsening hypertension], llt: Hypertension aggravated, pt: Hypertension, soc: Vascular disorders}
+  - {verbatim: [Cough, Dry cough], llt: Cough, pt: Cough, soc: "Respiratory, thoracic and mediastinal disorders"}
+  - {verbatim: [Nausea, Nausea after tablets], llt: Nausea, pt: Nausea, soc: Gastrointestinal disorders}
+  - {verbatim: [Feeling sick], llt: Feeling sick, pt: Nausea, soc: Gastrointestinal disorders}
+  - {verbatim: [Vomiting], llt: Vomiting, pt: Vomiting, soc: Gastrointestinal disorders}
+  - {verbatim: [Diarrhoea, Diarrhea], llt: Diarrhoea, pt: Diarrhoea, soc: Gastrointestinal disorders}
+  - {verbatim: [Loose stools], llt: Loose stools, pt: Diarrhoea, soc: Gastrointestinal disorders}
+  - {verbatim: [Abdominal pain], llt: Abdominal pain, pt: Abdominal pain, soc: Gastrointestinal disorders}
+  - {verbatim: [Upper abdominal pain, Stomach ache], llt: Upper abdominal pain, pt: Abdominal pain upper, soc: Gastrointestinal disorders}
+  - {verbatim: [Hypoglycemia, Hypoglycaemia], llt: Hypoglycaemia, pt: Hypoglycaemia, soc: Metabolism and nutrition disorders}
+  - {verbatim: [Low blood sugar], llt: Low blood sugar, pt: Hypoglycaemia, soc: Metabolism and nutrition disorders}
+  - {verbatim: [Myocardial infarction, Heart attack], llt: Myocardial infarction, pt: Myocardial infarction, soc: Cardiac disorders}
+  - {verbatim: [NSTEMI], llt: NSTEMI, pt: Acute myocardial infarction, soc: Cardiac disorders}
+  - {verbatim: [Atrial fibrillation, New onset atrial fibrillation], llt: Atrial fibrillation, pt: Atrial fibrillation, soc: Cardiac disorders}
+  - {verbatim: [Raised transaminases], llt: Transaminases raised, pt: Transaminases increased, soc: Investigations}
+  - {verbatim: [ALT increased], llt: ALT increased, pt: Alanine aminotransferase increased, soc: Investigations}
+
+medications:
+  - {verbatim: [Metformin], decod: METFORMIN, atc: A10BA, class: Biguanides}
+  - {verbatim: [Gliclazide], decod: GLICLAZIDE, atc: A10BB, class: Sulfonylureas}
+  - {verbatim: [Pioglitazone], decod: PIOGLITAZONE, atc: A10BG, class: Thiazolidinediones}
+  - {verbatim: [Empagliflozin], decod: EMPAGLIFLOZIN, atc: A10BK, class: Sodium-glucose co-transporter 2 (SGLT2) inhibitors}
+  - {verbatim: [Insulin glargine], decod: INSULIN GLARGINE, atc: A10AE, class: "Insulins and analogues for injection, long-acting"}
