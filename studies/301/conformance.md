@@ -67,7 +67,7 @@ register).
 
 The ADaM package (targets `adam_301_files` and `adam_301_define`, folder `data/adam/301`) was
 validated with Pinnacle 21 Community, engine 2304.3, configuration *ADaM-IG 1.3 (FDA)*, CDISC
-ADaM terminology 2024-03-29, by [`tools/run-p21-adam.sh`](../../tools/run-p21-adam.sh). The
+ADaM terminology 2024-03-29, by [`tools/run-p21-adam-study.sh`](../../tools/run-p21-adam-study.sh). The
 data were still blinded.
 
 ## What changed after the first run
