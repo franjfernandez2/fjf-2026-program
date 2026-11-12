@@ -368,7 +368,13 @@ list(
   tar_target(sdtm_301_ce_supp, map_ce_301(raw_data[["301"]], sdtm_301_dm, sdtm_301_spec, sdtm_301_se)),
   tar_target(sdtm_301_ce, sdtm_301_ce_supp$ce),
   tar_target(sdtm_301_suppce, sdtm_301_ce_supp$suppce),
-  tar_target(sdtm_301_data_issues, rbind(sdtm_301_lb_issues$issues, sdtm_301_vs_issues$issues)),
+  tar_target(
+    sdtm_301_data_issues,
+    rbind(
+      sdtm_301_lb_issues$issues, sdtm_301_vs_issues$issues,
+      ex_issues_301(raw_data[["301"]], sdtm_301_dm, sdtm_301_spec)
+    )
+  ),
   tar_target(
     sdtm_301,
     list(

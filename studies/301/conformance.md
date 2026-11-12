@@ -151,9 +151,11 @@ Define-XML 2.1, and P21 still finds no define issue.
   every domain (checked record by record against the previous build), and both second
   programmings still agree.
 
-## A finding for a decision before the lock
+- **Last dose after the last bottle (CORE-000238, 129 patients).** The disposition page's
+  last-dose date was 1-8 days after the end of the last returned bottle (return date minus
+  1). The reviewer, acting as data manager, decided before the lock that the disposition
+  date stands. The new cleaning rule CR10 extends the last bottle to it, and each case is in
+  the data-issues listing. RFXENDTC now equals the last EXENDTC for all 300 dosed patients.
+  Median compliance goes from 95% to 94%; the per-protocol set is unchanged (214).
 
-- **Last dose (CORE-000238, 129 patients).** RFXENDTC is the last-dose date of the disposition
-  page. For 129 patients it is 1-8 days after the end of their last returned bottle (return
-  date minus 1). The two CRF sources disagree. It is a data query, not a programming error,
-  and it affects compliance (ADSL.COMPLPCT) and so the per-protocol set.
+After both fixes: 348 rules pass and 26 report issues.

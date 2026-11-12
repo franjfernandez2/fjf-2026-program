@@ -83,6 +83,17 @@ test_that("EX takes the treatment of the assignment and ends the day before the 
   expect_identical(map_ex_301(raw, placebo, dm, protocol, spec, se)$EXTRT, c("PLACEBO", "PLACEBO"))
 })
 
+test_that("a last bottle returned before the last dose runs until it, and is listed (CR10)", {
+  expect_identical(nrow(ex_issues_301(raw, dm, spec)), 0L)
+  early <- raw
+  last <- nrow(early$exposure)
+  early$exposure$return_date[last] <- "10-JUL-2028"
+  expect_identical(map_ex_301(early, assignment, dm, protocol, spec, se)$EXENDTC, c("2028-02-15", "2028-07-18"))
+  issues <- ex_issues_301(early, dm, spec)
+  expect_identical(issues$rule, "CR10")
+  expect_match(issues$detail, "last dose 2028-07-18 .* 9 day\\(s\\) after")
+})
+
 test_that("DA keeps each tablet count, and a count not done stays missing", {
   expect_identical(da$DATESTCD, c("DISPAMT", "RETAMT", "DISPAMT", "RETAMT"))
   expect_identical(da$DASTRESN, c(35, 7, 35, NA))

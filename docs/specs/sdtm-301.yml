@@ -136,7 +136,7 @@ domains:
       - {name: VISIT, label: Visit Name, type: text, origin: Derived}
       - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: EXSTDTC, label: Start Date/Time of Treatment, type: text, origin: Collected, source: exposure.dispense_date}
-      - {name: EXENDTC, label: End Date/Time of Treatment, type: text, origin: Derived, source: "day before the return date; last dose date if not returned"}
+      - {name: EXENDTC, label: End Date/Time of Treatment, type: text, origin: Derived, source: "day before the return date, never after the last dose; the last bottle ends at the last dose (RFXENDTC) if not returned or returned earlier (CR10)"}
       - {name: EXSTDY, label: Study Day of Start of Treatment, type: integer, origin: Derived}
       - {name: EXENDY, label: Study Day of End of Treatment, type: integer, origin: Derived}
 

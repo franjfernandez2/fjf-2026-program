@@ -97,6 +97,19 @@ rules:
       treatment-emergent, so it is the one kept.
     acts_in: SDTM
 
+  - id: CR10
+    check: Last dose after the last bottle
+    applies_to: exposure and disposition (last dose of study treatment)
+    rule: >-
+      The last-dose date of the disposition page is kept as the end of treatment (RFXENDTC).
+      The subject's last bottle is taken until that date (EXENDTC), so its days of use, and
+      the compliance, count the extra days. Each case is listed.
+    reason: >-
+      The disposition page records the last dose itself; the bottle's end is inferred from
+      its return date. Decided by the study's data manager (the reviewer) before the lock,
+      while the data were blinded.
+    acts_in: SDTM
+
   - id: CR09
     check: Missing required value
     applies_to: adverse_events (severity)

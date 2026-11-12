@@ -24,6 +24,8 @@ map_ex_301 <- function(raw, assignment, dm, protocol, spec, se) {
   ex$EXTRT <- ifelse(ex$EXDOSE == 0, "PLACEBO", "FJF-2026")
   # The tablets of a bottle are taken until the day before it is returned, and never after
   # the last dose. A bottle never returned ends at the last dose, if it is the subject's last.
+  # CR10: if the last-dose date of the disposition page is after the end of the last bottle,
+  # the disposition date is kept and the last bottle is taken until then.
   returned <- iso_date(crf_to_iso(ex$return_date))
   last <- !duplicated(ex$USUBJID, fromLast = TRUE)
   last_dose <- iso_date(dm$RFXENDTC[match(ex$USUBJID, dm$USUBJID)])
@@ -31,6 +33,8 @@ map_ex_301 <- function(raw, assignment, dm, protocol, spec, se) {
   capped <- !is.na(end) & !is.na(last_dose) & end > last_dose
   end[capped] <- last_dose[capped]
   end[is.na(end) & last] <- last_dose[is.na(end) & last]
+  extend <- last & !is.na(end) & !is.na(last_dose) & end < last_dose
+  end[extend] <- last_dose[extend]
   ex$EXENDTC <- ifelse(is.na(end), NA, format(end))
   v <- planned_visit(ex$visit_code, protocol)
   ref <- dm$RFSTDTC[match(ex$USUBJID, dm$USUBJID)]
@@ -43,6 +47,30 @@ map_ex_301 <- function(raw, assignment, dm, protocol, spec, se) {
     EXENDY = sdtm_study_day(ex$EXENDTC, ref)
   )
   sdtm_conform(out, spec, "EX")
+}
+
+#' Data issues of the exposure: last-dose dates after the end of the last bottle (CR10).
+#'
+#' @param raw Named list of the study's raw tables.
+#' @param dm The DM dataset, for the last-dose date (RFXENDTC, from the disposition page).
+#' @param spec The SDTM specification.
+#' @return A data frame of data issues, one row per subject concerned.
+ex_issues_301 <- function(raw, dm, spec) {
+  ex <- raw$exposure
+  ex$USUBJID <- sdtm_usubjid(spec$study, ex$subject_id)
+  ex <- ex[order(ex$USUBJID, crf_to_iso(ex$dispense_date)), ]
+  ex <- ex[!duplicated(ex$USUBJID, fromLast = TRUE), ]
+  end <- iso_date(crf_to_iso(ex$return_date)) - 1
+  last_dose <- iso_date(dm$RFXENDTC[match(ex$USUBJID, dm$USUBJID)])
+  late <- !is.na(end) & !is.na(last_dose) & end < last_dose
+  data.frame(
+    rule = rep("CR10", sum(late)), table = rep("exposure", sum(late)), subject_id = ex$subject_id[late],
+    record_id = ex$record_id[late],
+    detail = sprintf(
+      "last dose %s (disposition) is %d day(s) after the last bottle ends (returned %s); exposure extended to it",
+      format(last_dose[late]), as.integer(last_dose[late] - end[late]), format(end[late] + 1)
+    )
+  )
 }
 
 #' Map the tablet counts of FJF-2026-301 to DA.

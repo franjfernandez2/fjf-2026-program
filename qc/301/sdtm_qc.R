@@ -208,6 +208,9 @@ qc_sdtm_301 <- function(dir, assignment, protocol, spec, dictionary) {
   end <- as.Date(ifelse(!is.na(end) & !is.na(last_dose) & end > last_dose, last_dose, end))
   is_last <- !duplicated(x$USUBJID, fromLast = TRUE)
   end[is.na(end) & is_last] <- last_dose[is.na(end) & is_last]
+  # CR10: the disposition's last dose is kept; the last bottle runs until it.
+  late <- is_last & !is.na(end) & !is.na(last_dose) & end < last_dose
+  end[late] <- last_dose[late]
   vnum <- match(x$visit_code, protocol$visits$code)
   ex <- data.frame(
     STUDYID = st, DOMAIN = "EX", USUBJID = x$USUBJID, EXSEQ = qc_seq(x$USUBJID), EXREFID = x$record_id,
