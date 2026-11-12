@@ -8,8 +8,10 @@
 #'
 #' @param adeff Efficacy dataset.
 #' @param reference Arm code of the reference arm, which becomes the first factor level.
+#' @param paramcd Parameter to keep, when the dataset has a PARAMCD column.
 #' @return A data frame with factors for subject, arm, visit (in week order) and stratum.
-prepare_efficacy_301 <- function(adeff, reference = "PBO") {
+prepare_efficacy_301 <- function(adeff, reference = "PBO", paramcd = "HBA1C") {
+  if ("PARAMCD" %in% names(adeff)) adeff <- adeff[adeff$PARAMCD == paramcd, ]
   arms <- unique(adeff$ARMCD)
   stopifnot(reference %in% arms, length(arms) == 2)
   visits <- unique(adeff$AVISIT[order(adeff$AVISITN)])
@@ -90,12 +92,17 @@ draws_301 <- function(data, imputations, seed) {
 #' @param strategy Strategy after withdrawal.
 #' @param reference Reference arm code (both arms follow it under JR and CR).
 #' @param visit Label of the primary visit.
+#' @param seed Seed of the imputation step. rbmi::impute() draws random numbers too, so it
+#'   needs its own seed: without one, the result would depend on whatever state the random
+#'   number generator was in.
 #' @param deltas Optional shifts (HbA1c points) added to imputed values of the active arm.
 #' @return A tibble with one row per delta: delta, estimate, se, lower, upper, p_value.
-pooled_ancova_301 <- function(draws, data, strategy, reference, visit, deltas = 0) {
+pooled_ancova_301 <- function(draws, data, strategy, reference, visit, seed, deltas = 0) {
   arms <- levels(data$ARMCD)
   refs <- stats::setNames(rep(reference, length(arms)), arms)
-  imputed <- rbmi::impute(draws, references = refs, update_strategy = withdrawal_ice_301(data, strategy))
+  imputed <- withr::with_seed(
+    seed, rbmi::impute(draws, references = refs, update_strategy = withdrawal_ice_301(data, strategy))
+  )
   vars <- rbmi::set_vars(
     subjid = "USUBJID", visit = "AVISIT", group = "ARMCD", outcome = "CHG", covariates = c("BASE", "STRATUM")
   )
@@ -117,20 +124,27 @@ pooled_ancova_301 <- function(draws, data, strategy, reference, visit, deltas = 
 
 #' Mixed model for repeated measures, difference between arms at the primary visit.
 #'
+#' The covariance structures are tried in the SAP's order; the first that converges is used.
+#'
 #' @param data The result of [prepare_efficacy_301()], already restricted for the estimand.
 #' @param visit Label of the primary visit.
-#' @return A tibble: estimate, se, df, lower, upper, p_value.
-fit_mmrm_301 <- function(data, visit) {
-  fit <- mmrm::mmrm(
-    CHG ~ BASE * AVISIT + STRATUM + ARMCD * AVISIT + us(AVISIT | USUBJID),
-    data = data[!is.na(data$CHG), ], method = "Kenward-Roger"
-  )
+#' @param covariances mmrm covariance structures, in order of preference.
+#' @return A tibble: estimate, se, df, lower, upper, p_value, covariance.
+fit_mmrm_301 <- function(data, visit, covariances = "us") {
+  observed <- data[!is.na(data$CHG), ]
+  fit <- NULL
+  for (cov in covariances) {
+    f <- stats::as.formula(sprintf("CHG ~ BASE * AVISIT + STRATUM + ARMCD * AVISIT + %s(AVISIT | USUBJID)", cov))
+    fit <- tryCatch(mmrm::mmrm(f, data = observed, method = "Kenward-Roger"), error = function(e) NULL)
+    if (!is.null(fit)) break
+  }
+  if (is.null(fit)) stop("no covariance structure converged: ", paste(covariances, collapse = ", "))
   means <- emmeans::emmeans(fit, ~ ARMCD | AVISIT)
   diff <- as.data.frame(summary(emmeans::contrast(means, list(difference = c(-1, 1))), infer = TRUE))
   row <- diff[diff$AVISIT == visit, ]
   tibble::tibble(
     estimate = row$estimate, se = row$SE, df = row$df,
-    lower = row$lower.CL, upper = row$upper.CL, p_value = row$p.value
+    lower = row$lower.CL, upper = row$upper.CL, p_value = row$p.value, covariance = cov
   )
 }
 
@@ -151,31 +165,34 @@ tipping_point <- function(tipping) {
 #' @param imputations Number of imputations; by default the SAP's.
 #' @param deltas Tipping-point grid; by default the SAP's. A coarser grid saves time on
 #'   large dry runs, where each delta re-analyses every imputed dataset.
+#' @param draws Draws of the HbA1c imputation model, if already made by [draws_301()] with
+#'   the SAP's seed; otherwise they are made here.
 #' @return A list: `results`, one row per analysis (A1, A2, S1, S2), and `tipping`, the
 #'   tipping-point table of S3, with its tipping point in `tipping_point`.
-analyse_efficacy_301 <- function(adeff, sap, protocol, imputations = NULL, deltas = NULL) {
+analyse_efficacy_301 <- function(adeff, sap, protocol, imputations = NULL, deltas = NULL, draws = NULL) {
   a1 <- sap_item(sap, "A1")
   visit <- sprintf("Week %d", protocol$primary_visit_week)
   reference <- a1$settings$reference
   data <- prepare_efficacy_301(adeff, reference)
-  draws <- draws_301(data, imputations %||% a1$settings$imputations, a1$settings$seed)
+  draws <- draws %||% draws_301(data, imputations %||% a1$settings$imputations, a1$settings$seed)
   mi <- function(id) {
     item <- sap_item(sap, id)
     strategy <- item$settings$strategy_after_withdrawal
-    pooled_ancova_301(draws, data, strategy, reference, visit) |>
+    pooled_ancova_301(draws, data, strategy, reference, visit, a1$settings$seed) |>
       dplyr::mutate(analysis = id, strategy = strategy, .before = 1) |>
       dplyr::select(-"delta")
   }
   results <- dplyr::bind_rows(
     mi("A1"),
-    fit_mmrm_301(hypothetical_data_301(data), visit) |> dplyr::mutate(analysis = "A2", strategy = "MMRM", .before = 1),
+    fit_mmrm_301(hypothetical_data_301(data), visit, unlist(sap_item(sap, "A2")$settings$covariance_fallback)) |>
+      dplyr::mutate(analysis = "A2", strategy = "MMRM", .before = 1),
     mi("S1"),
     mi("S2")
   )
   s3 <- sap_item(sap, "S3")
   grid <- s3$settings$deltas
   tipping <- pooled_ancova_301(
-    draws, data, s3$settings$strategy_after_withdrawal, reference, visit,
+    draws, data, s3$settings$strategy_after_withdrawal, reference, visit, a1$settings$seed,
     deltas = deltas %||% seq(grid$from, grid$to, by = grid$by)
   )
   list(results = results, tipping = tipping, tipping_point = tipping_point(tipping))
@@ -224,7 +241,9 @@ operating_characteristics_301 <- function(n_per_arm, pars, protocol, sap, trials
     )$adeff
     data <- prepare_efficacy_301(adeff, a1$settings$reference)
     draws <- draws_301(data, imputations, seed + i)
-    real <- pooled_ancova_301(draws, data, a1$settings$strategy_after_withdrawal, a1$settings$reference, visit)
+    real <- pooled_ancova_301(
+      draws, data, a1$settings$strategy_after_withdrawal, a1$settings$reference, visit, seed + i
+    )
     simple <- withr::with_seed(seed + i, simplified_analysis_301(data, visit, a1$settings$reference))
     dplyr::bind_rows(
       tibble::tibble(

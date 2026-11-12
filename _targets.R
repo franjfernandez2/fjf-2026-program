@@ -177,7 +177,13 @@ list(
   # SAP of FJF-2026-301, part 1 (efficacy), checked against the estimands and the protocol.
   tar_target(sap_301_file, "docs/sap/fjf-2026-301-sap.yml", format = "file"),
   tar_target(sap_301, read_sap(sap_301_file)),
-  tar_target(sap_301_problems, check_sap(sap_301, estimands_301, protocol_301)),
+  tar_target(outputs_301_file, "docs/sap/fjf-2026-301-outputs.yml", format = "file"),
+  tar_target(outputs_301, read_outputs(outputs_301_file)),
+  tar_target(
+    sap_301_problems,
+    c(check_sap(sap_301, estimands_301, protocol_301), check_outputs(outputs_301, sap_301))
+  ),
+  tar_target(traceability_301_table, traceability_301(outputs_301)),
   tar_target(analysis_windows_301_table, analysis_windows_301(protocol_301)),
 
   # Dry run (SAP, dry run): the SAP's analyses on data generated from the planning values
@@ -188,17 +194,37 @@ list(
     {
       stopifnot(length(sap_301_problems) == 0)
       d <- sap_301$dry_run
-      simulate_dry_run_301(sample_size_301, dry_run_301_pars, protocol_301, d$seed, d$missing_at_visit, d$washout_weeks)
+      simulate_dry_run_301(
+        sample_size_301, dry_run_301_pars, protocol_301, d$seed, d$missing_at_visit, d$washout_weeks,
+        covariates = d$covariates
+      )
     }
   ),
-  tar_target(dry_run_301_efficacy, analyse_efficacy_301(dry_run_301$adeff, sap_301, protocol_301)),
+  # One set of HbA1c imputation draws (A1's seed) serves A1, S1-S3, B1 and the subgroups.
+  tar_target(
+    dry_run_301_hba1c_draws,
+    {
+      a1 <- sap_item(sap_301, "A1")
+      draws_301(hba1c_data_301(dry_run_301, a1$settings$reference), a1$settings$imputations, a1$settings$seed)
+    }
+  ),
+  tar_target(
+    dry_run_301_efficacy,
+    analyse_efficacy_301(dry_run_301$adeff, sap_301, protocol_301, draws = dry_run_301_hba1c_draws)
+  ),
+  tar_target(dry_run_301_secondary, analyse_secondary_301(dry_run_301, sap_301, protocol_301, dry_run_301_hba1c_draws)),
+  tar_target(
+    dry_run_301_multiplicity,
+    test_multiplicity_301(multiplicity_inputs_301(dry_run_301_efficacy, dry_run_301_secondary, sap_301), sap_301)
+  ),
   # A large trial: does each analysis recover the value of its own estimand?
   tar_target(
     dry_run_301_large,
     {
       d <- sap_301$dry_run
       simulate_dry_run_301(
-        d$large_sample_per_arm, dry_run_301_pars, protocol_301, d$seed + 1, d$missing_at_visit, d$washout_weeks
+        d$large_sample_per_arm, dry_run_301_pars, protocol_301, d$seed + 1, d$missing_at_visit, d$washout_weeks,
+        covariates = d$covariates
       )
     }
   ),

@@ -1,14 +1,14 @@
-# Statistical analysis plan of study FJF-2026-301, part 1: efficacy of the primary
-# endpoint. The SAP document (fjf-2026-301-sap.qmd) renders this file, and the analysis
-# code reads its settings from it, so the text and the code cannot disagree. R/sap.R checks
-# it against the protocol and the estimands. Part 2 (PR 19) adds the secondary endpoints,
-# multiplicity, subgroups and safety.
+# Statistical analysis plan of study FJF-2026-301. The SAP document (fjf-2026-301-sap.qmd)
+# renders this file, and the analysis code reads its settings from it, so the text and the
+# code cannot disagree. R/sap.R checks it against the protocol and the estimands. Part 1
+# (PR 18): primary endpoint. Part 2 (PR 19): key secondary endpoints, multiplicity,
+# subgroups and safety. The outputs and their traceability are in fjf-2026-301-outputs.yml.
 #
 # The SAP is frozen with the tag sap-301-v1.0 before any study data are generated (ADR 0018).
 
 study: FJF-2026-301
-version: "0.1"
-status: Draft, part 1 of 2
+version: "0.2"
+status: Draft, complete; frozen as 1.0 after the reviewer's review
 
 analysis_sets:
   - id: FAS
@@ -65,6 +65,7 @@ analyses:
     analysis_model: Analysis of covariance at week 26, change on arm, baseline and stratum.
     pooling: Rubin's rules.
     test: Two-sided, 5% level. FJF-2026 is superior to placebo if the upper 95% limit is below 0.
+    favourable: lower
     settings:
       reference: PBO
       strategy_after_withdrawal: JR
@@ -84,6 +85,9 @@ analyses:
       visit; unstructured covariance; Kenward-Roger degrees of freedom.
     summary_measure: Difference in least-squares means at week 26 (emmeans).
     test: Two-sided, 5% level; supportive, no confirmatory claim.
+    settings:
+      # If the unstructured covariance does not converge, the next structure is used.
+      covariance_fallback: [us, toeph, ar1h, cs]
 
 # Sensitivity analyses vary one assumption of the analysis they belong to and keep the rest.
 sensitivity:
@@ -116,6 +120,111 @@ sensitivity:
       strategy_after_withdrawal: MAR
       deltas: {from: 0, to: 5, by: 0.25}
 
+# Key secondary endpoints. Each is tested only through the multiplicity graph below.
+secondary:
+  - id: B1
+    estimand: E3
+    label: HbA1c below 7.0% at week 26
+    analysis_set: FAS
+    data: The datasets imputed for A1 (jump to reference); HbA1c at week 26 is baseline plus imputed change.
+    analysis_model: >-
+      Logistic regression on arm, baseline HbA1c and stratum in each imputed dataset; the log
+      odds ratio is combined by Rubin's rules. The difference in proportions is combined in
+      the same way, with its normal-approximation standard error.
+    summary_measure: Odds ratio (FJF-2026 over placebo) and difference in proportions.
+    favourable: higher
+    settings:
+      threshold: 7.0
+  - id: B2
+    estimand: E4
+    label: Change in body weight at week 26
+    analysis_set: FAS
+    data: Every observed body weight at weeks 12 and 26, on or off treatment, before or after rescue.
+    missing_data: As A1, jump to reference after withdrawal.
+    analysis_model: As A1, for body weight, adjusted for baseline weight and stratum.
+    summary_measure: Difference in mean change (kg).
+    favourable: lower
+    settings:
+      reference: PBO
+      strategy_after_withdrawal: JR
+      imputations: 500
+      seed: 301002
+  - id: B3
+    estimand: E5
+    label: Time to first rescue medication
+    analysis_set: FAS
+    data: >-
+      Days from randomisation to the first dose of rescue medication. Patients without rescue
+      are censored on the day they leave the study or at week 26, whichever comes first.
+    analysis_model: Cox proportional hazards model on arm, stratified by stratum (Wald test).
+    summary_measure: Hazard ratio (FJF-2026 over placebo), with Kaplan-Meier curves by arm.
+    favourable: lower
+
+# Multiplicity: graphical approach with weighted Bonferroni tests (graphicalMCP). The family
+# error rate is controlled at one-sided 2.5%, the same as two-sided 5% with the effect in
+# favour. All the alpha starts on the primary hypothesis, so nothing else can be claimed
+# unless it is rejected.
+multiplicity:
+  alpha_one_sided: 0.025
+  hypotheses:
+    - {id: H1, analysis: A1, label: HbA1c change (primary), weight: 1}
+    - {id: H2, analysis: B1, label: HbA1c below 7%, weight: 0}
+    - {id: H3, analysis: B2, label: Body weight, weight: 0}
+    - {id: H4, analysis: B3, label: Time to rescue, weight: 0}
+  # Row = from, columns = to, in the order of the hypotheses above.
+  transitions:
+    H1: [0, 0.5, 0.5, 0]
+    H2: [0, 0, 0.5, 0.5]
+    H3: [0, 0.5, 0, 0.5]
+    H4: [0, 0.5, 0.5, 0]
+  rationale: >-
+    The primary hypothesis passes its alpha in halves to the glycaemic target and to body
+    weight, the two secondaries closest to the drug's expected benefit. Each of them passes its
+    alpha on to the other and to time to rescue, so no alpha is lost once a hypothesis is
+    rejected.
+
+# Subgroups: descriptive, no multiplicity adjustment and no claim. Each is binary, so the
+# interaction is one coefficient whose estimate and standard error are combined by Rubin.
+subgroups:
+  method: >-
+    On each dataset imputed for A1, the ANCOVA of A1 is fitted within each level of the
+    subgroup (without the stratum when the stratum is the subgroup), and once with an arm by
+    subgroup interaction. Estimates are combined by Rubin's rules and shown in a forest plot.
+  variables:
+    - {id: STRATUM, label: Screening HbA1c, levels: ["<=8.5", ">8.5"], derivation: Randomisation stratum}
+    - {id: AGEGR, label: Age, levels: ["<65", ">=65"], derivation: "AGE < 65 or AGE >= 65 years"}
+    - {id: SEX, label: Sex, levels: ["F", "M"], derivation: Sex as recorded in demography}
+    - {id: BMIGR, label: Body mass index, levels: ["<30", ">=30"], derivation: "BMIBL < 30 or >= 30 kg/m2"}
+
+# Safety: safety set, by treatment taken, descriptive. No hypothesis tests.
+safety:
+  - id: SF1
+    label: Adverse events
+    method: >-
+      Treatment-emergent adverse events (onset or worsening on or after the first dose and up
+      to 14 days after the last) by MedDRA system organ class and preferred term: patients with
+      at least one event, and events per 100 patient-years of exposure. Overview of serious
+      events, events leading to discontinuation, and deaths.
+  - id: SF2
+    label: Hypoglycaemia
+    method: >-
+      Episodes by level (level 1 below 70 mg/dL, level 2 below 54 mg/dL, level 3 severe), as
+      patients with at least one and as episodes per 100 patient-years, on treatment and before
+      rescue and over the whole study. Kaplan-Meier curve of the time to the first level 2 or
+      3 episode.
+  - id: SF3
+    label: Laboratory
+    method: >-
+      Change from baseline by visit; shift tables from baseline to the worst value on treatment
+      (low, normal, high against the reference range); eDISH plot of peak ALT against peak
+      bilirubin, both as multiples of the upper limit of normal, for potential Hy's law cases.
+  - id: SF4
+    label: Vital signs, weight and ECG
+    method: Change from baseline by visit; patients with values outside predefined limits.
+  - id: SF5
+    label: Exposure
+    method: Days on study drug and compliance by arm; patient-years of exposure for the rates above.
+
 # Dry run: the analyses above are run on data generated from the planning values with a public
 # seed, before any study data exist. It checks that the code runs, that it recovers the
 # planning effect, and that the real primary analysis has the power the sample size assumed.
@@ -127,3 +236,13 @@ dry_run:
     imputations: 20
   missing_at_visit: 0.03
   washout_weeks: 12
+  # Illustrative covariates for the subgroups and the weight analysis. They have no effect on
+  # any outcome in the dry run, and are not assumptions of the study.
+  covariates:
+    age_mean: 57
+    age_sd: 10
+    female_share: 0.45
+    bmi_mean: 31
+    bmi_sd: 5
+    weight_mean: 87
+    weight_sd: 17

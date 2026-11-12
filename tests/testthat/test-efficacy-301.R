@@ -8,14 +8,15 @@ test_that("dry-run data are reproducible and shaped like the efficacy dataset", 
   a <- simulate_dry_run_301(40, pars, protocol, seed = 3)
   b <- simulate_dry_run_301(40, pars, protocol, seed = 3)
   expect_identical(a, b)
-  d <- a$adeff
+  d <- a$adeff[a$adeff$PARAMCD == "HBA1C", ]
   expect_identical(nrow(d), 80L * 6L)
+  expect_identical(sum(a$adeff$PARAMCD == "WEIGHT"), 80L * 2L)
   expect_true(all(d$BASE >= 7 & d$BASE <= 10.5))
   expect_setequal(unique(d$ARMCD), c("PBO", "FJF20"))
   expect_identical(d$STRATUM == ">8.5", d$BASE > 8.5)
   # Nobody has a value after leaving the study.
   left <- a$subjects$USUBJID[is.finite(a$subjects$withdrawal_week)]
-  after <- d |>
+  after <- a$adeff |>
     dplyr::inner_join(a$subjects, by = c("USUBJID", "ARMCD")) |>
     dplyr::filter(AVISITN > withdrawal_week)
   expect_true(all(is.na(after$CHG)))
@@ -55,7 +56,7 @@ test_that("tipping_point finds the first delta whose upper limit reaches 0", {
 
 test_that("on a large dry run, each analysis recovers the value of its own estimand", {
   dry <- simulate_dry_run_301(1500, pars, protocol, seed = 301)
-  wk26 <- dry$adeff[dry$adeff$AVISITN == 26, ]
+  wk26 <- dry$adeff[dry$adeff$AVISITN == 26 & dry$adeff$PARAMCD == "HBA1C", ]
   e1_value <- mean(wk26$CHG_FULL[wk26$ARMCD == "FJF20"]) - mean(wk26$CHG_FULL[wk26$ARMCD == "PBO"])
   res <- analyse_efficacy_301(dry$adeff, sap, protocol, imputations = 5, deltas = c(0, 2, 4))
   est <- stats::setNames(res$results$estimate, res$results$analysis)
@@ -68,4 +69,12 @@ test_that("on a large dry run, each analysis recovers the value of its own estim
   expect_lt(est[["A2"]], est[["A1"]])
   # Larger deltas move the estimate towards 0.
   expect_true(all(diff(res$tipping$estimate) > 0))
+})
+
+test_that("the operating characteristics depend on the seed only, not on cores or prior state", {
+  run <- function(cores) {
+    set.seed(sample.int(1e6, 1)) # a different global state each time
+    operating_characteristics_301(60, pars, protocol, sap, trials = 2, imputations = 3, seed = 5, cores = cores)
+  }
+  expect_identical(run(1), run(2))
 })

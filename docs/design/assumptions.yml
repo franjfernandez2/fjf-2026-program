@@ -192,6 +192,15 @@ parameters:
       Dapagliflozin 10 mg lost 1.97 kg more than placebo (-2.86 vs -0.89, NCT00528879), an
       SGLT2 inhibitor. FJF-2026 has no stated mechanism, so the range goes up to a
       weight-neutral drug.
+  - id: weight_change_sd
+    description: Standard deviation of the change in body weight at week 24-26
+    unit: kg
+    planning: 2.8
+    truth_range: [2.2, 3.5]
+    sources: [bailey2010]
+    evidence: >-
+      The placebo change in NCT00528879 has SE 0.24 kg with about 137 patients, so
+      SD = 0.24 x sqrt(137) = 2.8 kg, approximately (the analysed number may be slightly lower).
   - id: hypoglycaemia_level2_active
     description: Proportion of patients on the active dose with at least one level 2 hypoglycaemia (< 54 mg/dL)
     unit: proportion

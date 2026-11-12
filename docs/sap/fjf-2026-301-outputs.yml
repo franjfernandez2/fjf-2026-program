@@ -1,0 +1,186 @@
+# Tables, figures and listings of FJF-2026-301, and their traceability. Each output names
+# the SAP item it implements, the ADaM variables it reads and the program that will make it
+# (in F3). R/outputs.R checks that every SAP item has an output, and every output a SAP item.
+# The ADaM variables are checked against the ADaM specification when it exists (F3).
+
+study: FJF-2026-301
+adam_datasets: [ADSL, ADEFF, ADTTE, ADAE, ADHYPO, ADLB, ADVS, ADEX]
+
+outputs:
+  # --- Patients ---
+  - id: T-14.1.1
+    type: table
+    title: Disposition of patients
+    population: FAS
+    sap: [FAS, SAF]
+    adam: [ADSL.RANDFL, ADSL.SAFFL, ADSL.EOTSTT, ADSL.DCTREAS, ADSL.EOSSTT, ADSL.DCSREAS]
+    program: studies/301/tlf/t_14_1_1.R
+    layout: Arms in columns, total last. Randomised, treated, completed treatment, completed study, reasons.
+  - id: T-14.1.2
+    type: table
+    title: Demographic and baseline characteristics
+    population: FAS
+    sap: [FAS]
+    adam: [ADSL.AGE, ADSL.AGEGR1, ADSL.SEX, ADSL.RACE, ADSL.BMIBL, ADSL.WEIGHTBL, ADSL.HBA1CBL, ADSL.STRATAR]
+    program: studies/301/tlf/t_14_1_2.R
+    layout: Arms in columns. n, mean (SD), median, min-max for continuous; n (%) for categorical.
+
+  # --- Primary endpoint ---
+  - id: T-14.2.1
+    type: table
+    title: Change from baseline in HbA1c at week 26, treatment-policy estimand (primary)
+    population: FAS
+    sap: [A1]
+    adam: [ADEFF.PARAMCD, ADEFF.AVISIT, ADEFF.BASE, ADEFF.CHG, ADEFF.ANL01FL, ADSL.TRT01P, ADSL.STRATAR]
+    program: studies/301/tlf/t_14_2_1.R
+    layout: >-
+      Arms in columns. Observed n, mean (SD) at baseline and week 26; LS mean change (SE);
+      difference (95% CI) and p-value from multiple imputation.
+  - id: T-14.2.2
+    type: table
+    title: Change from baseline in HbA1c at week 26, hypothetical estimand (supplementary)
+    population: FAS
+    sap: [A2]
+    adam: [ADEFF.PARAMCD, ADEFF.AVISIT, ADEFF.BASE, ADEFF.CHG, ADEFF.ONTRTFL, ADEFF.PRERESFL, ADSL.TRT01P]
+    program: studies/301/tlf/t_14_2_2.R
+    layout: As T-14.2.1, from the MMRM, with the covariance structure used.
+  - id: T-14.2.3
+    type: table
+    title: Sensitivity analyses of the primary estimand
+    population: FAS
+    sap: [S1, S2, S3]
+    adam: [ADEFF.CHG, ADEFF.AVISIT, ADSL.TRT01P]
+    program: studies/301/tlf/t_14_2_3.R
+    layout: One row per analysis (A1, S1, S2) with difference (95% CI) and p-value; the tipping point of S3.
+  - id: F-14.2.1
+    type: figure
+    title: Tipping-point analysis of the primary estimand
+    population: FAS
+    sap: [S3]
+    adam: [ADEFF.CHG, ADEFF.AVISIT, ADSL.TRT01P]
+    program: studies/301/tlf/f_14_2_1.R
+    layout: Difference and 95% CI against delta; horizontal line at 0.
+  - id: F-14.2.2
+    type: figure
+    title: Mean change in HbA1c over time
+    population: FAS
+    sap: [A1, A2]
+    adam: [ADEFF.CHG, ADEFF.AVISIT, ADEFF.ANL01FL, ADSL.TRT01P]
+    program: studies/301/tlf/f_14_2_2.R
+    layout: Observed mean (SE) by visit and arm.
+
+  # --- Key secondary endpoints and multiplicity ---
+  - id: T-14.2.4
+    type: table
+    title: Patients with HbA1c below 7.0% at week 26
+    population: FAS
+    sap: [B1]
+    adam: [ADEFF.PARAMCD, ADEFF.AVISIT, ADEFF.AVAL, ADEFF.CRIT1FL, ADSL.TRT01P]
+    program: studies/301/tlf/t_14_2_4.R
+    layout: Proportion by arm, odds ratio (95% CI), difference in proportions (95% CI), p-value.
+  - id: T-14.2.5
+    type: table
+    title: Change from baseline in body weight at week 26
+    population: FAS
+    sap: [B2]
+    adam: [ADEFF.PARAMCD, ADEFF.AVISIT, ADEFF.BASE, ADEFF.CHG, ADSL.TRT01P]
+    program: studies/301/tlf/t_14_2_5.R
+    layout: As T-14.2.1, for body weight (kg).
+  - id: T-14.2.6
+    type: table
+    title: Time to first rescue medication
+    population: FAS
+    sap: [B3]
+    adam: [ADTTE.PARAMCD, ADTTE.AVAL, ADTTE.CNSR, ADSL.TRT01P, ADSL.STRATAR]
+    program: studies/301/tlf/t_14_2_6.R
+    layout: Patients with rescue, Kaplan-Meier proportion at week 26, hazard ratio (95% CI), p-value.
+  - id: F-14.2.3
+    type: figure
+    title: Kaplan-Meier curves of the time to first rescue medication
+    population: FAS
+    sap: [B3]
+    adam: [ADTTE.AVAL, ADTTE.CNSR, ADSL.TRT01P]
+    program: studies/301/tlf/f_14_2_3.R
+    layout: Proportion without rescue by day and arm, with patients at risk.
+  - id: T-14.2.7
+    type: table
+    title: Primary and key secondary hypotheses under the multiplicity graph
+    population: FAS
+    sap: [multiplicity]
+    adam: []
+    program: studies/301/tlf/t_14_2_7.R
+    layout: One row per hypothesis, with one-sided and adjusted p-values and the decision.
+  - id: F-14.2.4
+    type: figure
+    title: Treatment effect on HbA1c at week 26 by subgroup
+    population: FAS
+    sap: [subgroups]
+    adam: [ADEFF.CHG, ADSL.AGE, ADSL.SEX, ADSL.BMIBL, ADSL.STRATAR, ADSL.TRT01P]
+    program: studies/301/tlf/f_14_2_4.R
+    layout: Forest plot, difference (95% CI) per level, n per level and interaction p-value.
+
+  # --- Safety ---
+  - id: T-14.3.1
+    type: table
+    title: Overview of treatment-emergent adverse events
+    population: SAF
+    sap: [SF1]
+    adam: [ADAE.TRTEMFL, ADAE.AESER, ADAE.AEACN, ADAE.AEOUT, ADSL.TRT01A]
+    program: studies/301/tlf/t_14_3_1.R
+    layout: Patients with any TEAE, serious, leading to discontinuation, fatal; n (%) by arm.
+  - id: T-14.3.2
+    type: table
+    title: Treatment-emergent adverse events by system organ class and preferred term
+    population: SAF
+    sap: [SF1]
+    adam: [ADAE.AEBODSYS, ADAE.AEDECOD, ADAE.TRTEMFL, ADSL.TRT01A, ADEX.TRTDURY]
+    program: studies/301/tlf/t_14_3_2.R
+    layout: n (%) and events per 100 patient-years by arm, sorted by frequency on FJF-2026.
+  - id: T-14.3.3
+    type: table
+    title: Hypoglycaemia by level
+    population: SAF
+    sap: [SF2]
+    adam: [ADHYPO.HYPOLVL, ADHYPO.ONTRTFL, ADHYPO.PRERESFL, ADSL.TRT01A, ADEX.TRTDURY]
+    program: studies/301/tlf/t_14_3_3.R
+    layout: Patients with at least one episode and episodes per 100 patient-years, by level and arm.
+  - id: F-14.3.1
+    type: figure
+    title: Kaplan-Meier curves of the time to first level 2 or 3 hypoglycaemia
+    population: SAF
+    sap: [SF2]
+    adam: [ADTTE.PARAMCD, ADTTE.AVAL, ADTTE.CNSR, ADSL.TRT01A]
+    program: studies/301/tlf/f_14_3_1.R
+    layout: Cumulative incidence by day and arm, with patients at risk.
+  - id: T-14.3.4
+    type: table
+    title: Laboratory shifts from baseline to the worst value on treatment
+    population: SAF
+    sap: [SF3]
+    adam: [ADLB.PARAMCD, ADLB.BNRIND, ADLB.ANRIND, ADLB.WORSTFL, ADSL.TRT01A]
+    program: studies/301/tlf/t_14_3_4.R
+    layout: Baseline low, normal, high in rows; worst on treatment in columns; by parameter and arm.
+  - id: F-14.3.2
+    type: figure
+    title: eDISH plot of peak ALT against peak total bilirubin
+    population: SAF
+    sap: [SF3]
+    adam: [ADLB.PARAMCD, ADLB.AVAL, ADLB.ANRHI, ADSL.TRT01A]
+    program: studies/301/tlf/f_14_3_2.R
+    layout: Log scales, multiples of ULN, reference lines at 3x ULN (ALT) and 2x ULN (bilirubin).
+  - id: T-14.3.5
+    type: table
+    title: Vital signs, body weight and ECG, change from baseline
+    population: SAF
+    sap: [SF4]
+    adam: [ADVS.PARAMCD, ADVS.AVISIT, ADVS.BASE, ADVS.CHG, ADSL.TRT01A]
+    program: studies/301/tlf/t_14_3_5.R
+    layout: n, mean (SD) at baseline and by visit, by parameter and arm.
+  - id: T-14.3.6
+    type: table
+    title: Exposure to study drug
+    population: SAF
+    sap: [SF5]
+    adam: [ADEX.TRTDURD, ADEX.TRTDURY, ADEX.COMPLPCT, ADSL.TRT01A]
+    program: studies/301/tlf/t_14_3_6.R
+    layout: Days on drug, patient-years and compliance, by arm.
