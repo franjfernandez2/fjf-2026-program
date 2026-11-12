@@ -5,6 +5,7 @@
 #' @param x Character vector of CRF dates.
 #' @return Character vector of ISO 8601 dates (CR02: no imputation in SDTM).
 crf_to_iso <- function(x) {
+  x <- as.character(x)
   out <- as.character(sdtm.oak::create_iso8601(x, .format = list(c("dd-mmm-y", "y")), .na = c("UN", "UNK")))
   out[is.na(x)] <- NA_character_
   out
@@ -89,3 +90,39 @@ sdtm_conform <- function(data, spec, domain) {
   for (v in vars) out[[v$name]] <- cast[[v$type]](out[[v$name]])
   tibble::as_tibble(out)
 }
+
+#' Code verbatim terms with the project's reduced dictionary.
+#'
+#' @param verbatim Character vector of terms as collected.
+#' @param entries Dictionary section (`adverse_events` or `medications`).
+#' @param what Name of the dictionary section, for the error message.
+#' @return A data frame with one row per term and the entry's fields; stops if a term is not
+#'   in the dictionary, as an uncoded term would raise a query.
+code_terms <- function(verbatim, entries, what) {
+  key <- function(x) tolower(trimws(x))
+  lookup <- purrr::list_rbind(purrr::map(entries, \(e) {
+    fields <- e[setdiff(names(e), "verbatim")]
+    data.frame(key = key(unlist(e$verbatim)), fields)
+  }))
+  if (anyDuplicated(lookup$key) > 0) stop("Duplicated verbatim terms in the ", what, " dictionary")
+  i <- match(key(verbatim), lookup$key)
+  uncoded <- unique(verbatim[is.na(i) & !is.na(verbatim)])
+  if (length(uncoded) > 0) stop("Uncoded ", what, ": ", toString(uncoded))
+  lookup[i, setdiff(names(lookup), "key"), drop = FALSE]
+}
+
+#' Visit number and name of planned visits.
+#'
+#' @param code Visit codes of the CRF.
+#' @param protocol The protocol design.
+#' @return A list with `VISITNUM` and `VISIT`.
+planned_visit <- function(code, protocol) {
+  i <- match(code, protocol$visits$code)
+  list(VISITNUM = as.numeric(i), VISIT = toupper(protocol$visits$label[i]))
+}
+
+#' Sequence number within subject, in the order given.
+#'
+#' @param usubjid Subject identifiers, already in the wanted order.
+#' @return Integer vector.
+sdtm_seq <- function(usubjid) as.integer(stats::ave(seq_along(usubjid), usubjid, FUN = seq_along))

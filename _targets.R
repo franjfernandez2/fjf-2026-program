@@ -328,5 +328,15 @@ list(
   ),
   tar_target(sdtm_301_dm, map_dm_301(raw_data[["301"]], assignment_301, protocol_301, sdtm_301_spec)),
   tar_target(sdtm_301_ds, map_ds_301(raw_data[["301"]], assignment_301, sdtm_301_dm, sdtm_301_spec)),
-  tar_target(sdtm_301_sv, map_sv_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec))
+  tar_target(sdtm_301_sv, map_sv_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec)),
+  tar_target(coding_dictionary_file, "docs/specs/coding-dictionary.yml", format = "file"),
+  tar_target(coding_dictionary, yaml::read_yaml(coding_dictionary_file)),
+  tar_target(
+    sdtm_301_ex, map_ex_301(raw_data[["301"]], assignment_301, sdtm_301_dm, protocol_301, sdtm_301_spec)
+  ),
+  tar_target(sdtm_301_da, map_da_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_cm, map_cm_301(raw_data[["301"]], sdtm_301_dm, coding_dictionary, sdtm_301_spec)),
+  tar_target(sdtm_301_ae_supp, map_ae_301(raw_data[["301"]], sdtm_301_dm, coding_dictionary, sdtm_301_spec)),
+  tar_target(sdtm_301_ae, sdtm_301_ae_supp$ae),
+  tar_target(sdtm_301_suppae, sdtm_301_ae_supp$suppae)
 )

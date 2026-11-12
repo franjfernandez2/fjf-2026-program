@@ -16,7 +16,20 @@ raw <- list(
     race = "WHITE", ethnicity = "NOT HISPANIC OR LATINO"
   ),
   exposure = data.frame(
-    subject_id = "301-001-0001", dispense_date = c("19-JAN-2028", "16-FEB-2028")
+    record_id = 1:2, subject_id = "301-001-0001", visit_code = c("V2", "V4"),
+    dispense_date = c("19-JAN-2028", "16-FEB-2028"), return_date = c("16-FEB-2028", NA),
+    tablets_dispensed = c(35L, 35L), tablets_returned = c(7L, NA)
+  ),
+  adverse_events = data.frame(
+    subject_id = "301-001-0001", ae_seq = 1:3, verbatim_term = c(" HEADACHE", "Low blood sugar", "COLD"),
+    start_date = c("25-JAN-2028", "UNK-FEB-2028", "10-MAR-2028"), end_date = c("27-JAN-2028", NA, "01-MAR-2028"),
+    severity = c("MILD", "", "MODERATE"), serious = "N", related = c("N", "Y", "N"),
+    action_taken = "DOSE NOT CHANGED", outcome = c("RECOVERED", "NOT RECOVERED", "RECOVERED")
+  ),
+  concomitant_meds = data.frame(
+    subject_id = "301-001-0001", cm_seq = 1:2, drug_name = c("METFORMIN", "GLICLAZIDE"),
+    indication = c("TYPE 2 DIABETES", "HYPERGLYCAEMIA (RESCUE)"), daily_dose = c("2000 MG", ""),
+    start_date = c("UNK-MAY-2018", "02-MAY-2028"), end_date = NA, rescue = c("N", "Y")
   ),
   disposition = data.frame(
     subject_id = c("301-001-0001", "301-001-0001", "301-001-0003"),
@@ -39,6 +52,11 @@ assignment <- list(
 dm <- map_dm_301(raw, assignment, protocol, spec)
 ds <- map_ds_301(raw, assignment, dm, spec)
 sv <- map_sv_301(raw, dm, protocol, spec)
+dictionary <- yaml::read_yaml(file.path(root, "docs", "specs", "coding-dictionary.yml"))
+ex <- map_ex_301(raw, assignment, dm, protocol, spec)
+da <- map_da_301(raw, dm, protocol, spec)
+cm <- map_cm_301(raw, dm, dictionary, spec)
+ae <- map_ae_301(raw, dm, dictionary, spec)
 
 spec_names <- function(domain) purrr::map_chr(sdtm_variables(spec, domain), "name")
 
@@ -46,6 +64,11 @@ test_that("each domain has exactly the variables of the specification, in order"
   expect_identical(names(dm), spec_names("DM"))
   expect_identical(names(ds), spec_names("DS"))
   expect_identical(names(sv), spec_names("SV"))
+  expect_identical(names(ex), spec_names("EX"))
+  expect_identical(names(da), spec_names("DA"))
+  expect_identical(names(cm), spec_names("CM"))
+  expect_identical(names(ae$ae), spec_names("AE"))
+  expect_identical(names(ae$suppae), spec_names("SUPPAE"))
 })
 
 test_that("DM has one record per screened subject", {
@@ -74,4 +97,45 @@ test_that("SV numbers unscheduled visits after the previous planned visit", {
   expect_identical(sv$VISIT[3], "UNSCHEDULED 2.1")
   expect_identical(sv$SVOCCUR, c("Y", "Y", NA, NA, "N"))
   expect_true(is.na(sv$SVSTDTC[5]))
+})
+
+test_that("EX takes the treatment of the assignment and ends the day before the return", {
+  expect_identical(ex$EXTRT, c("FJF-2026", "FJF-2026"))
+  expect_identical(ex$EXDOSE, c(20, 20))
+  expect_identical(ex$EXENDTC, c("2028-02-15", "2028-07-18"))
+  expect_identical(ex$EXSTDY, c(1L, 29L))
+  placebo <- assignment
+  placebo$randomisation$arm_code <- "PBO"
+  expect_identical(map_ex_301(raw, placebo, dm, protocol, spec)$EXTRT, c("PLACEBO", "PLACEBO"))
+})
+
+test_that("DA keeps each tablet count, and a count not done stays missing", {
+  expect_identical(da$DATESTCD, c("DISPAMT", "RETAMT", "DISPAMT", "RETAMT"))
+  expect_identical(da$DASTRESN, c(35, 7, 35, NA))
+  expect_identical(da$DASTAT, c(NA, NA, NA, "NOT DONE"))
+})
+
+test_that("CM codes medications and marks rescue and ongoing ones", {
+  expect_identical(cm$CMCLASCD, c("A10BA", "A10BB"))
+  expect_identical(cm$CMCAT, c("BACKGROUND ANTIDIABETIC THERAPY", "RESCUE MEDICATION"))
+  expect_identical(cm$CMSTDTC, c("2018-05", "2028-05-02"))
+  expect_identical(cm$CMDOSTOT, c(2000, NA))
+  expect_identical(cm$CMENRTPT, c("ONGOING", "ONGOING"))
+})
+
+test_that("AE codes terms, keeps partial dates and moves an end before the start to SUPPAE", {
+  a <- ae$ae
+  expect_identical(a$AEDECOD, c("Headache", "Hypoglycaemia", "Nasopharyngitis"))
+  expect_identical(a$AESTDTC, c("2028-01-25", "2028-02", "2028-03-10"))
+  expect_identical(a$AESTDY, c(7L, NA, 52L))
+  expect_identical(a$AESEV, c("MILD", NA, "MODERATE"))
+  expect_true(is.na(a$AEENDTC[3]))
+  expect_identical(ae$suppae$IDVARVAL, "3")
+  expect_identical(ae$suppae$QVAL, "2028-03-01")
+})
+
+test_that("an uncoded term stops the build", {
+  bad <- raw
+  bad$adverse_events$verbatim_term[1] <- "Something new"
+  expect_error(map_ae_301(bad, dm, dictionary, spec), "Uncoded adverse event terms: Something new")
 })
