@@ -1,0 +1,76 @@
+---
+title: "FJF-2026-301: Clinical Study Data Reviewer's Guide (draft)"
+subtitle: "SDTM tabulation datasets, SDTMIG 3.4"
+format: html
+---
+
+::: {.callout-note}
+Draft written with the SDTM (F3 day 5). It is completed with the CSR on day 14. The structure
+follows the PHUSE cSDRG template. The data are simulated and the sponsor is fictional.
+:::
+
+## 1. Introduction
+
+The package holds the SDTM datasets of FJF-2026-301, a 26-week, randomised, double-blind,
+placebo-controlled, parallel-group phase III study of FJF-2026 20 mg added to metformin in
+adults with type 2 diabetes. Datasets are SAS transport v5 files, described by `define.xml`
+(Define-XML 2.1). Standards: SDTM 2.0, SDTMIG 3.4, CDISC SDTM terminology 2024-03-29.
+
+The datasets are built from the raw (EDC-like) layer by the project's pipeline, from the
+specification `docs/specs/sdtm-301.yml` and the cleaning rules `docs/specs/cleaning-rules.yml`.
+
+## 2. Protocol description
+
+Two arms, 1:1, stratified by screening HbA1c (≤ 8.5%, > 8.5%): placebo + metformin and
+FJF-2026 20 mg + metformin. Screening (2 weeks), treatment (26 weeks), follow-up (2 weeks). The
+trial design is in TA, TE, TV, TI and TS; each subject's path is in SE.
+
+## 3. Subject data description
+
+### Domains
+
+| Dataset | Description | Notes |
+| --- | --- | --- |
+| DM | Demographics | Screen failures included (ARMNRS = SCREEN FAILURE). |
+| DS | Disposition | Protocol milestones and disposition events. |
+| IE | Criteria not met | Screen failures only, from the criterion recorded on the CRF. |
+| SV | Subject visits | Unscheduled visits numbered after the previous planned visit (+ 0.1). |
+| SE | Subject elements | Screening, treatment, follow-up; EPOCH of every other domain comes from SE. |
+| EX, DA | Exposure, product accountability | One EX record per bottle; tablet counts in DA. |
+| CM | Concomitant medications | Background therapy and rescue medication (CMCAT). |
+| AE, SUPPAE | Adverse events | SUPPAE.AEENRAW holds end dates set aside by rule CR08. |
+| CE, SUPPCE | Hypoglycaemic events | ADA level in CESCAT; glucose and assistance in SUPPCE. |
+| LB, VS | Laboratory, vital signs | Standard units by fixed factors; height from the screening demography page. |
+
+### Coding dictionaries
+
+MedDRA and WHODrug need a licence. Adverse events and medications are coded with the
+project's own reduced dictionary (`docs/specs/coding-dictionary.yml`): MedDRA-like lowest level
+term, preferred term and system organ class, without codes, and ATC level 4 classes for
+medications. AELLTCD, AEPTCD, AEHLT, AEHLGT and their codes are therefore absent.
+
+### Data that are not collected
+
+- **COUNTRY** is empty: the CRF does not collect the country of the site.
+- **Seriousness criteria** (AESHOSP, AESDTH, ...) are not collected; only AESER is.
+- **Demography of screen failures** is not collected, so their SEX, RACE and BRTHDTC are empty.
+
+### Cleaning rules applied in SDTM
+
+The raw layer is never changed. Duplicates keep the first entry (CR01), partial dates stay
+partial (CR02), weights in pounds and heights in metres are converted in the standard result
+variables (CR04, CR05), laboratory units are converted with fixed factors (CR06), qualified
+results stay as text (CR07), and an adverse event end date before its start is moved to SUPPAE
+(CR08). Every record a rule touches is listed in the data-issues listing.
+
+### Blinding
+
+Until the database lock (tag `dblock-301`, ADR 0027), the arm of each subject in DM, SE and EX
+comes from a dummy assignment: the real arms shuffled within stratum with a public seed. This
+guide is updated after the lock.
+
+## 4. Data conformance summary
+
+Pinnacle 21 Community 2304.3 (SDTM-IG 3.4, FDA) reports no reject and no define.xml issue.
+Each remaining issue is explained in `studies/301/conformance.md`. CDISC CORE is to be run
+before the lock.

@@ -9,8 +9,9 @@
 #' @param dm The DM dataset.
 #' @param protocol The protocol design.
 #' @param spec The SDTM specification.
+#' @param se The SE dataset, for EPOCH.
 #' @return The EX dataset.
-map_ex_301 <- function(raw, assignment, dm, protocol, spec) {
+map_ex_301 <- function(raw, assignment, dm, protocol, spec, se) {
   ex <- raw$exposure
   rand <- assignment$randomisation
   dose <- stats::setNames(purrr::map_dbl(protocol$arms, "dose_mg"), purrr::map_chr(protocol$arms, "code"))
@@ -21,19 +22,24 @@ map_ex_301 <- function(raw, assignment, dm, protocol, spec) {
   if (anyNA(arm)) stop("Exposure recorded for subjects without an assigned arm")
   ex$EXDOSE <- unname(dose[arm])
   ex$EXTRT <- ifelse(ex$EXDOSE == 0, "PLACEBO", "FJF-2026")
-  # The tablets of a bottle are taken until the day before it is returned. A bottle never
-  # returned ends at the last dose, if it is the subject's last.
+  # The tablets of a bottle are taken until the day before it is returned, and never after
+  # the last dose. A bottle never returned ends at the last dose, if it is the subject's last.
   returned <- iso_date(crf_to_iso(ex$return_date))
   last <- !duplicated(ex$USUBJID, fromLast = TRUE)
-  last_dose <- dm$RFXENDTC[match(ex$USUBJID, dm$USUBJID)]
-  ex$EXENDTC <- ifelse(!is.na(returned), format(returned - 1), ifelse(last, last_dose, NA))
+  last_dose <- iso_date(dm$RFXENDTC[match(ex$USUBJID, dm$USUBJID)])
+  end <- returned - 1
+  capped <- !is.na(end) & !is.na(last_dose) & end > last_dose
+  end[capped] <- last_dose[capped]
+  end[is.na(end) & last] <- last_dose[is.na(end) & last]
+  ex$EXENDTC <- ifelse(is.na(end), NA, format(end))
   v <- planned_visit(ex$visit_code, protocol)
   ref <- dm$RFSTDTC[match(ex$USUBJID, dm$USUBJID)]
   out <- data.frame(
     STUDYID = spec$study, DOMAIN = "EX", USUBJID = ex$USUBJID, EXSEQ = sdtm_seq(ex$USUBJID),
     EXREFID = as.character(ex$record_id), EXTRT = ex$EXTRT, EXDOSE = ex$EXDOSE, EXDOSU = "mg",
     EXDOSFRM = "TABLET", EXDOSFRQ = "QD", EXROUTE = "ORAL", VISITNUM = v$VISITNUM, VISIT = v$VISIT,
-    EXSTDTC = ex$EXSTDTC, EXENDTC = ex$EXENDTC, EXSTDY = sdtm_study_day(ex$EXSTDTC, ref),
+    EPOCH = epoch_of(ex$USUBJID, ex$EXSTDTC, se), EXSTDTC = ex$EXSTDTC, EXENDTC = ex$EXENDTC,
+    EXSTDY = sdtm_study_day(ex$EXSTDTC, ref),
     EXENDY = sdtm_study_day(ex$EXENDTC, ref)
   )
   sdtm_conform(out, spec, "EX")
@@ -43,7 +49,7 @@ map_ex_301 <- function(raw, assignment, dm, protocol, spec) {
 #'
 #' @inheritParams map_ex_301
 #' @return The DA dataset.
-map_da_301 <- function(raw, dm, protocol, spec) {
+map_da_301 <- function(raw, dm, protocol, spec, se) {
   ex <- raw$exposure
   count <- function(test, name, n, date) {
     data.frame(
@@ -65,7 +71,7 @@ map_da_301 <- function(raw, dm, protocol, spec) {
     DAORRES = ifelse(done, as.character(d$n), NA), DAORRESU = ifelse(done, "TABLET", NA),
     DASTRESC = ifelse(done, as.character(d$n), NA), DASTRESN = as.numeric(d$n),
     DASTRESU = ifelse(done, "TABLET", NA), DASTAT = ifelse(done, NA, "NOT DONE"),
-    VISITNUM = v$VISITNUM, VISIT = v$VISIT, DADTC = d$DADTC,
+    VISITNUM = v$VISITNUM, VISIT = v$VISIT, EPOCH = epoch_of(d$USUBJID, d$DADTC, se), DADTC = d$DADTC,
     DADY = sdtm_study_day(d$DADTC, dm$RFSTDTC[match(d$USUBJID, dm$USUBJID)])
   )
   sdtm_conform(out, spec, "DA")

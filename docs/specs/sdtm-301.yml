@@ -10,7 +10,8 @@ blinding_seed: 301301
 # The CRF does not collect the country. COUNTRY stays empty and the reviewer's guide says so.
 country: null
 
-# Laboratory tests: name, category and standard unit. Results in another unit are converted
+# Laboratory tests: CRF code, SDTM code (testcd, when the CRF code is not the CDISC one),
+# name, category and standard unit (CDISC unit terminology). Results in another unit are converted
 # with value * factor + offset (CR06); a unit not listed leaves LBSTRESN missing (listed).
 lab_tests:
   - {code: GLUC, name: Glucose, category: CHEMISTRY, unit: mg/dL, convert: [{from: mmol/L, factor: 18.016, offset: 0}]}
@@ -19,7 +20,7 @@ lab_tests:
   - {code: AST, name: Aspartate Aminotransferase, category: CHEMISTRY, unit: U/L, convert: []}
   - {code: BILI, name: Bilirubin, category: CHEMISTRY, unit: mg/dL, convert: [{from: umol/L, factor: 0.05848, offset: 0}]}
   - {code: CREAT, name: Creatinine, category: CHEMISTRY, unit: mg/dL, convert: [{from: umol/L, factor: 0.01131, offset: 0}]}
-  - {code: EGFR, name: "Glomerular Filtration Rate, Estimated", category: CHEMISTRY, unit: mL/min/1.73m2, convert: []}
+  - {code: EGFR, testcd: GFRE, name: "Glomerular Filtration Rate, Estimated", category: CHEMISTRY, unit: mL/min/1.73 m2, convert: [{from: mL/min/1.73m2, factor: 1, offset: 0}]}
 
 # Vital signs: the CRF column, test name and standard unit. Weight in pounds and height in
 # metres are converted (CR04, CR05).
@@ -45,7 +46,8 @@ domains:
       - {name: RFXSTDTC, label: Date/Time of First Study Treatment, type: text, origin: Derived, source: first dispense_date}
       - {name: RFXENDTC, label: Date/Time of Last Study Treatment, type: text, origin: Derived, source: disposition TREATMENT event_date}
       - {name: RFICDTC, label: Date/Time of Informed Consent, type: text, origin: Collected, source: enrolment.consent_date}
-      - {name: RFPENDTC, label: Date/Time of End of Participation, type: text, origin: Derived, source: last disposition or screening date}
+      - {name: RFPENDTC, label: Date/Time of End of Participation, type: text, origin: Derived, source: "last date of contact: latest complete date of the subject's records"}
+      - {name: DTHDTC, label: Date/Time of Death, type: text, origin: Derived, source: disposition event_date when reason is DEATH}
       - {name: DTHFL, label: Subject Death Flag, type: text, origin: Derived, source: disposition reason DEATH}
       - {name: SITEID, label: Study Site Identifier, type: text, origin: Collected, source: enrolment.site_id}
       - {name: BRTHDTC, label: Date/Time of Birth, type: text, origin: Collected, source: demography.birth_date}
@@ -59,12 +61,13 @@ domains:
       - {name: ACTARMCD, label: Actual Arm Code, type: text, origin: Derived, source: "ARMCD if dosed"}
       - {name: ACTARM, label: Description of Actual Arm, type: text, origin: Derived, source: "ARM if dosed"}
       - {name: ARMNRS, label: Reason Arm and/or Actual Arm is Null, type: text, origin: Derived}
+      - {name: ACTARMUD, label: Description of Unplanned Actual Arm, type: text, origin: Derived, source: none in this study}
       - {name: COUNTRY, label: Country, type: text, origin: Assigned, source: not collected}
 
   - name: DS
     label: Disposition
     structure: One record per disposition status or protocol milestone per subject
-    keys: [STUDYID, USUBJID, DSSTDTC, DSDECOD]
+    keys: [STUDYID, USUBJID, DSSTDTC, DSSCAT, DSDECOD]
     variables:
       - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
       - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
@@ -74,6 +77,7 @@ domains:
       - {name: DSDECOD, label: Standardized Disposition Term, type: text, origin: Derived}
       - {name: DSCAT, label: Category for Disposition Event, type: text, origin: Assigned}
       - {name: DSSCAT, label: Subcategory for Disposition Event, type: text, origin: Assigned}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: DSSTDTC, label: Start Date/Time of Disposition Event, type: text, origin: Collected}
       - {name: DSSTDY, label: Study Day of Start of Disposition Event, type: integer, origin: Derived}
 
@@ -112,6 +116,7 @@ domains:
       - {name: EXROUTE, label: Route of Administration, type: text, origin: Protocol}
       - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
       - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: EXSTDTC, label: Start Date/Time of Treatment, type: text, origin: Collected, source: exposure.dispense_date}
       - {name: EXENDTC, label: End Date/Time of Treatment, type: text, origin: Derived, source: "day before the return date; last dose date if not returned"}
       - {name: EXSTDY, label: Study Day of Start of Treatment, type: integer, origin: Derived}
@@ -137,6 +142,7 @@ domains:
       - {name: DASTAT, label: Completion Status, type: text, origin: Derived}
       - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
       - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: DADTC, label: Date/Time of Accountability Assessment, type: text, origin: Collected, source: "exposure.dispense_date, return_date"}
       - {name: DADY, label: Study Day of Accountability Assessment, type: integer, origin: Derived}
 
@@ -153,11 +159,12 @@ domains:
       - {name: CMTRT, label: Reported Name of Drug, Med, or Therapy, type: text, origin: Collected, source: concomitant_meds.drug_name}
       - {name: CMDECOD, label: Standardized Medication Name, type: text, origin: Assigned, source: coding-dictionary.yml}
       - {name: CMCAT, label: Category for Medication, type: text, origin: Derived, source: concomitant_meds.rescue}
+      - {name: CMINDC, label: Indication, type: text, origin: Collected, source: concomitant_meds.indication}
       - {name: CMCLAS, label: Medication Class, type: text, origin: Assigned, source: "coding-dictionary.yml (ATC level 4)"}
       - {name: CMCLASCD, label: Medication Class Code, type: text, origin: Assigned, source: coding-dictionary.yml}
-      - {name: CMINDC, label: Indication, type: text, origin: Collected, source: concomitant_meds.indication}
-      - {name: CMDOSTOT, label: Total Daily Dose, type: float, origin: Collected, source: concomitant_meds.daily_dose}
       - {name: CMDOSU, label: Dose Units, type: text, origin: Collected, source: concomitant_meds.daily_dose}
+      - {name: CMDOSTOT, label: Total Daily Dose, type: float, origin: Collected, source: concomitant_meds.daily_dose}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: CMSTDTC, label: Start Date/Time of Medication, type: text, origin: Collected, source: "concomitant_meds.start_date, CR02"}
       - {name: CMENDTC, label: End Date/Time of Medication, type: text, origin: Collected, source: concomitant_meds.end_date}
       - {name: CMSTDY, label: Study Day of Start of Medication, type: integer, origin: Derived}
@@ -185,10 +192,13 @@ domains:
       - {name: AEACN, label: Action Taken with Study Treatment, type: text, origin: Collected, source: adverse_events.action_taken}
       - {name: AEREL, label: Causality, type: text, origin: Collected, source: adverse_events.related}
       - {name: AEOUT, label: Outcome of Adverse Event, type: text, origin: Collected, source: adverse_events.outcome}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: AESTDTC, label: Start Date/Time of Adverse Event, type: text, origin: Collected, source: "adverse_events.start_date, CR02"}
       - {name: AEENDTC, label: End Date/Time of Adverse Event, type: text, origin: Collected, source: "adverse_events.end_date, CR08"}
       - {name: AESTDY, label: Study Day of Start of Adverse Event, type: integer, origin: Derived}
       - {name: AEENDY, label: Study Day of End of Adverse Event, type: integer, origin: Derived}
+      - {name: AEENRTPT, label: End Relative to Reference Time Point, type: text, origin: Derived, source: "ONGOING when no end date; UNKNOWN when the end was set missing (CR08)"}
+      - {name: AEENTPT, label: End Reference Time Point, type: text, origin: Assigned}
 
   - name: SUPPAE
     label: Supplemental Qualifiers for AE
@@ -229,10 +239,11 @@ domains:
       - {name: LBSTNRLO, label: Normal Range Lower Limit-Std Units, type: float, origin: Derived}
       - {name: LBSTNRHI, label: Normal Range Upper Limit-Std Units, type: float, origin: Derived}
       - {name: LBNRIND, label: Reference Range Indicator, type: text, origin: Derived}
-      - {name: LBFAST, label: Fasting Status, type: text, origin: Collected, source: lab_results.fasting}
       - {name: LBLOBXFL, label: Last Observation Before Exposure Flag, type: text, origin: Derived}
+      - {name: LBFAST, label: Fasting Status, type: text, origin: Collected, source: lab_results.fasting}
       - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
       - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: LBDTC, label: Date/Time of Specimen Collection, type: text, origin: Collected, source: lab_results.collection_date}
       - {name: LBDY, label: Study Day of Specimen Collection, type: integer, origin: Derived}
 
@@ -255,13 +266,14 @@ domains:
       - {name: VSLOBXFL, label: Last Observation Before Exposure Flag, type: text, origin: Derived}
       - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
       - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: VSDTC, label: Date/Time of Measurements, type: text, origin: Collected, source: "vital_signs.measure_date; screening date for height"}
       - {name: VSDY, label: Study Day of Vital Signs, type: integer, origin: Derived}
 
   - name: CE
     label: Clinical Events
     structure: One record per hypoglycaemic event per subject
-    keys: [STUDYID, USUBJID, CETERM, CESTDTC]
+    keys: [STUDYID, USUBJID, CETERM, CESTDTC, CESPID]
     variables:
       - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
       - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
@@ -274,6 +286,7 @@ domains:
       - {name: CESCAT, label: Subcategory for Clinical Event, type: text, origin: Derived, source: "hypoglycaemia.level (ADA level 1-3)"}
       - {name: CEPRESP, label: Clinical Event Pre-specified, type: text, origin: Assigned}
       - {name: CEOCCUR, label: Clinical Event Occurrence, type: text, origin: Assigned}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
       - {name: CESTDTC, label: Start Date/Time of Clinical Event, type: text, origin: Collected, source: hypoglycaemia.event_date}
       - {name: CESTDY, label: Study Day of Start of Clinical Event, type: integer, origin: Derived}
 
@@ -292,3 +305,109 @@ domains:
       - {name: QVAL, label: Data Value, type: text, origin: Collected}
       - {name: QORIG, label: Origin, type: text, origin: Assigned}
       - {name: QEVAL, label: Evaluator, type: text, origin: Assigned}
+
+  - name: IE
+    label: Inclusion/Exclusion Criteria Not Met
+    structure: One record per inclusion or exclusion criterion not met per subject
+    keys: [STUDYID, USUBJID, IETESTCD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: IESEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: IETESTCD, label: Inclusion/Exclusion Criterion Short Name, type: text, origin: Derived, source: TI}
+      - {name: IETEST, label: Inclusion/Exclusion Criterion, type: text, origin: Collected, source: enrolment.failed_criterion}
+      - {name: IECAT, label: Inclusion/Exclusion Category, type: text, origin: Derived, source: TI}
+      - {name: IEORRES, label: I/E Criterion Original Result, type: text, origin: Derived}
+      - {name: IESTRESC, label: I/E Criterion Result in Std Format, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived}
+      - {name: IEDTC, label: Date/Time of Collection, type: text, origin: Collected, source: enrolment.screening_date}
+      - {name: IEDY, label: Study Day of Collection, type: integer, origin: Derived}
+
+  - name: SE
+    label: Subject Elements
+    structure: One record per actual element per subject
+    keys: [STUDYID, USUBJID, ETCD, SESTDTC]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: SESEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: ETCD, label: Element Code, type: text, origin: Derived}
+      - {name: ELEMENT, label: Description of Element, type: text, origin: Derived}
+      - {name: TAETORD, label: Planned Order of Element within Arm, type: integer, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived}
+      - {name: SESTDTC, label: Start Date/Time of Element, type: text, origin: Derived, source: "RFICDTC, RFXSTDTC, day after RFXENDTC"}
+      - {name: SEENDTC, label: End Date/Time of Element, type: text, origin: Derived, source: "day before RFXSTDTC, RFXENDTC, RFPENDTC"}
+      - {name: SESTDY, label: Study Day of Start of Element, type: integer, origin: Derived}
+      - {name: SEENDY, label: Study Day of End of Element, type: integer, origin: Derived}
+
+  - name: TA
+    label: Trial Arms
+    structure: One record per planned element per arm
+    keys: [STUDYID, ARMCD, TAETORD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Protocol}
+      - {name: ARM, label: Description of Planned Arm, type: text, origin: Protocol}
+      - {name: TAETORD, label: Planned Order of Element within Arm, type: integer, origin: Protocol}
+      - {name: ETCD, label: Element Code, type: text, origin: Protocol}
+      - {name: ELEMENT, label: Description of Element, type: text, origin: Protocol}
+      - {name: TABRANCH, label: Branch, type: text, origin: Protocol}
+      - {name: TATRANS, label: Transition Rule, type: text, origin: Protocol}
+      - {name: EPOCH, label: Epoch, type: text, origin: Protocol}
+
+  - name: TE
+    label: Trial Elements
+    structure: One record per planned element
+    keys: [STUDYID, ETCD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: ETCD, label: Element Code, type: text, origin: Protocol}
+      - {name: ELEMENT, label: Description of Element, type: text, origin: Protocol}
+      - {name: TESTRL, label: Rule for Start of Element, type: text, origin: Protocol}
+      - {name: TEENRL, label: Rule for End of Element, type: text, origin: Protocol}
+      - {name: TEDUR, label: Planned Duration of Element, type: text, origin: Protocol}
+
+  - name: TV
+    label: Trial Visits
+    structure: One record per planned visit
+    keys: [STUDYID, VISITNUM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Protocol}
+      - {name: VISIT, label: Visit Name, type: text, origin: Protocol}
+      - {name: VISITDY, label: Planned Study Day of Visit, type: integer, origin: Protocol}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Protocol, source: "empty: every visit applies to both arms"}
+      - {name: TVSTRL, label: Visit Start Rule, type: text, origin: Protocol}
+
+  - name: TI
+    label: Trial Inclusion/Exclusion Criteria
+    structure: One record per inclusion or exclusion criterion
+    keys: [STUDYID, IETESTCD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: IETESTCD, label: Incl/Excl Criterion Short Name, type: text, origin: Protocol}
+      - {name: IETEST, label: Inclusion/Exclusion Criterion, type: text, origin: Protocol}
+      - {name: IECAT, label: Inclusion/Exclusion Category, type: text, origin: Protocol}
+
+  - name: TS
+    label: Trial Summary
+    structure: One record per trial summary parameter value
+    keys: [STUDYID, TSPARMCD, TSSEQ]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: TSSEQ, label: Sequence Number, type: integer, origin: Assigned}
+      - {name: TSPARMCD, label: Trial Summary Parameter Short Name, type: text, origin: Assigned}
+      - {name: TSPARM, label: Trial Summary Parameter, type: text, origin: Assigned}
+      - {name: TSVAL, label: Parameter Value, type: text, origin: Protocol}
+      - {name: TSVAL1, label: Parameter Value 1, type: text, origin: Protocol, source: "text after the first 200 characters"}
+      - {name: TSVALNF, label: Parameter Null Flavor, type: text, origin: Assigned}
+      - {name: TSVALCD, label: Parameter Value Code, type: text, origin: Assigned}
+      - {name: TSVCDREF, label: Name of the Reference Terminology, type: text, origin: Assigned}
+      - {name: TSVCDVER, label: Version of the Reference Terminology, type: text, origin: Assigned}

@@ -8,8 +8,9 @@
 #' @param dm The DM dataset.
 #' @param dictionary The coding dictionary (docs/specs/coding-dictionary.yml).
 #' @param spec The SDTM specification.
+#' @param se The SE dataset, for EPOCH.
 #' @return A list with the AE and SUPPAE datasets.
-map_ae_301 <- function(raw, dm, dictionary, spec) {
+map_ae_301 <- function(raw, dm, dictionary, spec, se) {
   ae <- raw$adverse_events
   ae$USUBJID <- sdtm_usubjid(spec$study, ae$subject_id)
   ae$AESTDTC <- crf_to_iso(ae$start_date)
@@ -27,8 +28,10 @@ map_ae_301 <- function(raw, dm, dictionary, spec) {
     AEDECOD = coded$pt, AEBODSYS = coded$soc, AESOC = coded$soc, AESEV = sev, AESER = ae$serious,
     AEACN = ae$action_taken, AEREL = c(Y = "RELATED", N = "NOT RELATED")[ae$related],
     AEOUT = c(RECOVERED = "RECOVERED/RESOLVED", "NOT RECOVERED" = "NOT RECOVERED/NOT RESOLVED")[ae$outcome],
-    AESTDTC = ae$AESTDTC, AEENDTC = ifelse(ends_first, NA, end),
-    AESTDY = sdtm_study_day(ae$AESTDTC, ref), AEENDY = sdtm_study_day(ifelse(ends_first, NA, end), ref)
+    EPOCH = epoch_of(ae$USUBJID, ae$AESTDTC, se), AESTDTC = ae$AESTDTC, AEENDTC = ifelse(ends_first, NA, end),
+    AESTDY = sdtm_study_day(ae$AESTDTC, ref), AEENDY = sdtm_study_day(ifelse(ends_first, NA, end), ref),
+    AEENRTPT = ifelse(ends_first, "UNKNOWN", ifelse(is.na(end), "ONGOING", NA)),
+    AEENTPT = ifelse(ends_first | is.na(end), "END OF STUDY", NA)
   )
   supp <- data.frame(
     STUDYID = spec$study, RDOMAIN = "AE", USUBJID = ae$USUBJID[ends_first], IDVAR = "AESEQ",

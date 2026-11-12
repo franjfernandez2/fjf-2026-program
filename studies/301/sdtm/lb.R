@@ -9,8 +9,9 @@
 #' @param dm The DM dataset.
 #' @param protocol The protocol design.
 #' @param spec The SDTM specification.
+#' @param se The SE dataset, for EPOCH.
 #' @return A list with the LB dataset and the data issues found while mapping.
-map_lb_301 <- function(raw, raw_spec, dm, protocol, spec) {
+map_lb_301 <- function(raw, raw_spec, dm, protocol, spec, se) {
   first <- keep_first_entry(raw$lab_results, natural_key(raw_spec, "lab_results"), "lab_results")
   lb <- first$data
   tests <- spec$lab_tests
@@ -48,13 +49,14 @@ map_lb_301 <- function(raw, raw_spec, dm, protocol, spec) {
   v <- planned_visit(lb$visit_code, protocol)
   out <- data.frame(
     STUDYID = spec$study, DOMAIN = "LB", USUBJID = usubjid, LBREFID = as.character(lb$record_id),
-    LBTESTCD = lb$test_code, LBTEST = purrr::map_chr(tests, "name")[t],
+    LBTESTCD = purrr::map_chr(tests, \(x) if (is.null(x$testcd)) x$code else x$testcd)[t],
+    LBTEST = purrr::map_chr(tests, "name")[t],
     LBCAT = purrr::map_chr(tests, "category")[t], LBORRES = lb$result, LBORRESU = lb$unit,
     LBORNRLO = lb$ref_low, LBORNRHI = lb$ref_high, LBSTRESC = stresc, LBSTRESN = stresn,
     LBSTRESU = std_unit, LBSTNRLO = lo, LBSTNRHI = hi, LBNRIND = nrind,
     LBFAST = ifelse(lb$fasting == "Y", "Y", NA),
     LBLOBXFL = last_before_exposure(usubjid, lb$test_code, dtc, stresn, dm),
-    VISITNUM = v$VISITNUM, VISIT = v$VISIT, LBDTC = dtc,
+    VISITNUM = v$VISITNUM, VISIT = v$VISIT, EPOCH = epoch_of(usubjid, dtc, se), LBDTC = dtc,
     LBDY = sdtm_study_day(dtc, dm$RFSTDTC[match(usubjid, dm$USUBJID)])
   )
   out <- out[order(out$USUBJID, out$LBTESTCD, out$VISITNUM, out$LBDTC), ]
