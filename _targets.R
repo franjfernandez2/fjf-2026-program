@@ -244,5 +244,53 @@ list(
       )
     }
   ),
-  tar_target(dry_run_301_oc_summary, summarise_oc_301(dry_run_301_oc))
+  tar_target(dry_run_301_oc_summary, summarise_oc_301(dry_run_301_oc)),
+
+  # --- FJF-2026-201 (phase II, dose finding): design, SAP and dry run ---
+  tar_target(protocol_201_file, "docs/protocols/fjf-2026-201.yml", format = "file"),
+  tar_target(protocol_201, read_protocol(protocol_201_file)),
+  tar_target(estimands_201_file, "docs/protocols/fjf-2026-201-estimands.yml", format = "file"),
+  tar_target(estimands_201, read_estimands(estimands_201_file)),
+  tar_target(sap_201_file, "docs/sap/fjf-2026-201-sap.yml", format = "file"),
+  tar_target(sap_201, read_sap(sap_201_file)),
+  # The phase III dose is read from the 301 design, so the two studies cannot disagree.
+  tar_target(reference_dose_201, max(purrr::map_dbl(protocol_301$arms, "dose_mg"))),
+  tar_target(
+    design_201_problems,
+    c(
+      check_protocol(protocol_201, design_assumptions),
+      check_estimands(estimands_201, protocol_201),
+      check_sap_201(sap_201, estimands_201, protocol_201)
+    )
+  ),
+  tar_target(
+    planning_curve_201_values,
+    planning_curve_201(
+      design_assumptions, min(setdiff(purrr::map_dbl(protocol_201$arms, "dose_mg"), 0)), reference_dose_201
+    )
+  ),
+  tar_target(
+    sample_size_201_power,
+    {
+      stopifnot(length(design_201_problems) == 0)
+      power_mcp_201(design_assumptions, protocol_201, sap_201, reference_dose_201)
+    }
+  ),
+  tar_target(sample_size_201, choose_sample_size_201(sample_size_201_power, sap_201$sample_size$target_power)),
+  tar_target(
+    dry_run_201,
+    simulate_dry_run_201(
+      sample_size_201, design_assumptions, protocol_201, reference_dose_201, sap_201$dry_run$seed,
+      sap_201$dry_run$missing_at_visit
+    )
+  ),
+  tar_target(dry_run_201_analysis, analyse_201(dry_run_201$adeff, sap_201, protocol_201)),
+  tar_target(
+    dry_run_201_oc,
+    operating_characteristics_201(
+      sample_size_201, design_assumptions, protocol_201, sap_201, reference_dose_201,
+      trials = sap_201$dry_run$operating_characteristics$trials, seed = sap_201$dry_run$seed + 1000,
+      cores = min(4L, parallel::detectCores())
+    )
+  )
 )

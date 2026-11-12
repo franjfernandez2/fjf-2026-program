@@ -1,0 +1,114 @@
+# Statistical analysis plan of study FJF-2026-201 (phase II, dose finding). The SAP document
+# (fjf-2026-201-sap.qmd) renders this file and the analysis code (R/mcpmod_201.R) reads its
+# settings from it. R/sap_201.R checks it against the protocol and the estimands. Analysis
+# sets and derivations are those of the FJF-2026-301 SAP, so the studies can be pooled.
+#
+# The SAP is frozen with the tag sap-201-v1.0 before any study data are generated (ADR 0018).
+# The analysis itself is done in F4.
+
+study: FJF-2026-201
+version: "0.1"
+status: Draft, complete; frozen as 1.0 after the reviewer's review
+
+analysis_sets:
+  - id: FAS
+    label: Full analysis set
+    definition: Every randomised patient, analysed in the arm they were randomised to.
+    use: All efficacy analyses.
+  - id: SAF
+    label: Safety set
+    definition: Every randomised patient who took at least one dose of study drug, analysed by the dose taken.
+    use: All safety analyses.
+
+derivations: >-
+  Study day, baseline, change from baseline, analysis visits (nearest scheduled HbA1c visit,
+  boundaries at the midpoints between target days), on treatment and before rescue are
+  derived exactly as in the FJF-2026-301 SAP, applied to this study's visit schedule.
+
+primary:
+  id: A1
+  estimand: E1
+  label: Generalised MCP-Mod on the MMRM estimates at week 12
+  analysis_set: FAS
+  data: >-
+    HbA1c values from week 4 to week 12 taken on treatment and before rescue. Later values are
+    set to missing, because E1 asks what each dose does when taken without rescue.
+  model: >-
+    Mixed model for repeated measures: change from baseline on baseline, stratum, visit, arm,
+    arm by visit and baseline by visit; unstructured covariance; Kenward-Roger. Its least-squares
+    means by arm at week 12 and their covariance matrix are the input to MCP-Mod.
+  covariance_fallback: [us, toeph, ar1h, cs]
+  mcp:
+    alpha_one_sided: 0.025
+    direction: decreasing
+    contrasts: >-
+      Optimal contrasts for each candidate model, given the covariance of the estimated means
+      (generalised MCP-Mod, Pinheiro and colleagues, 2014). A dose-response signal is
+      established if the largest contrast test is significant at the multiplicity-adjusted level.
+    # Candidate models, with their guesstimates. Every model is scaled to the same maximum
+    # effect over the dose range, so they differ only in shape.
+    candidate_models:
+      - {model: linear}
+      - {model: emax, ed50: 6}
+      - {model: sigEmax, ed50: 10, h: 3}
+      - {model: quadratic, delta: -0.015}
+  mod:
+    selection: >-
+      Among the candidate models whose contrast is significant, the one with the smallest
+      generalised AIC is fitted by generalised least squares to the estimated means.
+    target_dose:
+      rule: >-
+        The smallest dose in the study whose estimated effect is at least 80% of the estimated
+        maximum effect over the dose range (discrete ED80), and at least 0.3 percentage points
+        better than placebo. If no dose is 0.3 points better, no dose is recommended.
+      p: 0.8
+      clinical_relevance: 0.3
+
+sensitivity:
+  - id: S1
+    of: A1
+    label: Model averaging
+    method: >-
+      The Mod step with every candidate model fitted and their dose-response curves averaged
+      with weights from the generalised AIC, by parametric bootstrap of the estimated means
+      (DoseFinding::maFitMod). The target dose is read from the averaged curve.
+    settings:
+      bootstrap: 1000
+      seed: 201002
+  - id: S2
+    of: A1
+    label: All observed values
+    method: >-
+      A1 on every observed HbA1c, on or off treatment and before or after rescue, under missing
+      at random. It shows how much the dose-response depends on the hypothetical strategy.
+
+exploratory:
+  - id: X1
+    label: Clinical utility index
+    method: >-
+      A utility combining the estimated HbA1c effect and the estimated rate of adverse events
+      leading to discontinuation at each dose, each scaled to [0, 1] and weighted 0.7 and 0.3.
+      Descriptive; it supports, and does not replace, the target-dose rule. Computed in F4,
+      when the safety data exist.
+
+safety:
+  - id: SF1
+    label: Safety by dose
+    method: >-
+      As in the FJF-2026-301 SAP (adverse events, hypoglycaemia, laboratory, vital signs,
+      exposure), with the five arms in columns and the trend over dose shown descriptively.
+
+# Sample size: power of the MCP step under each candidate model (DoseFinding::powMCT), with
+# the effective number of patients reduced by those with no week-12 value under E1.
+sample_size:
+  target_power: 0.9
+  grid: {from: 30, to: 100, by: 5}
+
+# Dry run: the SAP's analyses on data from the planning values with a public seed. The
+# planning dose-response is an Emax curve (ED50 from lowest_dose_effect_ratio). Rates of
+# intercurrent events over 12 weeks are the 26-week planning rates scaled by 12/26.
+dry_run:
+  seed: 201004
+  operating_characteristics:
+    trials: 300
+  missing_at_visit: 0.03

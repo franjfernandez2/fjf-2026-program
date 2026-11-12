@@ -115,6 +115,18 @@ parameters:
       Dapagliflozin 2.5 mg vs 10 mg: -0.38 / -0.54 = 0.70. Empagliflozin 10 mg vs 25 mg:
       -0.57 / -0.64 = 0.89. Both curves are close to their plateau; the range also allows a
       steeper curve, which a dose-finding study must be able to detect.
+  - id: effect_ratio_week12
+    description: >-
+      Share of the week-24/26 change in HbA1c (drug effect and placebo change) already reached
+      at week 12; it scales the planning values for the 12-week phase II study
+    unit: ratio
+    planning: 0.85
+    truth_range: [0.75, 0.95]
+    sources: none
+    evidence: >-
+      HbA1c reflects about three months of glycaemia, and in add-on trials most of the
+      24-week change is already seen at week 12. No registry entry used here reports the
+      week-12 value, so the ratio is a declared working assumption, with a wide range.
   - id: discontinuation_placebo
     description: Proportion of placebo patients who stop study treatment by week 24-26
     unit: proportion

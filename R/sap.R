@@ -174,3 +174,47 @@ window_assessments <- function(assessments, windows) {
     dplyr::select(-"distance") |>
     dplyr::mutate(ANL01FL = "Y")
 }
+
+#' Candidate dose-response models the 201 code can build.
+sap_201_models <- c("linear", "emax", "sigEmax", "quadratic", "exponential")
+
+#' Check the FJF-2026-201 SAP against its estimands and protocol.
+#'
+#' The primary analysis answers the primary estimand; the candidate models are known, with
+#' guesstimates inside the dose range; the MCP level, direction and target-dose rule are
+#' valid; the study has placebo and at least three doses; every sensitivity analysis belongs
+#' to the primary analysis, and model averaging has a bootstrap size and a seed.
+#'
+#' @param sap The result of [read_sap()].
+#' @param estimands The result of [read_estimands()].
+#' @param protocol The result of [read_protocol()].
+#' @return A character vector of problems; empty when consistent.
+check_sap_201 <- function(sap, estimands, protocol) {
+  found <- new.env()
+  found$problems <- character()
+  add <- function(cond, msg) if (isTRUE(cond)) found$problems <- c(found$problems, msg)
+  primary <- purrr::keep(estimands$estimands, \(e) e$role == "primary")
+  add(length(primary) != 1 || !identical(sap$primary$estimand, primary[[1]]$id), "A1 must answer the primary estimand")
+  doses <- purrr::map_dbl(protocol$arms, "dose_mg")
+  add(sum(doses == 0) != 1 || sum(doses > 0) < 3, "MCP-Mod needs placebo and at least three doses")
+  mcp <- sap$primary$mcp
+  add(!isTRUE(mcp$alpha_one_sided > 0 && mcp$alpha_one_sided <= 0.025), "one-sided alpha must be in (0, 0.025]")
+  add(!isTRUE(mcp$direction %in% c("increasing", "decreasing")), "direction must be increasing or decreasing")
+  models <- purrr::map_chr(mcp$candidate_models, "model")
+  add(length(models) < 2 || anyDuplicated(models) > 0, "at least two distinct candidate models are needed")
+  unknown <- setdiff(models, sap_201_models)
+  add(length(unknown) > 0, paste("unknown candidate model:", paste(unknown, collapse = ", ")))
+  for (m in mcp$candidate_models) {
+    add(!is.null(m$ed50) && !(m$ed50 > 0 && m$ed50 <= max(doses)), sprintf("%s: ED50 outside the dose range", m$model))
+  }
+  td <- sap$primary$mod$target_dose
+  add(!isTRUE(td$p > 0 && td$p < 1), "target dose share p must be in (0, 1)")
+  add(!isTRUE(td$clinical_relevance > 0), "clinical relevance must be positive")
+  for (s in sap$sensitivity) add(!identical(s$of, sap$primary$id), sprintf("%s: belongs to unknown analysis", s$id))
+  s1 <- purrr::keep(sap$sensitivity, \(x) x$id == "S1")
+  add(
+    length(s1) != 1 || is.null(s1[[1]]$settings$bootstrap) || is.null(s1[[1]]$settings$seed),
+    "S1 (model averaging) needs a bootstrap size and a seed"
+  )
+  found$problems
+}

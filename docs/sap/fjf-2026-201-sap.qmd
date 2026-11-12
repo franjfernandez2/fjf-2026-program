@@ -1,0 +1,175 @@
+---
+title: "Statistical analysis plan: FJF-2026-201"
+subtitle: "Phase II · Dose finding of FJF-2026 added to metformin in type 2 diabetes"
+author: "Francisco Fernández"
+date: today
+---
+
+```{r}
+#| include: false
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+knitr::opts_knit$set(root.dir = root)
+for (f in c("assumptions.R", "protocol.R", "estimands.R", "sap.R", "mcpmod_201.R")) source(file.path(root, "R", f))
+p <- read_protocol(file.path(root, "docs", "protocols", "fjf-2026-201.yml"))
+e <- read_estimands(file.path(root, "docs", "protocols", "fjf-2026-201-estimands.yml"))
+s <- read_sap(file.path(root, "docs", "sap", "fjf-2026-201-sap.yml"))
+stopifnot(length(check_sap_201(s, e, p)) == 0)
+store <- file.path(root, "_targets")
+tr <- function(name) targets::tar_read_raw(name, store = store)
+ss_n <- tr("sample_size_201")
+dry <- tr("dry_run_201")
+res <- tr("dry_run_201_analysis")
+oc <- tr("dry_run_201_oc")
+fmt <- function(x, d = 2) formatC(x, format = "f", digits = d)
+pct <- function(x, d = 0) paste0(formatC(100 * x, format = "f", digits = d), "%")
+pval <- function(x) ifelse(x < 0.001, "<0.001", formatC(x, format = "f", digits = 3))
+doses <- purrr::map_dbl(p$arms, "dose_mg")
+mcp <- s$primary$mcp
+td <- s$primary$mod$target_dose
+truth <- emax_effect(dry$curve, doses) - emax_effect(dry$curve, 0)
+true_td <- target_dose_201(truth, doses, td$p, td$clinical_relevance)
+```
+
+Every setting in this plan is read from [`fjf-2026-201-sap.yml`](fjf-2026-201-sap.yml), and the analysis code ([`R/mcpmod_201.R`](../../R/mcpmod_201.R)) reads the same file. The estimand comes from [`fjf-2026-201-estimands.yml`](../protocols/fjf-2026-201-estimands.yml) and the design from the [protocol synopsis](../protocols/fjf-2026-201-synopsis.qmd).
+
+# Document control
+
+| Version | Date | Author | Change |
+|---|---|---|---|
+| 0.1 | 2026-11-12 | Francisco Fernández | Complete draft (F2 · PR 20) |
+
+The SAP becomes version 1.0 with the tag `sap-201-v1.0`, before any study data are generated ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)).
+
+# Study design in brief
+
+`r p$title`. Patients are randomised `r paste(unlist(p$randomisation$ratio), collapse = ":")` to placebo or FJF-2026 `r paste(doses[doses > 0], collapse = ", ")` mg, added to metformin, for `r p$treatment_weeks` weeks. The sample size is `r ss_n` patients per arm, `r length(doses) * ss_n` in all ([ADR 0023](../adr/0023-mcpmod-design-of-201.md)). The primary endpoint is the change from baseline in HbA1c at week `r p$primary_visit_week`, under the hypothetical estimand E1.
+
+# Analysis sets and derivations
+
+```{r}
+#| results: asis
+for (x in s$analysis_sets) cat("- **", x$label, " (", x$id, "):** ", x$definition, " *Use:* ", x$use, "\n", sep = "")
+```
+
+`r s$derivations`
+
+# Primary analysis (A1): generalised MCP-Mod
+
+MCP-Mod answers two questions in turn. The **MCP step** asks whether the effect changes with the dose at all, without betting on one shape of the curve. The **Mod step** then estimates the curve and reads the dose for phase III from it.
+
+- **Data:** `r s$primary$data`
+- **First stage:** `r s$primary$model` If the unstructured covariance does not converge, the next of `r paste(s$primary$covariance_fallback, collapse = ", ")` is used.
+- **MCP step:** `r mcp$contrasts` One-sided alpha `r mcp$alpha_one_sided`, for a `r mcp$direction` HbA1c.
+- **Mod step:** `r s$primary$mod$selection`
+- **Target dose:** `r td$rule`
+
+## Candidate models
+
+```{r}
+guess <- function(m) {
+  switch(m$model,
+    linear = "none",
+    emax = sprintf("ED50 %s mg", m$ed50),
+    sigEmax = sprintf("ED50 %s mg, Hill %s", m$ed50, m$h),
+    quadratic = sprintf("delta %s", m$delta)
+  )
+}
+models <- candidate_models_201(s, doses, -1)
+shapes <- DoseFinding::getResp(models, doses)
+knitr::kable(data.frame(
+  Model = purrr::map_chr(mcp$candidate_models, "model"),
+  Guesstimate = purrr::map_chr(mcp$candidate_models, guess),
+  t(apply(shapes, 2, \(x) fmt(x / min(x))))[, -1],
+  check.names = FALSE, row.names = NULL
+), col.names = c("Model", "Guesstimate", paste(doses[-1], "mg")), align = "llrrrr")
+```
+
+Each row is the shape of a model's effect, as a share of its largest effect over the dose range. The models cover a steep early plateau (Emax), an S-shaped curve (sigmoid Emax), a straight line and an umbrella that turns at the top dose (quadratic). The optimal contrast of each model is the weighting of the dose means that has the most power if that model is true.
+
+# Sensitivity analyses
+
+```{r}
+#| results: asis
+for (x in s$sensitivity) {
+  cat("- **", x$id, " · ", x$label, ":** ", x$method, sep = "")
+  if (!is.null(x$settings)) cat(" Settings: ", paste(names(x$settings), unlist(x$settings), sep = " ", collapse = ", "), ".", sep = "")
+  cat("\n")
+}
+```
+
+# Exploratory and safety analyses
+
+```{r}
+#| results: asis
+for (x in c(s$exploratory, s$safety)) cat("- **", x$id, " · ", x$label, ":** ", x$method, "\n", sep = "")
+```
+
+# Dry run on planning data
+
+::: {.callout-important}
+## Not study results
+The numbers in this section come from data generated from the **planning values** with a public seed (`r s$dry_run$seed`), before any study data exist. They test the plan, not FJF-2026.
+:::
+
+The planning curve is an Emax curve with ED50 `r fmt(dry$curve$ed50, 1)` mg. On it, the target-dose rule would choose **`r true_td` mg**: the effects are `r paste(paste0(doses[-1], " mg ", fmt(truth[-1])), collapse = ", ")`.
+
+## One trial of the planned size
+
+```{r}
+knitr::kable(data.frame(
+  Model = res$a1$mct$model,
+  `Contrast t` = fmt(res$a1$mct$t_stat),
+  `Adjusted p` = pval(res$a1$mct$adjusted_p),
+  check.names = FALSE
+), align = "lrr")
+```
+
+```{r}
+knitr::kable(data.frame(
+  Dose = paste(doses, "mg"),
+  `MMRM effect vs placebo` = fmt(res$means$means - res$means$means[1]),
+  `A1 · selected model` = fmt(res$a1$effects),
+  `S1 · model averaging` = fmt(res$s1$effects),
+  `S2 · all observed` = fmt(res$s2$effects),
+  `Planning curve` = fmt(truth),
+  check.names = FALSE, row.names = NULL
+), align = "lrrrrr")
+```
+
+The dose-response signal is `r if (res$a1$signal) "established" else "not established"`. The selected model is **`r res$a1$model`** and the target dose is **`r res$a1$target_dose` mg**; model averaging gives `r res$s1$target_dose` mg and the analysis on all observed values `r if (is.na(res$s2$target_dose)) "no dose" else paste(res$s2$target_dose, "mg")`. In this trial the four active doses have almost the same estimated effect, so a small change in the fitted curve moves the target dose: S2, which also uses the values after rescue and after stopping treatment, fits a curve that is already flat at 5 mg, so the smallest dose reaches 80% of the maximum. This is why the operating characteristics below look at the dose chosen, not only at the signal.
+
+```{r}
+#| fig-height: 3
+#| fig-width: 6
+library(ggplot2)
+grid <- seq(0, max(doses), length.out = 200)
+curve_df <- data.frame(dose = grid, effect = emax_effect(dry$curve, grid) - emax_effect(dry$curve, 0))
+points_df <- data.frame(dose = doses, effect = res$means$means - res$means$means[1],
+                        se = sqrt(diag(res$means$S) + res$means$S[1, 1] - 2 * res$means$S[, 1]))
+ggplot(points_df, aes(dose, effect)) +
+  geom_line(data = curve_df, colour = "grey50", linetype = "dashed") +
+  geom_pointrange(aes(ymin = effect - 1.96 * se, ymax = effect + 1.96 * se), colour = "steelblue") +
+  geom_line(data = data.frame(dose = doses, effect = res$a1$effects), colour = "firebrick") +
+  geom_hline(yintercept = -td$clinical_relevance, colour = "grey70") +
+  labs(x = "Dose (mg)", y = "Effect vs placebo (HbA1c, % points)") +
+  theme_minimal(base_size = 10)
+```
+
+Blue: MMRM estimates with 95% intervals. Red: the selected model at the doses. Dashed: the planning curve. Grey: the clinically relevant effect.
+
+## Operating characteristics
+
+The whole primary analysis (MMRM, MCP step, Mod step, target dose) was repeated on `r nrow(oc)` trials of `r ss_n` patients per arm from the planning curve.
+
+```{r}
+counts <- table(factor(ifelse(is.na(oc$target_dose), "none", paste(oc$target_dose, "mg")),
+                       levels = c(paste(doses[-1], "mg"), "none")))
+knitr::kable(data.frame(`Target dose` = names(counts), Trials = as.integer(counts),
+                        Share = pct(as.numeric(counts) / nrow(oc)), check.names = FALSE), align = "lrr")
+```
+
+- **Signal:** the MCP step was significant in `r pct(mean(oc$signal), 1)` of trials (Monte Carlo standard error `r pct(sqrt(mean(oc$signal) * (1 - mean(oc$signal)) / nrow(oc)), 1)`), against `r pct(s$sample_size$target_power)` planned. The planned power was computed for the MCP step alone, so this checks it with the MMRM first stage and the real missing data.
+- **Dose selection:** the rule picks the planning target dose, `r true_td` mg, in `r pct(mean(oc$target_dose == true_td, na.rm = TRUE) * mean(!is.na(oc$target_dose)))` of trials. Neighbouring doses take most of the rest. On an Emax curve with ED50 near the lowest dose, the doses from 10 to 40 mg differ by less than their standard errors, so a study of this size can show that the drug works and that the curve flattens, but cannot pin down one dose with certainty.
+- **Selected models:** `r paste(paste0(names(table(oc$model)), " ", as.integer(table(oc$model))), collapse = ", ")` trials.
+
+The phase III study was designed on 20 mg before this study ([ADR 0005](../adr/0005-build-order.md)). The dose this study recommends is compared with that choice at the unblinding; a different recommendation is a finding to report, not a reason to change the plan.
