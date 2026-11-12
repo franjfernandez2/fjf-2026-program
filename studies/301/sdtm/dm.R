@@ -34,6 +34,11 @@ map_dm_301 <- function(raw, assignment, protocol, spec) {
   d <- merge(d, arms, by = "arm_code", all.x = TRUE)
   d <- d[order(d$subject_id), ]
 
+  # End of participation: the last date of contact, the latest complete date in the
+  # subject's records (a follow-up visit or event can come after the end-of-study page).
+  last <- last_contact_301(raw)
+  d$last_contact <- last$date[match(d$subject_id, last$subject_id)]
+
   randomised <- !is.na(d$arm_code)
   dosed <- randomised & !is.na(d$first)
   birth <- crf_to_iso(d$birth_date)
@@ -48,7 +53,8 @@ map_dm_301 <- function(raw, assignment, protocol, spec) {
     RFXSTDTC = ifelse(dosed, format(d$first), NA),
     RFXENDTC = ifelse(dosed, crf_to_iso(d$last_dose_date), NA),
     RFICDTC = consent,
-    RFPENDTC = ifelse(randomised, crf_to_iso(d$end_date), crf_to_iso(d$screening_date)),
+    RFPENDTC = format(d$last_contact),
+    DTHDTC = ifelse(!is.na(d$end_reason) & d$end_reason == "DEATH", crf_to_iso(d$end_date), NA),
     DTHFL = ifelse(!is.na(d$end_reason) & d$end_reason == "DEATH", "Y", NA),
     SITEID = d$site_id,
     BRTHDTC = birth,
@@ -62,7 +68,27 @@ map_dm_301 <- function(raw, assignment, protocol, spec) {
     ACTARMCD = ifelse(dosed, d$arm_code, NA),
     ACTARM = ifelse(dosed, d$arm_label, NA),
     ARMNRS = ifelse(!randomised, "SCREEN FAILURE", ifelse(!dosed, "ASSIGNED, NOT TREATED", NA)),
+    ACTARMUD = NA_character_,
     COUNTRY = if (is.null(spec$country)) NA_character_ else spec$country
   )
   sdtm_conform(out, spec, "DM")
+}
+
+#' Last date of contact of each subject: the latest complete date in the raw tables.
+#'
+#' @param raw Named list of the study's raw tables.
+#' @return A data frame with `subject_id` and `date`.
+last_contact_301 <- function(raw) {
+  cols <- list(
+    enrolment = c("consent_date", "screening_date"), visits = "visit_date", lab_results = "collection_date",
+    vital_signs = "measure_date", exposure = c("dispense_date", "return_date"), disposition = "event_date",
+    adverse_events = c("start_date", "end_date"), hypoglycaemia = "event_date"
+  )
+  dates <- purrr::list_rbind(purrr::imap(cols, \(cc, table) {
+    purrr::list_rbind(purrr::map(cc, \(col) {
+      data.frame(subject_id = raw[[table]]$subject_id, date = iso_date(crf_to_iso(raw[[table]][[col]])))
+    }))
+  }))
+  dates <- dates[!is.na(dates$date), ]
+  stats::aggregate(list(date = dates$date), list(subject_id = dates$subject_id), max)
 }

@@ -17,6 +17,7 @@ tar_source("qc/benchmark")
 # Tables, figures and their comparison with the pilot's study report.
 tar_source(c("studies/benchmark/tlf", "studies/benchmark/compare"))
 tar_source("studies/301/sdtm")
+tar_source("qc/301")
 
 list(
   # --- F0: environment smoke test ---
@@ -327,24 +328,70 @@ list(
     assignment_in_use(raw_data[["301"]]$randomisation, dblock_301, sdtm_301_spec$blinding_seed)
   ),
   tar_target(sdtm_301_dm, map_dm_301(raw_data[["301"]], assignment_301, protocol_301, sdtm_301_spec)),
-  tar_target(sdtm_301_ds, map_ds_301(raw_data[["301"]], assignment_301, sdtm_301_dm, sdtm_301_spec)),
+  tar_target(sdtm_301_se, map_se_301(sdtm_301_dm, protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_ie, map_ie_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_ta, map_ta_301(protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_te, map_te_301(protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_tv, map_tv_301(protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_ti, map_ti_301(protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_ts, map_ts_301(
+    protocol_301, sdtm_301_spec, sdtm_301_dm, 2L * sample_size_301, purrr::map_chr(sap_301_content$secondary, "label")
+  )),
+  tar_target(sdtm_301_ds, map_ds_301(raw_data[["301"]], assignment_301, sdtm_301_dm, sdtm_301_spec, sdtm_301_se)),
   tar_target(sdtm_301_sv, map_sv_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec)),
   tar_target(coding_dictionary_file, "docs/specs/coding-dictionary.yml", format = "file"),
   tar_target(coding_dictionary, yaml::read_yaml(coding_dictionary_file)),
   tar_target(
-    sdtm_301_ex, map_ex_301(raw_data[["301"]], assignment_301, sdtm_301_dm, protocol_301, sdtm_301_spec)
+    sdtm_301_ex, map_ex_301(raw_data[["301"]], assignment_301, sdtm_301_dm, protocol_301, sdtm_301_spec, sdtm_301_se)
   ),
-  tar_target(sdtm_301_da, map_da_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec)),
-  tar_target(sdtm_301_cm, map_cm_301(raw_data[["301"]], sdtm_301_dm, coding_dictionary, sdtm_301_spec)),
-  tar_target(sdtm_301_ae_supp, map_ae_301(raw_data[["301"]], sdtm_301_dm, coding_dictionary, sdtm_301_spec)),
+  tar_target(sdtm_301_da, map_da_301(raw_data[["301"]], sdtm_301_dm, protocol_301, sdtm_301_spec, sdtm_301_se)),
+  tar_target(sdtm_301_cm, map_cm_301(raw_data[["301"]], sdtm_301_dm, coding_dictionary, sdtm_301_spec, sdtm_301_se)),
+  tar_target(sdtm_301_ae_supp, map_ae_301(
+    raw_data[["301"]], sdtm_301_dm, coding_dictionary, sdtm_301_spec,
+    sdtm_301_se
+  )),
   tar_target(sdtm_301_ae, sdtm_301_ae_supp$ae),
   tar_target(sdtm_301_suppae, sdtm_301_ae_supp$suppae),
-  tar_target(sdtm_301_lb_issues, map_lb_301(raw_data[["301"]], raw_spec, sdtm_301_dm, protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_lb_issues, map_lb_301(
+    raw_data[["301"]], raw_spec, sdtm_301_dm, protocol_301, sdtm_301_spec,
+    sdtm_301_se
+  )),
   tar_target(sdtm_301_lb, sdtm_301_lb_issues$lb),
-  tar_target(sdtm_301_vs_issues, map_vs_301(raw_data[["301"]], raw_spec, sdtm_301_dm, protocol_301, sdtm_301_spec)),
+  tar_target(sdtm_301_vs_issues, map_vs_301(
+    raw_data[["301"]], raw_spec, sdtm_301_dm, protocol_301, sdtm_301_spec,
+    sdtm_301_se
+  )),
   tar_target(sdtm_301_vs, sdtm_301_vs_issues$vs),
-  tar_target(sdtm_301_ce_supp, map_ce_301(raw_data[["301"]], sdtm_301_dm, sdtm_301_spec)),
+  tar_target(sdtm_301_ce_supp, map_ce_301(raw_data[["301"]], sdtm_301_dm, sdtm_301_spec, sdtm_301_se)),
   tar_target(sdtm_301_ce, sdtm_301_ce_supp$ce),
   tar_target(sdtm_301_suppce, sdtm_301_ce_supp$suppce),
-  tar_target(sdtm_301_data_issues, rbind(sdtm_301_lb_issues$issues, sdtm_301_vs_issues$issues))
+  tar_target(sdtm_301_data_issues, rbind(sdtm_301_lb_issues$issues, sdtm_301_vs_issues$issues)),
+  tar_target(
+    sdtm_301,
+    list(
+      DM = sdtm_301_dm, DS = sdtm_301_ds, SV = sdtm_301_sv, EX = sdtm_301_ex, DA = sdtm_301_da,
+      CM = sdtm_301_cm, AE = sdtm_301_ae, SUPPAE = sdtm_301_suppae, LB = sdtm_301_lb, VS = sdtm_301_vs,
+      CE = sdtm_301_ce, SUPPCE = sdtm_301_suppce, IE = sdtm_301_ie, SE = sdtm_301_se, TA = sdtm_301_ta,
+      TE = sdtm_301_te, TV = sdtm_301_tv, TI = sdtm_301_ti, TS = sdtm_301_ts
+    )[sdtm_domains(sdtm_301_spec)]
+  ),
+  tar_target(
+    sdtm_301_qc,
+    qc_sdtm_301(
+      file.path(dirname(raw_manifest_file), "301"), assignment_301, protocol_301, sdtm_301_spec, coding_dictionary
+    )
+  ),
+  tar_target(sdtm_301_qc_comparison, compare_sdtm_301(sdtm_301, sdtm_301_qc, sdtm_301_spec)),
+  # The double programming must agree; a difference stops the pipeline until it is explained.
+  tar_target(sdtm_301_qc_check, stopifnot("SDTM double programming differs" = all(sdtm_301_qc_comparison$clean))),
+  tar_target(
+    sdtm_301_files,
+    unlist(purrr::imap(sdtm_301, \(d, name) write_sdtm_domain(d, sdtm_301_spec, name, "data/sdtm/301"))),
+    format = "file"
+  ),
+  tar_target(
+    sdtm_301_define,
+    write_sdtm_define(sdtm_301, sdtm_301_spec, "data/sdtm/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
+    format = "file"
+  )
 )

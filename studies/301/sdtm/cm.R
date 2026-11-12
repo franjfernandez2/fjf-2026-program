@@ -7,8 +7,9 @@
 #' @param dm The DM dataset.
 #' @param dictionary The coding dictionary (docs/specs/coding-dictionary.yml).
 #' @param spec The SDTM specification.
+#' @param se The SE dataset, for EPOCH.
 #' @return The CM dataset.
-map_cm_301 <- function(raw, dm, dictionary, spec) {
+map_cm_301 <- function(raw, dm, dictionary, spec, se) {
   cm <- raw$concomitant_meds
   cm$USUBJID <- sdtm_usubjid(spec$study, cm$subject_id)
   cm$CMSTDTC <- crf_to_iso(cm$start_date)
@@ -25,7 +26,8 @@ map_cm_301 <- function(raw, dm, dictionary, spec) {
     CMCLAS = coded$class, CMCLASCD = coded$atc, CMINDC = cm$indication,
     CMDOSTOT = as.numeric(sub("^([0-9.]+) .*$", "\\1", dose)),
     CMDOSU = ifelse(is.na(dose), NA, tolower(sub("^[0-9.]+ ", "", dose))),
-    CMSTDTC = cm$CMSTDTC, CMENDTC = end, CMSTDY = sdtm_study_day(cm$CMSTDTC, ref),
+    EPOCH = epoch_of(cm$USUBJID, cm$CMSTDTC, se), CMSTDTC = cm$CMSTDTC, CMENDTC = end,
+    CMSTDY = sdtm_study_day(cm$CMSTDTC, ref),
     CMENDY = sdtm_study_day(end, ref), CMENRTPT = ifelse(is.na(end), "ONGOING", NA),
     CMENTPT = ifelse(is.na(end), "END OF STUDY", NA)
   )

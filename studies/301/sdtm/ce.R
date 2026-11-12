@@ -6,8 +6,9 @@
 #' @param raw Named list of the study's raw tables.
 #' @param dm The DM dataset.
 #' @param spec The SDTM specification.
+#' @param se The SE dataset, for EPOCH.
 #' @return A list with the CE and SUPPCE datasets.
-map_ce_301 <- function(raw, dm, spec) {
+map_ce_301 <- function(raw, dm, spec, se) {
   hy <- raw$hypoglycaemia
   hy$USUBJID <- sdtm_usubjid(spec$study, hy$subject_id)
   hy$CESTDTC <- crf_to_iso(hy$event_date)
@@ -17,7 +18,10 @@ map_ce_301 <- function(raw, dm, spec) {
     STUDYID = spec$study, DOMAIN = "CE", USUBJID = hy$USUBJID, CESEQ = seq,
     CESPID = as.character(hy$event_seq), CETERM = "HYPOGLYCAEMIA", CEDECOD = "Hypoglycaemia",
     CECAT = "HYPOGLYCAEMIA", CESCAT = paste("LEVEL", hy$level), CEPRESP = "Y", CEOCCUR = "Y",
-    CESTDTC = hy$CESTDTC, CESTDY = sdtm_study_day(hy$CESTDTC, dm$RFSTDTC[match(hy$USUBJID, dm$USUBJID)])
+    EPOCH = epoch_of(hy$USUBJID, hy$CESTDTC, se), CESTDTC = hy$CESTDTC, CESTDY = sdtm_study_day(
+      hy$CESTDTC,
+      dm$RFSTDTC[match(hy$USUBJID, dm$USUBJID)]
+    )
   )
   qual <- function(qnam, qlabel, qval) {
     data.frame(

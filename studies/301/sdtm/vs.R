@@ -6,7 +6,7 @@
 #'
 #' @inheritParams map_lb_301
 #' @return A list with the VS dataset and the data issues found while mapping.
-map_vs_301 <- function(raw, raw_spec, dm, protocol, spec) {
+map_vs_301 <- function(raw, raw_spec, dm, protocol, spec, se) {
   first <- keep_first_entry(raw$vital_signs, natural_key(raw_spec, "vital_signs"), "vital_signs")
   vs <- first$data
   tests <- purrr::keep(spec$vital_signs, \(x) x$code != "HEIGHT")
@@ -52,7 +52,7 @@ map_vs_301 <- function(raw, raw_spec, dm, protocol, spec) {
     VSSTRESC = ifelse(is.na(stresn), NA, format(stresn, trim = TRUE, drop0trailing = TRUE)),
     VSSTRESN = stresn, VSSTRESU = long$std,
     VSLOBXFL = last_before_exposure(usubjid, long$code, dtc, stresn, dm),
-    VISITNUM = v$VISITNUM, VISIT = v$VISIT, VSDTC = dtc,
+    VISITNUM = v$VISITNUM, VISIT = v$VISIT, EPOCH = epoch_of(usubjid, dtc, se), VSDTC = dtc,
     VSDY = sdtm_study_day(dtc, dm$RFSTDTC[match(usubjid, dm$USUBJID)])
   )
   out <- out[order(out$USUBJID, out$VSTESTCD, out$VISITNUM), ]
