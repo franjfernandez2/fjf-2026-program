@@ -1,0 +1,21 @@
+# Design documents of the FJF-2026 programme (phase F2).
+#   quarto render docs/design
+
+project:
+  type: default
+  output-dir: _output
+
+lang: en-GB
+date-format: "D MMMM YYYY"
+toc: true
+number-sections: true
+
+format:
+  html:
+    embed-resources: true
+    theme: cosmo
+    fontsize: 1rem
+
+execute:
+  echo: false
+  warning: false

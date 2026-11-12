@@ -20,6 +20,12 @@ This project is built by one person working with an AI assistant (Claude, by Ant
 - **Decisions are recorded.** Each decision has an ADR saying what was chosen, what was rejected and why.
 - **Results are checked, not trusted.** Double programming, the public CDISC benchmark and the sealed simulation truth test the code independently of who wrote it.
 
+## The sealed truth and its limit
+
+The simulated studies are analysed against a sealed truth ([ADR 0018](adr/0018-sealed-truth-and-data-generating-model.md)): the parameters that generate the data come from a secret seed, and the analysis side must not know them until every analysis is final.
+
+At Francisco's request, the assistant generated that seed. It used a command that wrote the number straight to a private file outside the repository and displayed nothing, so the assistant does not know it. Francisco keeps a copy. The file is on a disk the assistant can read, though, so the protection rests on a rule and on a test that keeps the analysis code away from the seed and the simulator, not on an impossibility. A seed known only to Francisco would have been stronger.
+
 ## What this means for a reader
 
 The code was not typed by hand. The design, the decisions and the responsibility for every result are Francisco's, and Francisco can explain each of them.

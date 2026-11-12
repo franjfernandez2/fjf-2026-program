@@ -9,8 +9,8 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | Phase | Content | Status |
 | --- | --- | --- |
 | F0 · Foundations | Repository, environment, database, CI and templates | Done (`gate-0`) |
-| F1 · Benchmark | Replication of the public CDISC pilot (CDISCPILOT01) | In progress |
-| F2 · Design | Protocols, SAPs, table shells and the data simulator | Planned |
+| F1 · Benchmark | Replication of the public CDISC pilot (CDISCPILOT01) | Done (`gate-1`) |
+| F2 · Design | Protocols, SAPs, table shells and the data simulator | In progress |
 | F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation | Planned |
 | F4 · Safety and phase II | Safety TLFs, integrated safety and MCP-Mod dose finding | Planned |
 | F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | Planned |
@@ -27,7 +27,7 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 
 Three principles hold the design together:
 
-1. **Sealed truth.** The simulator keeps its true parameters in a file the analysis code never reads. After each analysis is final, the truth is unsealed and compared with the estimates.
+1. **Sealed truth.** The simulator draws its true parameters from a secret seed that the analysis code never reads. After each analysis is final, the truth is unsealed and compared with the estimates ([ADR 0018](docs/adr/0018-sealed-truth-and-data-generating-model.md); its limit is stated in [docs/ai-assistance.md](docs/ai-assistance.md)).
 2. **Messy raw data.** The simulator produces EDC-like data with partial dates, out-of-window visits and duplicates. Cleaning and mapping are real work.
 3. **Paper first.** Protocols, SAPs and table shells are frozen with a git tag before a single result is generated.
 

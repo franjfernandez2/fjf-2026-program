@@ -1,0 +1,80 @@
+---
+title: "Design assumptions"
+subtitle: "FJF-2026 programme · phase F2"
+author: "Francisco Fernández"
+date: today
+---
+
+```{r}
+#| include: false
+root <- rprojroot::find_root(rprojroot::has_file("renv.lock"))
+knitr::opts_knit$set(root.dir = root)
+source(file.path(root, "R", "assumptions.R"))
+a <- read_assumptions(file.path(root, "docs", "design", "assumptions.yml"))
+stopifnot(length(check_assumptions(a)) == 0)
+fmt <- function(x) format(x, trim = TRUE, drop0trailing = TRUE)
+```
+
+This page is generated from [`assumptions.yml`](assumptions.yml). Every number in the protocols, the SAPs and the sample size of FJF-2026 comes from that file. A test checks that each number has a published source or says why it has none.
+
+# Planning values and truth ranges
+
+Each parameter has two values. The **planning value** is what the protocols and the sample size assume, and it is public. The **truth range** is where the true value lies. The simulator draws the true value inside that range with a sealed seed ([ADR 0018](../adr/0018-sealed-truth-and-data-generating-model.md)), so nobody on the analysis side knows where it falls until the unblinding.
+
+```{r}
+p <- a$parameters
+knitr::kable(
+  data.frame(
+    Parameter = p$description,
+    Unit = p$unit,
+    Planning = fmt(p$planning),
+    `Truth range` = paste(fmt(p$truth_low), "to", fmt(p$truth_high)),
+    Sources = vapply(p$sources, paste, character(1), collapse = ", "),
+    check.names = FALSE
+  )
+)
+```
+
+# Evidence for each value
+
+```{r}
+#| results: asis
+for (i in seq_len(nrow(p))) {
+  cat("**", p$description[i], "** (`", p$id[i], "`). ", p$evidence[i], "\n\n", sep = "")
+}
+```
+
+# Design rules
+
+```{r}
+#| results: asis
+for (r in a$design_rules) {
+  cat("- **", r$rule, "** ", r$evidence, " (", paste(unlist(r$sources), collapse = ", "), ")\n", sep = "")
+}
+```
+
+# Calibration targets
+
+```{r}
+#| results: asis
+for (t in a$calibration_targets) {
+  v <- paste(names(t$values), unlist(t$values), sep = " = ", collapse = "; ")
+  cat("- **", t$description, "**: ", v, ". ", t$use, "\n", sep = "")
+}
+```
+
+# Sources
+
+```{r}
+#| results: asis
+for (key in names(a$sources)) {
+  s <- a$sources[[key]]
+  cat("- `", key, "`: ", s$citation, " <", s$url, ">. *Read:* ", s$read, "\n", sep = "")
+}
+```
+
+# Limits
+
+- **No full texts.** For the three trials, only the abstracts and the registry results were read, because the full texts are behind paywalls. The numbers above come from those two places, and the evidence of each says which.
+- **Older trials.** They are from 2006 to 2014 and analysed with LOCF, with data after rescue excluded. Their effects are therefore close to a hypothetical estimand, not to the 301's treatment-policy estimand. The simulator generates the data after rescue and after treatment discontinuation that those trials left out.
+- **Two assumptions without a source.** The correlation between visits and the share of discontinuations that depend on unobserved values are working assumptions. The sensitivity analyses and the sample size simulation cover their whole range.
