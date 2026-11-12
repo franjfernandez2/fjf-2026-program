@@ -1,0 +1,223 @@
+# Design assumptions for the FJF-2026 programme (phase F2, day 1).
+#
+# Each parameter has two values:
+# - planning: the value the protocols and the sample size use. It is public.
+# - truth_range: the plausible range from which the simulator draws the true value, with
+#   the sealed seed (ADR 0018). Nobody on the analysis side knows where in the range it falls.
+#
+# Every number cites a source below, or says plainly that no published source was used
+# (source: none) and why. tests/testthat/test-assumptions.R checks this file.
+# Units: HbA1c in % (NGSP); weight in kg; proportions between 0 and 1.
+
+sources:
+  charbonnel2006:
+    citation: >-
+      Charbonnel B, Karasik A, Liu J, Wu M, Meininger G; Sitagliptin Study 020 Group.
+      Efficacy and safety of the dipeptidyl peptidase-4 inhibitor sitagliptin added to ongoing
+      metformin therapy in patients with type 2 diabetes inadequately controlled with metformin
+      alone. Diabetes Care. 2006;29(12):2638-2643. doi:10.2337/dc06-0706
+    registry: NCT00086515
+    url: https://clinicaltrials.gov/study/NCT00086515
+    read: Abstract (PubMed 17130197) and the registry results; the full text was not available.
+  bailey2010:
+    citation: >-
+      Bailey CJ, Gross JL, Pieters A, Bastien A, List JF. Effect of dapagliflozin in patients
+      with type 2 diabetes who have inadequate glycaemic control with metformin: a randomised,
+      double-blind, placebo-controlled trial. Lancet. 2010;375(9733):2223-2233.
+      doi:10.1016/S0140-6736(10)60407-2
+    registry: NCT00528879
+    url: https://clinicaltrials.gov/study/NCT00528879
+    read: Abstract (PubMed 20609968) and the registry results; the full text was not available.
+  haring2014:
+    citation: >-
+      Häring HU, Merker L, Seewaldt-Becker E, Weimer M, Meinicke T, et al. Empagliflozin as
+      add-on to metformin in patients with type 2 diabetes: a 24-week, randomized, double-blind,
+      placebo-controlled trial. Diabetes Care. 2014;37(6):1650-1659. doi:10.2337/dc13-2105
+    registry: NCT01159600
+    url: https://clinicaltrials.gov/study/NCT01159600
+    read: Abstract (PubMed 24722494) and the registry results (metformin stratum only).
+  fda2023:
+    citation: >-
+      U.S. Food and Drug Administration. Diabetes Mellitus: Efficacy Endpoints for Clinical
+      Trials Investigating Antidiabetic Drugs and Biological Products. Draft guidance for
+      industry. May 2023. Docket FDA-2023-D-0625.
+    url: https://www.fda.gov/media/168475/download
+    read: Full text of the draft.
+  nct02964247:
+    citation: >-
+      Novo Nordisk. LIRA-ADD2SGLT2i: liraglutide versus placebo as add-on to SGLT2 inhibitors.
+      Clinical trial protocol, NCT02964247, published on ClinicalTrials.gov.
+    url: https://cdn.clinicaltrials.gov/large-docs/47/NCT02964247/Prot_000.pdf
+    read: Rescue criteria section, as quoted in a search result; an example of industry practice.
+
+parameters:
+  - id: hba1c_baseline_mean
+    description: Mean HbA1c at baseline in patients inadequately controlled on metformin
+    unit: "%"
+    planning: 8.0
+    truth_range: [7.8, 8.3]
+    sources: [charbonnel2006]
+    evidence: Baseline mean 8.0 (SD 0.8) in both arms of NCT00086515, inclusion HbA1c 7-10%.
+  - id: hba1c_baseline_sd
+    description: Standard deviation of baseline HbA1c
+    unit: "%"
+    planning: 0.8
+    truth_range: [0.7, 1.0]
+    sources: [charbonnel2006]
+    evidence: Baseline SD 0.8 in NCT00086515.
+  - id: placebo_change_week24
+    description: Mean change in HbA1c with placebo added to metformin, about 24-26 weeks
+    unit: "%"
+    planning: -0.15
+    truth_range: [-0.30, 0.00]
+    sources: [charbonnel2006, bailey2010, haring2014]
+    evidence: Placebo arms -0.02 (NCT00086515), -0.30 (NCT00528879) and -0.13 (NCT01159600).
+  - id: change_sd
+    description: Standard deviation of the change in HbA1c at the primary visit
+    unit: "%"
+    planning: 1.0
+    truth_range: [0.7, 1.1]
+    sources: [charbonnel2006, bailey2010, haring2014]
+    evidence: >-
+      Derived as SE times the square root of n. NCT00528879 placebo 0.0718 x sqrt(134) = 0.83;
+      NCT01159600 placebo 0.05 x sqrt(207) = 0.72; NCT00086515 placebo, SE from the 95% CI
+      (0.25 / 3.92 = 0.064) x sqrt(224) = 0.95, sitagliptin 0.051 x sqrt(453) = 1.09.
+      The planning value takes the upper part of the range, which is conservative.
+  - id: effect_target_dose
+    description: >-
+      Placebo-adjusted change in HbA1c at the primary visit with the phase III dose, while on
+      treatment and without rescue
+    unit: "%"
+    planning: -0.50
+    truth_range: [-0.80, -0.30]
+    sources: [charbonnel2006, bailey2010, haring2014]
+    evidence: >-
+      Placebo-adjusted differences -0.65 (sitagliptin 100 mg), -0.54 (dapagliflozin 10 mg,
+      from -0.84 vs -0.30) and -0.57 and -0.64 (empagliflozin 10 and 25 mg). The planning value
+      sits below the class, so the study is not powered on an optimistic effect. The range
+      allows a true effect smaller than planned, as happens in real programmes.
+  - id: lowest_dose_effect_ratio
+    description: >-
+      Effect of the lowest phase II dose as a fraction of the phase III dose effect; it sets
+      the steepness of the true Emax curve
+    unit: ratio
+    planning: 0.6
+    truth_range: [0.4, 0.9]
+    sources: [bailey2010, haring2014]
+    evidence: >-
+      Dapagliflozin 2.5 mg vs 10 mg: -0.38 / -0.54 = 0.70. Empagliflozin 10 mg vs 25 mg:
+      -0.57 / -0.64 = 0.89. Both curves are close to their plateau; the range also allows a
+      steeper curve, which a dose-finding study must be able to detect.
+  - id: discontinuation_placebo
+    description: Proportion of placebo patients who stop study treatment by week 24-26
+    unit: proportion
+    planning: 0.15
+    truth_range: [0.08, 0.20]
+    sources: [charbonnel2006, bailey2010, haring2014]
+    evidence: 45/237 = 0.19 (NCT00086515), 22/137 = 0.16 (NCT00528879), 21/207 = 0.10 (NCT01159600).
+  - id: discontinuation_active
+    description: Proportion of patients on the active dose who stop study treatment by week 24-26
+    unit: proportion
+    planning: 0.10
+    truth_range: [0.04, 0.13]
+    sources: [charbonnel2006, bailey2010, haring2014]
+    evidence: >-
+      49/464 = 0.11 (NCT00086515), 16/135 = 0.12 (NCT00528879, 10 mg), 8/217 = 0.04 and
+      18/214 = 0.08 (NCT01159600).
+  - id: rescue_placebo
+    description: Proportion of placebo patients who start glycaemic rescue by week 24-26
+    unit: proportion
+    planning: 0.12
+    truth_range: [0.05, 0.20]
+    sources: [charbonnel2006]
+    evidence: >-
+      23/192 = 0.12 of placebo patients who completed the first 24 weeks of NCT00086515 had
+      received rescue. Patients who stopped earlier are not in the denominator, so this is a
+      rough figure; the wide range reflects that.
+  - id: rescue_active
+    description: Proportion of patients on the active dose who start glycaemic rescue by week 24-26
+    unit: proportion
+    planning: 0.04
+    truth_range: [0.02, 0.08]
+    sources: [charbonnel2006]
+    evidence: 16/415 = 0.04 of sitagliptin completers of the first 24 weeks (same caveat as above).
+  - id: weight_change_placebo
+    description: Mean change in body weight with placebo added to metformin
+    unit: kg
+    planning: -0.5
+    truth_range: [-1.0, 0.0]
+    sources: [bailey2010]
+    evidence: -0.89 kg (SE 0.24) with placebo in NCT00528879.
+  - id: weight_effect_target_dose
+    description: Placebo-adjusted change in body weight with the phase III dose
+    unit: kg
+    planning: -1.0
+    truth_range: [-2.0, 0.0]
+    sources: [bailey2010]
+    evidence: >-
+      Dapagliflozin 10 mg lost 1.97 kg more than placebo (-2.86 vs -0.89, NCT00528879), an
+      SGLT2 inhibitor. FJF-2026 has no stated mechanism, so the range goes up to a
+      weight-neutral drug.
+  - id: hypoglycaemia_level2_active
+    description: Proportion of patients on the active dose with at least one level 2 hypoglycaemia (< 54 mg/dL)
+    unit: proportion
+    planning: 0.01
+    truth_range: [0.00, 0.03]
+    sources: [haring2014, fda2023]
+    evidence: >-
+      Without a sulfonylurea, hypoglycaemia was below the registry's reporting threshold for
+      other adverse events in every arm of NCT01159600 (0 reported). Levels as defined in the
+      FDA 2023 draft (ADA 2023). The registry gives an upper bound, not an estimate.
+  - id: visit_correlation
+    description: Correlation of HbA1c changes between consecutive visits
+    unit: correlation
+    planning: 0.7
+    truth_range: [0.5, 0.85]
+    sources: none
+    evidence: >-
+      No published source gives this directly. The value is a working assumption. The MMRM
+      with unstructured covariance does not depend on it, and the sample size simulation
+      shows its effect over the whole range.
+  - id: mnar_share_of_dropouts
+    description: Share of treatment discontinuations whose timing depends on the unobserved HbA1c
+    unit: proportion
+    planning: 0.3
+    truth_range: [0.1, 0.5]
+    sources: none
+    evidence: >-
+      Not observable in any trial, by definition. It sets how far the missing data depart from
+      missing at random, which is what the tipping-point analysis has to detect.
+
+design_rules:
+  - id: primary_timepoint
+    rule: Primary endpoint is the change in HbA1c at week 26 (6 months of randomised treatment).
+    sources: [fda2023]
+    evidence: The draft recommends the change from baseline in A1C after 6 months of randomised treatment.
+  - id: rescue_as_intercurrent_event
+    rule: Starting rescue medication is an intercurrent event, documented and handled by the estimand.
+    sources: [fda2023]
+    evidence: >-
+      The draft says changes in or initiation of glycaemic-lowering drugs, for example for
+      rescue, should be documented as an intercurrent event.
+  - id: rescue_thresholds
+    rule: >-
+      Rescue when a confirmed fasting plasma glucose exceeds 270 mg/dL in weeks 2-6, 240 mg/dL
+      in weeks 6-12 or 200 mg/dL from week 12 to week 26.
+    sources: [nct02964247]
+    evidence: >-
+      Stepped thresholds of the same structure (270, 240 and 200 mg/dL with a confirmatory
+      FPG) are used in industry protocols such as NCT02964247; the week boundaries are adapted
+      to the 301 visit schedule. To be reviewed clinically in the 301 protocol (PR 16).
+  - id: hypoglycaemia_levels
+    rule: Hypoglycaemia is classified in levels 1, 2 and 3 (70, 54 mg/dL and severe).
+    sources: [fda2023]
+    evidence: Levels as given in the draft, after ADA 2023.
+
+calibration_targets:
+  - id: responders_below_7
+    description: Proportion with HbA1c < 7% at week 24 (data after rescue excluded, LOCF)
+    values: {placebo: 0.259, dapagliflozin_10mg: 0.406}
+    sources: [bailey2010]
+    use: >-
+      The simulator is checked against these with a public test seed (day 8). They are not
+      fitted exactly: the definitions differ from the 301 estimand.
