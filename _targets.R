@@ -19,6 +19,7 @@ tar_source(c("studies/benchmark/tlf", "studies/benchmark/compare"))
 tar_source("studies/301/sdtm")
 tar_source("qc/301")
 tar_source("studies/301/adam")
+tar_source("studies/301/analysis")
 
 list(
   # --- F0: environment smoke test ---
@@ -438,6 +439,33 @@ list(
   }),
   tar_target(adam_301_qc_comparison, compare_adam_301(adam_301, adam_301_qc)),
   tar_target(adam_301_qc_check, stopifnot(all(adam_301_qc_comparison$clean))),
+  # The SAP's analyses on the study data, with the F2 code unchanged. Until the lock the arms
+  # are the dummy assignment (ADR 0027), so these results carry no information on the drug.
+  tar_target(analysis_301_data, {
+    adam_301_qc_check
+    analysis_data_301(adam_301)
+  }),
+  tar_target(
+    analysis_301_hba1c_draws,
+    {
+      a1 <- sap_item(sap_301_content, "A1")
+      draws_301(hba1c_data_301(analysis_301_data, a1$settings$reference), a1$settings$imputations, a1$settings$seed)
+    }
+  ),
+  tar_target(
+    analysis_301_efficacy,
+    analyse_efficacy_301(analysis_301_data$adeff, sap_301_content, protocol_301, draws = analysis_301_hba1c_draws)
+  ),
+  tar_target(
+    analysis_301_secondary,
+    analyse_secondary_301(analysis_301_data, sap_301_content, protocol_301, analysis_301_hba1c_draws)
+  ),
+  tar_target(
+    analysis_301_multiplicity,
+    test_multiplicity_301(
+      multiplicity_inputs_301(analysis_301_efficacy, analysis_301_secondary, sap_301_content), sap_301_content
+    )
+  ),
   tar_target(
     adam_301_define,
     write_adam_define(adam_301, adam_301_spec, "data/adam/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
