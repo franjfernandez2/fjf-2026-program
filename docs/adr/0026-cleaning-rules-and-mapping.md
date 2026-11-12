@@ -1,6 +1,6 @@
 # ADR 0026: Cleaning rules, and where cleaning happens
 
-- **Status:** Proposed (for the reviewer's clinical review, F3 day 1)
+- **Status:** Accepted (reviewer's clinical review, 2026-11-12)
 - **Date:** 2026-11-12
 - **Decided by:** Francisco Fernández
 
