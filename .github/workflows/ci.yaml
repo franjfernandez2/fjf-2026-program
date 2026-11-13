@@ -1,7 +1,9 @@
 # Continuous integration for the FJF-2026 programme.
 #
-# Runs on every pull request (whatever its base branch, so stacked pull requests are
-# checked too) and on every push to main. It uses exactly the same Docker image and
+# Runs on pull requests into main and on every push to main; a stacked pull request is
+# checked when it is retargeted to main. Changes to Markdown only (README, ADRs) do not run
+# it. Pushes reuse the pipeline store; the weekly run rebuilds the whole pipeline from
+# scratch (ADR 0029: the account has 2,000 Actions minutes a month). It uses exactly the same Docker image and
 # Compose stack as local work, so "it passes in CI" means "it passes on any machine".
 #
 # Steps: build the analysis image (with layer cache) -> restore the cached pilot data ->
@@ -12,8 +14,13 @@ name: CI
 
 on:
   pull_request:
+    branches: [main]
+    paths-ignore: ["**.md"]
   push:
     branches: [main]
+    paths-ignore: ["**.md"]
+  schedule:
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -68,9 +75,9 @@ jobs:
           key: cdiscpilot01-${{ hashFiles('data/external/cdiscpilot01-manifest.csv') }}
 
       # The pipeline store of an earlier run, so that targets rebuilds only what is outdated.
-      # Pull requests only: every push to main rebuilds the whole pipeline from scratch.
-      - name: Restore the pipeline store (pull requests)
-        if: github.event_name == 'pull_request'
+      # Not on the weekly run, which rebuilds the whole pipeline from scratch.
+      - name: Restore the pipeline store
+        if: github.event_name != 'schedule'
         uses: actions/cache/restore@v4
         with:
           path: _targets

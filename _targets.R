@@ -447,9 +447,10 @@ list(
   tar_target(adam_301_qc_check, stopifnot(all(adam_301_qc_comparison$clean))),
   # The SAP's analyses on the study data, with the F2 code unchanged. Until the lock the arms
   # are the dummy assignment (ADR 0027), so these results carry no information on the drug.
+  # Only the datasets the analyses read, so a change to a safety dataset does not rerun them.
   tar_target(analysis_301_data, {
     adam_301_qc_check
-    analysis_data_301(adam_301)
+    analysis_data_301(list(ADSL = adam_301_adsl, ADEFF = adam_301_adeff, ADTTE = adam_301_adtte))
   }),
   tar_target(
     analysis_301_hba1c_draws,
