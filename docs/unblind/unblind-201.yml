@@ -1,0 +1,6 @@
+# Unblinding authorisation of FJF-2026-201 (ADR 0032). Written by the reviewer.
+study: "201"
+status: authorised
+authorised_at: "2026-11-13T22:11:36Z"
+authorised_by: "Francisco Fernandez Fernandez"
+lock: docs/lock/dblock-201.yml
