@@ -24,6 +24,7 @@ tar_source("studies/301/tlf")
 tar_source("studies/201/analysis")
 tar_source("studies/201/tlf")
 tar_source("qc/201")
+tar_source("studies/iss/tlf")
 
 list(
   # --- F0: environment smoke test ---
@@ -688,6 +689,17 @@ list(
     },
     format = "file"
   ),
+  # Blinded pooled safety review of FJF-2026-201 and FJF-2026-301 (ADR 0033): columns are the
+  # studies and all patients, never an arm, so it is made while both studies stay blinded.
+  tar_target(outputs_iss_file, "docs/sap/fjf-2026-iss-outputs.yml", format = "file"),
+  tar_target(outputs_iss, read_outputs(outputs_iss_file)),
+  tar_target(adam_iss, {
+    adam_201_qc_check
+    adam_301_qc_check
+    pool_iss(list(`201` = adam_201, `301` = adam_301), outputs_iss)
+  }),
+  tar_target(tlf_iss_tables, tables_iss(adam_iss, outputs_iss)),
+  tar_target(tlf_iss_files, write_tlf_iss(tlf_iss_tables, "studies/iss/output/tlf"), format = "file"),
   tar_target(
     adam_301_define,
     write_adam_define(adam_301, adam_301_spec, "data/adam/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),

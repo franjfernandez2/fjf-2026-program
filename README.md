@@ -11,10 +11,32 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | F0 · Foundations | Repository, environment, database, CI and templates | Done (`gate-0`) |
 | F1 · Benchmark | Replication of the public CDISC pilot (CDISCPILOT01) | Done (`gate-1`) |
 | F2 · Design | Protocols, SAPs, table shells and the data simulator | Done (`gate-2`; SAPs frozen at `sap-201-v1.0`, `sap-301-v1.0`) |
-| F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation | In progress: data, conformance and SAP analyses done on blinded data; next the database lock, unblinding, TLFs and CSR |
-| F4 · Safety and phase II | Safety TLFs, integrated safety and MCP-Mod dose finding | Planned |
+| F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation, TLFs | Done on blinded data; database locked (`dblock-301`) |
+| F4 · Safety and phase II | Safety TLFs, MCP-Mod dose finding, clinical utility index; blinded pooled safety review | Done on blinded data; database locked (`dblock-201`) |
 | F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | Planned |
-| F6 · Publication | Study reports, interactive app and website | Planned |
+| F6 · Publication | Study reports, reviewer's guides, interactive app and website | In progress: clinical study reports and reviewer's guides (cSDRG, ADRG) of both studies done, blinded; the integrated safety by treatment waits for the unblinding, which the reviewer has not authorised |
+
+### Blinding
+
+Both databases are locked, and **both studies are still blinded**. Locking and unblinding are
+two decisions ([ADR 0032](docs/adr/0032-locking-does-not-unblind.md)): the pipeline uses the
+real treatment arms only when a study is locked **and** the reviewer has committed
+`docs/unblind/unblind-<study>.yml` with `status: authorised`. Until then every result by arm
+uses a dummy assignment (the real arms shuffled within stratum with a public seed,
+[ADR 0027](docs/adr/0027-blinded-data-review-and-lock.md)), and every output and report says
+so on its face. Nothing in this repository is a result of FJF-2026 against placebo.
+
+### What the pipeline produces
+
+| Output | Where | Notes |
+| --- | --- | --- |
+| SDTM and ADaM packages with define.xml | `data/sdtm/<study>`, `data/adam/<study>` | Double-programmed; conformance notes in `studies/<study>/conformance.md` |
+| Tables and figures | `studies/<study>/output/tlf` | Traced to the SAP in `docs/sap/fjf-2026-<study>-outputs.yml`; tables double-programmed |
+| Clinical study reports (ICH E3) | `studies/<study>/output/csr` | From `studies/<study>/csr.qmd`; blinded, discussion pending the unblinding |
+| Reviewer's guides (cSDRG, ADRG) | `studies/<study>/csdrg.qmd`, `adrg.qmd` | PHUSE templates |
+| Blinded pooled safety review | `studies/iss/output/tlf` | Columns are the studies, never an arm ([ADR 0033](docs/adr/0033-blinded-pooled-safety-review.md)) |
+
+Outputs are rebuilt by the pipeline and are not versioned.
 
 ## The programme
 
@@ -43,10 +65,10 @@ fjf-2026-program/
 │   ├── benchmark/   CDISC pilot replication
 │   ├── 201/         phase II
 │   ├── 301/         phase III
-│   └── iss/         integrated safety
+│   └── iss/         integrated safety (blinded pooled review)
 ├── qc/              independent second programming and comparisons
-├── reports/         Quarto study reports
-├── app/             interactive explorer
+├── tools/           data generation, database lock, conformance runs, local CI
+├── app/             interactive explorer (F6, not started)
 └── tests/           unit tests
 ```
 
@@ -57,7 +79,7 @@ Requires Docker.
 ```sh
 cp .env.example .env              # then set your own local passwords
 docker compose up -d db           # start the clinical database (PostgreSQL 18)
-docker compose run --rm analysis Rscript tests/run-tests.R        # 25 database checks
+docker compose run --rm analysis Rscript tests/run-tests.R        # unit and database tests
 docker compose run --rm analysis Rscript tests/check-style.R      # lintr and styler
 docker compose run --rm analysis Rscript -e 'targets::tar_make()' # the pipeline
 docker compose run --rm analysis bash -c 'cd docs/templates && quarto render'  # documents
@@ -70,7 +92,13 @@ tools/generate-study-data.sh                                     # checks the SA
 docker compose run --rm analysis Rscript tools/load-raw-data.R   # loads it as the loader role
 ```
 
-`compose.yaml` starts the database and the analysis environment together. The analysis image pins R 4.6.1, the system libraries and every R package ([ADR 0012](docs/adr/0012-reproducible-environment.md)). The database has separate roles for loading and reading raw data and an append-only audit trail ([ADR 0013](docs/adr/0013-database-roles-and-audit-trail.md)). Continuous integration runs the same commands, in the same image, on every pull request (`.github/workflows/ci.yaml`).
+`compose.yaml` starts the database and the analysis environment together. The analysis image pins R 4.6.1, the system libraries and every R package ([ADR 0012](docs/adr/0012-reproducible-environment.md)). The database has separate roles for loading and reading raw data and an append-only audit trail ([ADR 0013](docs/adr/0013-database-roles-and-audit-trail.md)). Continuous integration runs the same commands, in the same image, on pull requests into main (`.github/workflows/ci.yaml`; [ADR 0029](docs/adr/0029-ci-minutes-budget.md)). The same steps run locally on a fresh clone, with a throwaway database, with:
+
+```sh
+tools/ci-local.sh            # the current commit, from scratch
+```
+
+The database lock is the reviewer's action, by `tools/lock-database.sh <study>`, which runs its own checks, writes `docs/lock/dblock-<study>.yml` and tags the commit.
 
 ## How this project is made
 
