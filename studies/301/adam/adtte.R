@@ -23,15 +23,18 @@ derive_adtte_301 <- function(adsl, adhypo, protocol, spec) {
     )
   }
   a <- adsl[adsl$FASFL == "Y", ]
-  week26 <- a$RANDDT + 7 * protocol$primary_visit_week
-  leave <- as.Date(ifelse(!is.na(a$EOSDT) & a$EOSDT < week26, a$EOSDT, week26))
+  end_primary <- a$RANDDT + 7 * protocol$primary_visit_week
+  leave <- as.Date(ifelse(!is.na(a$EOSDT) & a$EOSDT < end_primary, a$EOSDT, end_primary))
   event <- !is.na(a$RESCDT) & a$RESCDT <= leave
   adt <- as.Date(ifelse(event, a$RESCDT, leave))
   resc <- cbind(subject(a), data.frame(
     PARAMCD = "TTRESC", PARAM = "Time to first rescue medication (days)", STARTDT = a$RANDDT, ADT = adt,
     AVAL = as.numeric(adt - a$RANDDT) + 1, CNSR = ifelse(event, 0L, 1L),
-    EVNTDESC = ifelse(event, "RESCUE MEDICATION", ifelse(leave < week26, "END OF STUDY", "WEEK 26")),
-    SRCDOM = "ADSL", SRCVAR = ifelse(event, "RESCDT", ifelse(leave < week26, "EOSDT", "RANDDT"))
+    EVNTDESC = ifelse(
+      event, "RESCUE MEDICATION",
+      ifelse(leave < end_primary, "END OF STUDY", sprintf("WEEK %d", protocol$primary_visit_week))
+    ),
+    SRCDOM = "ADSL", SRCVAR = ifelse(event, "RESCDT", ifelse(leave < end_primary, "EOSDT", "RANDDT"))
   ))
 
   s <- adsl[adsl$SAFFL == "Y", ]
