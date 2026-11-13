@@ -4,7 +4,7 @@ programs <- c(
   list.files(file.path(project_root, "R"), pattern = "[.]R$", full.names = TRUE),
   list.files(file.path(project_root, "studies", "benchmark", "adam"), pattern = "[.]R$", full.names = TRUE),
   list.files(
-    file.path(project_root, "studies", "301", c("sdtm", "adam", "analysis")),
+    file.path(project_root, "studies", "301", c("sdtm", "adam", "analysis", "tlf")),
     pattern = "[.]R$", full.names = TRUE
   ),
   list.files(file.path(project_root, "qc", c("benchmark", "301")), pattern = "[.]R$", full.names = TRUE),
