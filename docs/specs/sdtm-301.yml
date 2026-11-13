@@ -12,6 +12,15 @@ blinding_seed: 301301
 # The CRF does not collect the country. COUNTRY stays empty and the reviewer's guide says so.
 country: null
 
+# Trial summary (TS) values that differ between studies. Codes: CDISC CT 2024-03-29.
+trial_summary:
+  phase: {value: PHASE III TRIAL, code: C15602}
+  types:
+    - {value: EFFICACY, code: C49666}
+    - {value: SAFETY, code: C49667}
+  objective_primary: Change in HbA1c from baseline to week 26, FJF-2026 20 mg against placebo
+  primary_outcome: Change from baseline in HbA1c at week 26
+
 # Laboratory tests: CRF code, SDTM code (testcd, when the CRF code is not the CDISC one),
 # name, category and standard unit (CDISC unit terminology). Results in another unit are converted
 # with value * factor + offset (CR06); a unit not listed leaves LBSTRESN missing (listed).

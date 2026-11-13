@@ -1,0 +1,446 @@
+# SDTM specification of study FJF-2026-201 (SDTMIG 3.4). The mapping programs in
+# studies/301/sdtm read it (they serve both studies, ADR 0030), and a test checks that each
+# dataset has exactly these variables, in this order. Origins follow Define-XML 2.1: Collected, Derived, Assigned, Protocol.
+# Cleaning rules (CRnn) are in cleaning-rules.yml.
+
+study: FJF-2026-201
+sdtmig: "3.4"
+# CDISC SDTM terminology the package is checked against (P21, CORE), declared in define.xml.
+ct: "2024-03-29"
+# Public seed of the dummy treatment assignment used until the database lock (ADR 0027).
+blinding_seed: 201201
+# The CRF does not collect the country. COUNTRY stays empty and the reviewer's guide says so.
+country: null
+
+# Trial summary (TS) values that differ between studies. Codes: CDISC CT 2024-03-29.
+trial_summary:
+  phase: {value: PHASE II TRIAL, code: C15601}
+  types:
+    - {value: EFFICACY, code: C49666}
+    - {value: SAFETY, code: C49667}
+  objective_primary: >-
+    Dose-response of FJF-2026 5 to 40 mg on the change in HbA1c from baseline to week 12,
+    and the dose to take forward
+  primary_outcome: Change from baseline in HbA1c at week 12
+  # The SAP of FJF-2026-201 has no secondary endpoints; its secondary objectives are these.
+  objective_secondary:
+    - Robustness of the dose-response to the model (model averaging) and to the intercurrent-event strategy
+    - Safety and tolerability by dose
+
+# Laboratory tests: CRF code, SDTM code (testcd, when the CRF code is not the CDISC one),
+# name, category and standard unit (CDISC unit terminology). Results in another unit are converted
+# with value * factor + offset (CR06); a unit not listed leaves LBSTRESN missing (listed).
+lab_tests:
+  - {code: GLUC, name: Glucose, category: CHEMISTRY, unit: mg/dL, convert: [{from: mmol/L, factor: 18.016, offset: 0}]}
+  - {code: HBA1C, name: Hemoglobin A1C, category: CHEMISTRY, unit: "%", convert: [{from: mmol/mol, factor: 0.0915, offset: 2.15}]}
+  - {code: ALT, name: Alanine Aminotransferase, category: CHEMISTRY, unit: U/L, convert: []}
+  - {code: AST, name: Aspartate Aminotransferase, category: CHEMISTRY, unit: U/L, convert: []}
+  - {code: BILI, name: Bilirubin, category: CHEMISTRY, unit: mg/dL, convert: [{from: umol/L, factor: 0.05848, offset: 0}]}
+  - {code: CREAT, name: Creatinine, category: CHEMISTRY, unit: mg/dL, convert: [{from: umol/L, factor: 0.01131, offset: 0}]}
+  - {code: EGFR, testcd: GFRE, name: "Glomerular Filtration Rate, Estimated", category: CHEMISTRY, unit: mL/min/1.73 m2, convert: [{from: mL/min/1.73m2, factor: 1, offset: 0}]}
+
+# Vital signs: the CRF column, test name and standard unit. Weight in pounds and height in
+# metres are converted (CR04, CR05).
+vital_signs:
+  - {code: SYSBP, column: sysbp, name: Systolic Blood Pressure, unit: mmHg}
+  - {code: DIABP, column: diabp, name: Diastolic Blood Pressure, unit: mmHg}
+  - {code: PULSE, column: pulse, name: Pulse Rate, unit: beats/min}
+  - {code: WEIGHT, column: weight, name: Weight, unit: kg}
+  - {code: HEIGHT, column: height_cm, name: Height, unit: cm}
+
+domains:
+  - name: DM
+    label: Demographics
+    structure: One record per subject
+    keys: [STUDYID, USUBJID]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived, source: "STUDYID-subject_id"}
+      - {name: SUBJID, label: Subject Identifier for the Study, type: text, origin: Collected, source: enrolment.subject_id}
+      - {name: RFSTDTC, label: Subject Reference Start Date/Time, type: text, origin: Derived, source: first dispense_date}
+      - {name: RFENDTC, label: Subject Reference End Date/Time, type: text, origin: Derived, source: date of last dose}
+      - {name: RFXSTDTC, label: Date/Time of First Study Treatment, type: text, origin: Derived, source: first dispense_date}
+      - {name: RFXENDTC, label: Date/Time of Last Study Treatment, type: text, origin: Derived, source: disposition TREATMENT event_date}
+      - {name: RFICDTC, label: Date/Time of Informed Consent, type: text, origin: Collected, source: enrolment.consent_date}
+      - {name: RFPENDTC, label: Date/Time of End of Participation, type: text, origin: Derived, source: "last date of contact: latest complete date of the subject's records"}
+      - {name: DTHDTC, label: Date/Time of Death, type: text, origin: Derived, source: disposition event_date when reason is DEATH}
+      - {name: DTHFL, label: Subject Death Flag, type: text, origin: Derived, source: disposition reason DEATH}
+      - {name: SITEID, label: Study Site Identifier, type: text, origin: Collected, source: enrolment.site_id}
+      - {name: BRTHDTC, label: Date/Time of Birth, type: text, origin: Collected, source: demography.birth_date}
+      - {name: AGE, label: Age, type: integer, origin: Derived, source: "birth date to consent, CR02"}
+      - {name: AGEU, label: Age Units, type: text, origin: Assigned}
+      - {name: SEX, label: Sex, type: text, origin: Collected, source: demography.sex}
+      - {name: RACE, label: Race, type: text, origin: Collected, source: demography.race}
+      - {name: ETHNIC, label: Ethnicity, type: text, origin: Collected, source: demography.ethnicity}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Derived, source: randomisation.arm_code}
+      - {name: ARM, label: Description of Planned Arm, type: text, origin: Derived, source: protocol arms}
+      - {name: ACTARMCD, label: Actual Arm Code, type: text, origin: Derived, source: "ARMCD if dosed"}
+      - {name: ACTARM, label: Description of Actual Arm, type: text, origin: Derived, source: "ARM if dosed"}
+      - {name: ARMNRS, label: Reason Arm and/or Actual Arm is Null, type: text, origin: Derived}
+      - {name: ACTARMUD, label: Description of Unplanned Actual Arm, type: text, origin: Derived, source: none in this study}
+      - {name: COUNTRY, label: Country, type: text, origin: Assigned, source: not collected}
+
+  - name: SUPPDM
+    label: Supplemental Qualifiers for DM
+    structure: One record per supplemental qualifier per subject
+    keys: [STUDYID, RDOMAIN, USUBJID, QNAM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: RDOMAIN, label: Related Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: IDVAR, label: Identifying Variable, type: text, origin: Assigned}
+      - {name: IDVARVAL, label: Identifying Variable Value, type: text, origin: Derived}
+      - {name: QNAM, label: Qualifier Variable Name, type: text, origin: Assigned}
+      - {name: QLABEL, label: Qualifier Variable Label, type: text, origin: Assigned}
+      - {name: QVAL, label: Data Value, type: text, origin: Collected, source: "randomisation.stratum, randomisation_number"}
+      - {name: QORIG, label: Origin, type: text, origin: Assigned}
+      - {name: QEVAL, label: Evaluator, type: text, origin: Assigned}
+
+  - name: DS
+    label: Disposition
+    structure: One record per disposition status or protocol milestone per subject
+    keys: [STUDYID, USUBJID, DSSTDTC, DSSCAT, DSDECOD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: DSSEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: DSTERM, label: Reported Term for the Disposition Event, type: text, origin: Collected}
+      - {name: DSDECOD, label: Standardized Disposition Term, type: text, origin: Derived}
+      - {name: DSCAT, label: Category for Disposition Event, type: text, origin: Assigned}
+      - {name: DSSCAT, label: Subcategory for Disposition Event, type: text, origin: Assigned}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
+      - {name: DSSTDTC, label: Start Date/Time of Disposition Event, type: text, origin: Collected}
+      - {name: DSSTDY, label: Study Day of Start of Disposition Event, type: integer, origin: Derived}
+
+  - name: SV
+    label: Subject Visits
+    structure: One record per planned or unscheduled visit per subject
+    keys: [STUDYID, USUBJID, VISITNUM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Derived, source: "protocol order; unscheduled = previous + 0.1"}
+      - {name: VISIT, label: Visit Name, type: text, origin: Derived, source: protocol visit label}
+      - {name: SVPRESP, label: Pre-specified, type: text, origin: Assigned}
+      - {name: SVOCCUR, label: Occurrence, type: text, origin: Collected, source: visits.visit_status}
+      - {name: SVSTDTC, label: Start Date/Time of Observation, type: text, origin: Collected, source: visits.visit_date}
+      - {name: SVENDTC, label: End Date/Time of Observation, type: text, origin: Derived, source: SVSTDTC}
+      - {name: SVSTDY, label: Study Day of Start of Observation, type: integer, origin: Derived}
+      - {name: SVENDY, label: Study Day of End of Observation, type: integer, origin: Derived}
+
+  - name: EX
+    label: Exposure
+    structure: One record per dispensing interval per subject
+    keys: [STUDYID, USUBJID, EXTRT, EXSTDTC]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: EXSEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: EXREFID, label: Reference ID, type: text, origin: Collected, source: exposure.record_id}
+      - {name: EXTRT, label: Name of Treatment, type: text, origin: Derived, source: "arm of the assignment in use (ADR 0027)"}
+      - {name: EXDOSE, label: Dose, type: float, origin: Protocol, source: protocol arm dose_mg}
+      - {name: EXDOSU, label: Dose Units, type: text, origin: Assigned}
+      - {name: EXDOSFRM, label: Dose Form, type: text, origin: Assigned}
+      - {name: EXDOSFRQ, label: Dosing Frequency per Interval, type: text, origin: Protocol}
+      - {name: EXROUTE, label: Route of Administration, type: text, origin: Protocol}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
+      - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
+      - {name: EXSTDTC, label: Start Date/Time of Treatment, type: text, origin: Collected, source: exposure.dispense_date}
+      - {name: EXENDTC, label: End Date/Time of Treatment, type: text, origin: Derived, source: "day before the return date, never after the last dose; the last bottle ends at the last dose (RFXENDTC) if not returned or returned earlier (CR10)"}
+      - {name: EXSTDY, label: Study Day of Start of Treatment, type: integer, origin: Derived}
+      - {name: EXENDY, label: Study Day of End of Treatment, type: integer, origin: Derived}
+
+  - name: DA
+    label: Product Accountability
+    structure: One record per tablet count per dispensing per subject
+    keys: [STUDYID, USUBJID, DAREFID, DATESTCD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: DASEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: DAREFID, label: Reference ID, type: text, origin: Collected, source: exposure.record_id}
+      - {name: DATESTCD, label: Short Name of Accountability Assessment, type: text, origin: Assigned}
+      - {name: DATEST, label: Name of Accountability Assessment, type: text, origin: Assigned}
+      - {name: DAORRES, label: Result or Finding in Original Units, type: text, origin: Collected, source: "exposure.tablets_dispensed, tablets_returned"}
+      - {name: DAORRESU, label: Original Units, type: text, origin: Assigned}
+      - {name: DASTRESC, label: Character Result/Finding in Std Format, type: text, origin: Derived}
+      - {name: DASTRESN, label: Numeric Result/Finding in Standard Units, type: float, origin: Derived}
+      - {name: DASTRESU, label: Standard Units, type: text, origin: Assigned}
+      - {name: DASTAT, label: Completion Status, type: text, origin: Derived}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
+      - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
+      - {name: DADTC, label: Date/Time of Accountability Assessment, type: text, origin: Collected, source: "exposure.dispense_date, return_date"}
+      - {name: DADY, label: Study Day of Accountability Assessment, type: integer, origin: Derived}
+
+  - name: CM
+    label: Concomitant/Concurrent Medications
+    structure: One record per recorded medication per subject
+    keys: [STUDYID, USUBJID, CMTRT, CMSTDTC]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: CMSEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: CMSPID, label: Sponsor-Defined Identifier, type: text, origin: Collected, source: concomitant_meds.cm_seq}
+      - {name: CMTRT, label: Reported Name of Drug, Med, or Therapy, type: text, origin: Collected, source: concomitant_meds.drug_name}
+      - {name: CMDECOD, label: Standardized Medication Name, type: text, origin: Assigned, source: coding-dictionary.yml}
+      - {name: CMCAT, label: Category for Medication, type: text, origin: Derived, source: concomitant_meds.rescue}
+      - {name: CMINDC, label: Indication, type: text, origin: Collected, source: concomitant_meds.indication}
+      - {name: CMCLAS, label: Medication Class, type: text, origin: Assigned, source: "coding-dictionary.yml (ATC level 4)"}
+      - {name: CMCLASCD, label: Medication Class Code, type: text, origin: Assigned, source: coding-dictionary.yml}
+      - {name: CMDOSU, label: Dose Units, type: text, origin: Collected, source: concomitant_meds.daily_dose}
+      - {name: CMDOSTOT, label: Total Daily Dose, type: float, origin: Collected, source: concomitant_meds.daily_dose}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
+      - {name: CMSTDTC, label: Start Date/Time of Medication, type: text, origin: Collected, source: "concomitant_meds.start_date, CR02"}
+      - {name: CMENDTC, label: End Date/Time of Medication, type: text, origin: Collected, source: concomitant_meds.end_date}
+      - {name: CMSTDY, label: Study Day of Start of Medication, type: integer, origin: Derived}
+      - {name: CMENDY, label: Study Day of End of Medication, type: integer, origin: Derived}
+      - {name: CMENRTPT, label: End Relative to Reference Time Point, type: text, origin: Derived}
+      - {name: CMENTPT, label: End Reference Time Point, type: text, origin: Assigned}
+
+  - name: AE
+    label: Adverse Events
+    structure: One record per adverse event per subject
+    keys: [STUDYID, USUBJID, AEDECOD, AESTDTC]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: AESEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: AESPID, label: Sponsor-Defined Identifier, type: text, origin: Collected, source: adverse_events.ae_seq}
+      - {name: AETERM, label: Reported Term for the Adverse Event, type: text, origin: Collected, source: adverse_events.verbatim_term}
+      - {name: AELLT, label: Lowest Level Term, type: text, origin: Assigned, source: coding-dictionary.yml}
+      - {name: AEDECOD, label: Dictionary-Derived Term, type: text, origin: Assigned, source: coding-dictionary.yml}
+      - {name: AEBODSYS, label: Body System or Organ Class, type: text, origin: Assigned, source: coding-dictionary.yml}
+      - {name: AESOC, label: Primary System Organ Class, type: text, origin: Assigned, source: coding-dictionary.yml}
+      - {name: AESEV, label: Severity/Intensity, type: text, origin: Collected, source: "adverse_events.severity, CR09 in ADaM"}
+      - {name: AESER, label: Serious Event, type: text, origin: Collected, source: adverse_events.serious}
+      - {name: AEACN, label: Action Taken with Study Treatment, type: text, origin: Collected, source: adverse_events.action_taken}
+      - {name: AEREL, label: Causality, type: text, origin: Collected, source: adverse_events.related}
+      - {name: AEOUT, label: Outcome of Adverse Event, type: text, origin: Collected, source: adverse_events.outcome}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
+      - {name: AESTDTC, label: Start Date/Time of Adverse Event, type: text, origin: Collected, source: "adverse_events.start_date, CR02"}
+      - {name: AEENDTC, label: End Date/Time of Adverse Event, type: text, origin: Collected, source: "adverse_events.end_date, CR08"}
+      - {name: AESTDY, label: Study Day of Start of Adverse Event, type: integer, origin: Derived}
+      - {name: AEENDY, label: Study Day of End of Adverse Event, type: integer, origin: Derived}
+      - {name: AEENRTPT, label: End Relative to Reference Time Point, type: text, origin: Derived, source: "ONGOING when no end date; UNKNOWN when the end was set missing (CR08)"}
+      - {name: AEENTPT, label: End Reference Time Point, type: text, origin: Assigned}
+
+  - name: SUPPAE
+    label: Supplemental Qualifiers for AE
+    structure: One record per supplemental qualifier per adverse event
+    keys: [STUDYID, RDOMAIN, USUBJID, IDVAR, IDVARVAL, QNAM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: RDOMAIN, label: Related Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: IDVAR, label: Identifying Variable, type: text, origin: Assigned}
+      - {name: IDVARVAL, label: Identifying Variable Value, type: text, origin: Derived}
+      - {name: QNAM, label: Qualifier Variable Name, type: text, origin: Assigned}
+      - {name: QLABEL, label: Qualifier Variable Label, type: text, origin: Assigned}
+      - {name: QVAL, label: Data Value, type: text, origin: Collected}
+      - {name: QORIG, label: Origin, type: text, origin: Assigned}
+      - {name: QEVAL, label: Evaluator, type: text, origin: Assigned}
+
+  - name: LB
+    label: Laboratory Test Results
+    structure: One record per lab test per visit per subject
+    keys: [STUDYID, USUBJID, LBTESTCD, VISITNUM, LBDTC]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: LBSEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: LBREFID, label: Specimen ID, type: text, origin: Collected, source: lab_results.record_id}
+      - {name: LBTESTCD, label: Lab Test or Examination Short Name, type: text, origin: Collected, source: lab_results.test_code}
+      - {name: LBTEST, label: Lab Test or Examination Name, type: text, origin: Assigned}
+      - {name: LBCAT, label: Category for Lab Test, type: text, origin: Assigned}
+      - {name: LBORRES, label: Result or Finding in Original Units, type: text, origin: Collected, source: lab_results.result}
+      - {name: LBORRESU, label: Original Units, type: text, origin: Collected, source: lab_results.unit}
+      - {name: LBORNRLO, label: Normal Range Lower Limit-Original Units, type: text, origin: Collected}
+      - {name: LBORNRHI, label: Normal Range Upper Limit-Original Units, type: text, origin: Collected}
+      - {name: LBSTRESC, label: Character Result/Finding in Std Format, type: text, origin: Derived, source: "CR06, CR07"}
+      - {name: LBSTRESN, label: Numeric Result/Finding in Standard Units, type: float, origin: Derived, source: "CR06, CR07"}
+      - {name: LBSTRESU, label: Standard Units, type: text, origin: Assigned}
+      - {name: LBSTNRLO, label: Normal Range Lower Limit-Std Units, type: float, origin: Derived}
+      - {name: LBSTNRHI, label: Normal Range Upper Limit-Std Units, type: float, origin: Derived}
+      - {name: LBNRIND, label: Reference Range Indicator, type: text, origin: Derived}
+      - {name: LBLOBXFL, label: Last Observation Before Exposure Flag, type: text, origin: Derived}
+      - {name: LBFAST, label: Fasting Status, type: text, origin: Collected, source: lab_results.fasting}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
+      - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
+      - {name: LBDTC, label: Date/Time of Specimen Collection, type: text, origin: Collected, source: lab_results.collection_date}
+      - {name: LBDY, label: Study Day of Specimen Collection, type: integer, origin: Derived}
+
+  - name: VS
+    label: Vital Signs
+    structure: One record per vital sign measurement per visit per subject
+    keys: [STUDYID, USUBJID, VSTESTCD, VISITNUM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: VSSEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: VSTESTCD, label: Vital Signs Test Short Name, type: text, origin: Assigned}
+      - {name: VSTEST, label: Vital Signs Test Name, type: text, origin: Assigned}
+      - {name: VSORRES, label: Result or Finding in Original Units, type: text, origin: Collected, source: "vital_signs; demography.height_cm"}
+      - {name: VSORRESU, label: Original Units, type: text, origin: Collected}
+      - {name: VSSTRESC, label: Character Result/Finding in Std Format, type: text, origin: Derived, source: "CR04, CR05"}
+      - {name: VSSTRESN, label: Numeric Result/Finding in Standard Units, type: float, origin: Derived, source: "CR04, CR05"}
+      - {name: VSSTRESU, label: Standard Units, type: text, origin: Assigned}
+      - {name: VSLOBXFL, label: Last Observation Before Exposure Flag, type: text, origin: Derived}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Derived}
+      - {name: VISIT, label: Visit Name, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
+      - {name: VSDTC, label: Date/Time of Measurements, type: text, origin: Collected, source: "vital_signs.measure_date; screening date for height"}
+      - {name: VSDY, label: Study Day of Vital Signs, type: integer, origin: Derived}
+
+  - name: CE
+    label: Clinical Events
+    structure: One record per hypoglycaemic event per subject
+    keys: [STUDYID, USUBJID, CETERM, CESTDTC, CESPID]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: CESEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: CESPID, label: Sponsor-Defined Identifier, type: text, origin: Collected, source: hypoglycaemia.event_seq}
+      - {name: CETERM, label: Reported Term for the Clinical Event, type: text, origin: Assigned}
+      - {name: CEDECOD, label: Dictionary-Derived Term, type: text, origin: Assigned}
+      - {name: CECAT, label: Category for Clinical Event, type: text, origin: Assigned}
+      - {name: CESCAT, label: Subcategory for Clinical Event, type: text, origin: Derived, source: "hypoglycaemia.level (ADA level 1-3)"}
+      - {name: CEPRESP, label: Clinical Event Pre-specified, type: text, origin: Assigned}
+      - {name: CEOCCUR, label: Clinical Event Occurrence, type: text, origin: Assigned}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived, source: SE}
+      - {name: CESTDTC, label: Start Date/Time of Clinical Event, type: text, origin: Collected, source: hypoglycaemia.event_date}
+      - {name: CESTDY, label: Study Day of Start of Clinical Event, type: integer, origin: Derived}
+
+  - name: SUPPCE
+    label: Supplemental Qualifiers for CE
+    structure: One record per supplemental qualifier per clinical event
+    keys: [STUDYID, RDOMAIN, USUBJID, IDVAR, IDVARVAL, QNAM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: RDOMAIN, label: Related Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: IDVAR, label: Identifying Variable, type: text, origin: Assigned}
+      - {name: IDVARVAL, label: Identifying Variable Value, type: text, origin: Derived}
+      - {name: QNAM, label: Qualifier Variable Name, type: text, origin: Assigned}
+      - {name: QLABEL, label: Qualifier Variable Label, type: text, origin: Assigned}
+      - {name: QVAL, label: Data Value, type: text, origin: Collected}
+      - {name: QORIG, label: Origin, type: text, origin: Assigned}
+      - {name: QEVAL, label: Evaluator, type: text, origin: Assigned}
+
+  - name: IE
+    label: Inclusion/Exclusion Criteria Not Met
+    structure: One record per inclusion or exclusion criterion not met per subject
+    keys: [STUDYID, USUBJID, IETESTCD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: IESEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: IETESTCD, label: Inclusion/Exclusion Criterion Short Name, type: text, origin: Derived, source: TI}
+      - {name: IETEST, label: Inclusion/Exclusion Criterion, type: text, origin: Collected, source: enrolment.failed_criterion}
+      - {name: IECAT, label: Inclusion/Exclusion Category, type: text, origin: Derived, source: TI}
+      - {name: IEORRES, label: I/E Criterion Original Result, type: text, origin: Derived}
+      - {name: IESTRESC, label: I/E Criterion Result in Std Format, type: text, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived}
+      - {name: IEDTC, label: Date/Time of Collection, type: text, origin: Collected, source: enrolment.screening_date}
+      - {name: IEDY, label: Study Day of Collection, type: integer, origin: Derived}
+
+  - name: SE
+    label: Subject Elements
+    structure: One record per actual element per subject
+    keys: [STUDYID, USUBJID, ETCD, SESTDTC]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: USUBJID, label: Unique Subject Identifier, type: text, origin: Derived}
+      - {name: SESEQ, label: Sequence Number, type: integer, origin: Derived}
+      - {name: ETCD, label: Element Code, type: text, origin: Derived}
+      - {name: ELEMENT, label: Description of Element, type: text, origin: Derived}
+      - {name: TAETORD, label: Planned Order of Element within Arm, type: integer, origin: Derived}
+      - {name: EPOCH, label: Epoch, type: text, origin: Derived}
+      - {name: SESTDTC, label: Start Date/Time of Element, type: text, origin: Derived, source: "RFICDTC (screening), RFXSTDTC (treatment), RFXENDTC (follow-up)"}
+      - {name: SEENDTC, label: End Date/Time of Element, type: text, origin: Derived, source: "RFXSTDTC (screening), RFXENDTC (treatment), RFPENDTC (follow-up): each element ends when the next starts"}
+      - {name: SESTDY, label: Study Day of Start of Element, type: integer, origin: Derived}
+      - {name: SEENDY, label: Study Day of End of Element, type: integer, origin: Derived}
+
+  - name: TA
+    label: Trial Arms
+    structure: One record per planned element per arm
+    keys: [STUDYID, ARMCD, TAETORD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Protocol}
+      - {name: ARM, label: Description of Planned Arm, type: text, origin: Protocol}
+      - {name: TAETORD, label: Planned Order of Element within Arm, type: integer, origin: Protocol}
+      - {name: ETCD, label: Element Code, type: text, origin: Protocol}
+      - {name: ELEMENT, label: Description of Element, type: text, origin: Protocol}
+      - {name: TABRANCH, label: Branch, type: text, origin: Protocol}
+      - {name: TATRANS, label: Transition Rule, type: text, origin: Protocol}
+      - {name: EPOCH, label: Epoch, type: text, origin: Protocol}
+
+  - name: TE
+    label: Trial Elements
+    structure: One record per planned element
+    keys: [STUDYID, ETCD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: ETCD, label: Element Code, type: text, origin: Protocol}
+      - {name: ELEMENT, label: Description of Element, type: text, origin: Protocol}
+      - {name: TESTRL, label: Rule for Start of Element, type: text, origin: Protocol}
+      - {name: TEENRL, label: Rule for End of Element, type: text, origin: Protocol}
+      - {name: TEDUR, label: Planned Duration of Element, type: text, origin: Protocol}
+
+  - name: TV
+    label: Trial Visits
+    structure: One record per planned visit
+    keys: [STUDYID, VISITNUM]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: VISITNUM, label: Visit Number, type: float, origin: Protocol}
+      - {name: VISIT, label: Visit Name, type: text, origin: Protocol}
+      - {name: VISITDY, label: Planned Study Day of Visit, type: integer, origin: Protocol}
+      - {name: ARMCD, label: Planned Arm Code, type: text, origin: Protocol, source: "empty: every visit applies to both arms"}
+      - {name: TVSTRL, label: Visit Start Rule, type: text, origin: Protocol}
+
+  - name: TI
+    label: Trial Inclusion/Exclusion Criteria
+    structure: One record per inclusion or exclusion criterion
+    keys: [STUDYID, IETESTCD]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: IETESTCD, label: Incl/Excl Criterion Short Name, type: text, origin: Protocol}
+      - {name: IETEST, label: Inclusion/Exclusion Criterion, type: text, origin: Protocol}
+      - {name: IECAT, label: Inclusion/Exclusion Category, type: text, origin: Protocol}
+
+  - name: TS
+    label: Trial Summary
+    structure: One record per trial summary parameter value
+    keys: [STUDYID, TSPARMCD, TSSEQ]
+    variables:
+      - {name: STUDYID, label: Study Identifier, type: text, origin: Protocol}
+      - {name: DOMAIN, label: Domain Abbreviation, type: text, origin: Assigned}
+      - {name: TSSEQ, label: Sequence Number, type: integer, origin: Assigned}
+      - {name: TSPARMCD, label: Trial Summary Parameter Short Name, type: text, origin: Assigned}
+      - {name: TSPARM, label: Trial Summary Parameter, type: text, origin: Assigned}
+      - {name: TSVAL, label: Parameter Value, type: text, origin: Protocol}
+      - {name: TSVAL1, label: Parameter Value 1, type: text, origin: Protocol, source: "text after the first 200 characters"}
+      - {name: TSVALNF, label: Parameter Null Flavor, type: text, origin: Assigned}
+      - {name: TSVALCD, label: Parameter Value Code, type: text, origin: Assigned}
+      - {name: TSVCDREF, label: Name of the Reference Terminology, type: text, origin: Assigned}
+      - {name: TSVCDVER, label: Version of the Reference Terminology, type: text, origin: Assigned}

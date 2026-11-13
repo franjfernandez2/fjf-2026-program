@@ -35,3 +35,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0027](0027-blinded-data-review-and-lock.md) | Blinded data review, and the database lock | Accepted |
 | [0028](0028-pre-lock-analysis-decisions-301.md) | Analysis decisions of FJF-2026-301 taken on blinded data, before the lock | Accepted |
 | [0029](0029-ci-minutes-budget.md) | Continuous integration within the monthly Actions minutes | Proposed |
+| [0030](0030-study-201-reuses-301-programs.md) | FJF-2026-201 uses the SDTM and ADaM programs of FJF-2026-301 | Proposed |
