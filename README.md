@@ -10,8 +10,8 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | --- | --- | --- |
 | F0 · Foundations | Repository, environment, database, CI and templates | Done (`gate-0`) |
 | F1 · Benchmark | Replication of the public CDISC pilot (CDISCPILOT01) | Done (`gate-1`) |
-| F2 · Design | Protocols, SAPs, table shells and the data simulator | Built; awaiting review, SAP freeze and `gate-2` |
-| F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation | Planned |
+| F2 · Design | Protocols, SAPs, table shells and the data simulator | Done (`gate-2`; SAPs frozen at `sap-201-v1.0`, `sap-301-v1.0`) |
+| F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation | In progress: data, conformance and SAP analyses done on blinded data; next the database lock, unblinding, TLFs and CSR |
 | F4 · Safety and phase II | Safety TLFs, integrated safety and MCP-Mod dose finding | Planned |
 | F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | Planned |
 | F6 · Publication | Study reports, interactive app and website | Planned |
