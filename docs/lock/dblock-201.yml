@@ -1,0 +1,7 @@
+# Database lock of FJF-2026-201 (ADR 0027). Written by tools/lock-database.sh.
+study: "201"
+status: locked
+locked_at: "2026-11-13T18:04:13Z"
+locked_by: "Francisco Fernandez Fernandez"
+frozen_commit: "ec859e568df9e0f54a10692d9d54496df2bdafda"
+decisions: docs/adr/0028-pre-lock-analysis-decisions-301.md
