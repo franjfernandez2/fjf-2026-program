@@ -53,7 +53,8 @@ qc_seq <- function(id) as.integer(stats::ave(seq_along(id), id, FUN = seq_along)
 qc_epoch <- function(id, dtc, se) {
   d <- qc_date(dtc)
   out <- rep(NA_character_, length(id))
-  for (k in seq_len(nrow(se))) {
+  # A day two elements share (first or last dose) belongs to treatment.
+  for (k in c(which(se$EPOCH == "TREATMENT"), which(se$EPOCH != "TREATMENT"))) {
     hit <- id == se$USUBJID[k] & !is.na(d) & d >= qc_date(se$SESTDTC[k]) &
       (is.na(se$SEENDTC[k]) | d <= qc_date(se$SEENDTC[k]))
     out[hit & is.na(out)] <- se$EPOCH[k]
@@ -129,11 +130,10 @@ qc_sdtm_301 <- function(dir, assignment, protocol, spec, dictionary) {
   )
 
   # SE --------------------------------------------------------------------------------
-  shift <- function(dtc, k) ifelse(is.na(dtc), NA, as.character(qc_date(dtc) + k))
   se <- rbind(
     data.frame(
       USUBJID = dm$USUBJID, ETCD = "SCRN", ELEMENT = "Screening", TAETORD = 1L, EPOCH = "SCREENING",
-      SESTDTC = dm$RFICDTC, SEENDTC = ifelse(is.na(dm$RFXSTDTC), dm$RFPENDTC, shift(dm$RFXSTDTC, -1))
+      SESTDTC = dm$RFICDTC, SEENDTC = ifelse(is.na(dm$RFXSTDTC), dm$RFPENDTC, dm$RFXSTDTC)
     ),
     data.frame(
       USUBJID = dm$USUBJID, ETCD = dm$ACTARMCD, ELEMENT = dm$ACTARM, TAETORD = 2L, EPOCH = "TREATMENT",
@@ -141,7 +141,7 @@ qc_sdtm_301 <- function(dir, assignment, protocol, spec, dictionary) {
     )[!is.na(dm$ACTARMCD), ],
     data.frame(
       USUBJID = dm$USUBJID, ETCD = "FU", ELEMENT = "Follow-up", TAETORD = 3L, EPOCH = "FOLLOW-UP",
-      SESTDTC = shift(dm$RFXENDTC, 1), SEENDTC = dm$RFPENDTC
+      SESTDTC = dm$RFXENDTC, SEENDTC = dm$RFPENDTC
     )[!is.na(dm$RFXENDTC) & dm$RFPENDTC > dm$RFXENDTC, ]
   )
   se <- se[order(se$USUBJID, se$TAETORD), ]
