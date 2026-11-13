@@ -21,6 +21,7 @@ tar_source("qc/301")
 tar_source("studies/301/adam")
 tar_source("studies/301/analysis")
 tar_source("studies/301/tlf")
+tar_source("studies/201/analysis")
 
 list(
   # --- F0: environment smoke test ---
@@ -488,6 +489,55 @@ list(
     write_sdtm_define(sdtm_201, sdtm_201_spec, "data/sdtm/201/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
     format = "file"
   ),
+  # --- FJF-2026-201: ADaM (F4), with the programs of FJF-2026-301 (ADR 0030).
+  tar_target(adam_201_spec_file, "docs/specs/adam-201.yml", format = "file"),
+  tar_target(adam_201_spec, yaml::read_yaml(adam_201_spec_file)),
+  tar_target(adam_201_adsl_base, derive_adsl_301(sdtm_201, protocol_201, adam_201_spec)),
+  tar_target(adam_201_adeff_base, derive_adeff_301(sdtm_201, adam_201_adsl_base, protocol_201, adam_201_spec)),
+  tar_target(adam_201_pps, add_pps_301(adam_201_adsl_base, adam_201_adeff_base, protocol_201)),
+  tar_target(adam_201_adsl, adam_201_pps$adsl),
+  tar_target(adam_201_adeff, adam_201_pps$adeff),
+  tar_target(adam_201_adex, derive_adex_301(adam_201_adsl, adam_201_spec)),
+  tar_target(adam_201_adae, derive_adae_301(sdtm_201, adam_201_adsl, adam_201_spec)),
+  tar_target(adam_201_adhypo, derive_adhypo_301(sdtm_201, adam_201_adsl, adam_201_spec)),
+  tar_target(adam_201_adlb, derive_adlb_301(sdtm_201, adam_201_adsl, protocol_201, adam_201_spec)),
+  tar_target(adam_201_advs, derive_advs_301(sdtm_201, adam_201_adsl, protocol_201, adam_201_spec)),
+  tar_target(adam_201_adtte, derive_adtte_301(adam_201_adsl, adam_201_adhypo, protocol_201, adam_201_spec)),
+  tar_target(
+    adam_201_files,
+    c(
+      write_adam_dataset(adam_201_adsl, adam_201_spec, "ADSL", "data/adam/201"),
+      write_adam_dataset(adam_201_adeff, adam_201_spec, "ADEFF", "data/adam/201"),
+      write_adam_dataset(adam_201_adtte, adam_201_spec, "ADTTE", "data/adam/201"),
+      write_adam_dataset(adam_201_adex, adam_201_spec, "ADEX", "data/adam/201"),
+      write_adam_dataset(adam_201_adae, adam_201_spec, "ADAE", "data/adam/201"),
+      write_adam_dataset(adam_201_adhypo, adam_201_spec, "ADHYPO", "data/adam/201"),
+      write_adam_dataset(adam_201_adlb, adam_201_spec, "ADLB", "data/adam/201"),
+      write_adam_dataset(adam_201_advs, adam_201_spec, "ADVS", "data/adam/201")
+    ),
+    format = "file"
+  ),
+  tar_target(
+    adam_201,
+    list(
+      ADSL = adam_201_adsl, ADEFF = adam_201_adeff, ADTTE = adam_201_adtte, ADEX = adam_201_adex,
+      ADAE = adam_201_adae, ADHYPO = adam_201_adhypo, ADLB = adam_201_adlb, ADVS = adam_201_advs
+    )
+  ),
+  # Second programming of ADaM (qc/301, ADR 0030), from the SDTM files written above.
+  tar_target(adam_201_qc, {
+    sdtm_201_files
+    qc_adam_301("data/sdtm/201", protocol_201, adam_201_spec$vital_sign_limits)
+  }),
+  tar_target(adam_201_qc_comparison, compare_adam_301(adam_201, adam_201_qc)),
+  tar_target(adam_201_qc_check, stopifnot(all(adam_201_qc_comparison$clean))),
+  # The SAP's analyses (generalised MCP-Mod, model averaging, all observed values) on the study
+  # data, with the F2 code unchanged. Until the lock the arms are the dummy assignment.
+  tar_target(analysis_201_data, {
+    adam_201_qc_check
+    analysis_data_201(adam_201_adeff, protocol_201)
+  }),
+  tar_target(analysis_201, analyse_201(analysis_201_data, sap_201_content, protocol_201)),
   tar_target(adam_301_spec_file, "docs/specs/adam-301.yml", format = "file"),
   tar_target(adam_301_spec, yaml::read_yaml(adam_301_spec_file)),
   tar_target(adam_301_adsl_base, derive_adsl_301(sdtm_301, protocol_301, adam_301_spec)),
@@ -582,6 +632,11 @@ list(
   tar_target(
     adam_301_define,
     write_adam_define(adam_301, adam_301_spec, "data/adam/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
+    format = "file"
+  ),
+  tar_target(
+    adam_201_define,
+    write_adam_define(adam_201, adam_201_spec, "data/adam/201/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
     format = "file"
   )
 )

@@ -24,3 +24,16 @@ the 20 that FJF-2026-301 reports and explains in
 
 v1.0.0, SDTMIG 3.4 published rules, terminology from define.xml: 348 rules pass and 26 report
 issues, the same 26 rules as FJF-2026-301, explained in [its conformance notes](../301/conformance.md).
+
+# Conformance of the ADaM of FJF-2026-201
+
+The ADaM datasets (target `adam_201_files`, with `adam_201_define`) are made by the programs of
+FJF-2026-301 with this study's specification (`docs/specs/adam-201.yml`).
+
+- **Second programming** (`qc/301/adam_qc.R` on this study's SDTM files): ADSL, ADEFF, ADTTE,
+  ADAE, ADHYPO, ADLB and ADVS agree with production.
+- **Pinnacle 21 Community** (engine 2304.3, *ADaM-IG 1.3 (FDA)*, by
+  [`tools/run-p21-adam-study.sh`](../../tools/run-p21-adam-study.sh) `201`): AD1024-AD1026
+  (traceability rules left out, as for FJF-2026-301) and AD0047 (AEBDSYCD), the same items
+  FJF-2026-301 explains in [its conformance notes](../301/conformance.md).
+- **CDISC CORE** v1.0.0 has no published ADaM rules, as for FJF-2026-301.
