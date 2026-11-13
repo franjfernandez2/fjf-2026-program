@@ -7,8 +7,8 @@ programs <- c(
     file.path(project_root, "studies", "301", c("sdtm", "adam", "analysis", "tlf")),
     pattern = "[.]R$", full.names = TRUE
   ),
-  list.files(file.path(project_root, "studies", "201", "analysis"), pattern = "[.]R$", full.names = TRUE),
-  list.files(file.path(project_root, "qc", c("benchmark", "301")), pattern = "[.]R$", full.names = TRUE),
+  list.files(file.path(project_root, "studies", "201", c("analysis", "tlf")), pattern = "[.]R$", full.names = TRUE),
+  list.files(file.path(project_root, "qc", c("benchmark", "301", "201")), pattern = "[.]R$", full.names = TRUE),
   list.files(file.path(project_root, "studies", "benchmark", c("tlf", "compare")), pattern = "[.]R$", full.names = TRUE)
 )
 for (f in programs) {

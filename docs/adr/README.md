@@ -36,3 +36,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0028](0028-pre-lock-analysis-decisions-301.md) | Analysis decisions of FJF-2026-301 taken on blinded data, before the lock | Accepted |
 | [0029](0029-ci-minutes-budget.md) | Continuous integration within the monthly Actions minutes | Proposed |
 | [0030](0030-study-201-reuses-301-programs.md) | FJF-2026-201 uses the SDTM and ADaM programs of FJF-2026-301 | Proposed |
+| [0031](0031-tlf-and-utility-index-201.md) | Tables, figures and clinical utility index of FJF-2026-201 | Proposed |
