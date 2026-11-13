@@ -76,6 +76,10 @@ impute_ae_start_301 <- function(dtc, trtsdt, endt) {
 derive_adae_301 <- function(sdtm, adsl, spec) {
   ae <- sdtm$AE[sdtm$AE$USUBJID %in% adsl$USUBJID, ]
   out <- cbind(safety_subject_301(ae$USUBJID, adsl), ae[setdiff(names(ae), c("STUDYID", "USUBJID"))])
+  # CR09: a missing severity counts as severe in the tables by severity, with a flag.
+  out$ASEVIMFL <- ifelse(is.na(out$AESEV), "Y", NA)
+  out$ASEV <- ifelse(is.na(out$AESEV), "SEVERE", out$AESEV)
+  out$ASEVN <- match(out$ASEV, c("MILD", "MODERATE", "SEVERE"))
   out$AENDT <- adam_date(out$AEENDTC)
   start <- impute_ae_start_301(out$AESTDTC, out$TRTSDT, out$AENDT)
   out$ASTDT <- start$date
