@@ -51,6 +51,13 @@ if [ "$pipeline" = 1 ]; then
   " >/dev/null || fail "the second programmings do not agree with production, or the pipeline failed"
 fi
 
+# The ADRs that record each study's decisions taken before its lock.
+case "$study" in
+  301) decisions="[docs/adr/0028-pre-lock-analysis-decisions-301.md]" ;;
+  201) decisions="[docs/adr/0030-study-201-reuses-301-programs.md, docs/adr/0031-tlf-and-utility-index-201.md]" ;;
+  *) fail "no pre-lock decisions are recorded for study $study; add them to this script" ;;
+esac
+
 frozen=$(git rev-parse HEAD)
 content="# Database lock of FJF-2026-$study (ADR 0027). Written by tools/lock-database.sh.
 study: \"$study\"
@@ -58,7 +65,7 @@ status: locked
 locked_at: \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
 locked_by: \"$(git config user.name)\"
 frozen_commit: \"$frozen\"
-decisions: docs/adr/0028-pre-lock-analysis-decisions-301.md"
+decisions: $decisions"
 
 if [ "$dry" = 1 ]; then
   echo "All checks passed. Dry run: $lock would be:"
@@ -69,7 +76,7 @@ fi
 mkdir -p docs/lock
 printf '%s\n' "$content" > "$lock"
 git add "$lock"
-git commit -q -m "Database lock of FJF-2026-$study" -m "Programs, specifications and cleaning rules are frozen at $frozen (ADR 0027)."
+git commit -q -m "Database lock of FJF-2026-$study [skip ci]" -m "Programs, specifications and cleaning rules are frozen at $frozen (ADR 0027)."
 git tag -a "$tag" -m "Database lock of FJF-2026-$study"
 echo "Locked: $lock committed and tagged $tag. Push both:"
 echo "  git push origin main && git push origin $tag"
