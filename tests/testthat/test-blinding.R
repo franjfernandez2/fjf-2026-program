@@ -50,10 +50,3 @@ test_that("an authorisation without a lock does not unblind", {
   yaml::write_yaml(list(status = "authorised"), unblind_file("201", root = dir))
   expect_false(unblinding_authorised("201", root = dir))
 })
-
-test_that("no study of the repository is authorised for unblinding", {
-  # Remove this test in the same change as the reviewer's authorisation (ADR 0032).
-  root <- test_path("..", "..")
-  expect_false(unblinding_authorised("301", root = root))
-  expect_false(unblinding_authorised("201", root = root))
-})

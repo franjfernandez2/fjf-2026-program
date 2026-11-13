@@ -6,7 +6,7 @@ format: html
 
 ::: {.callout-note}
 Written with the clinical study report, after the database lock (tag `dblock-201`). The study
-is still blinded (ADR 0032): the package is the blinded one. The structure follows the PHUSE
+was then unblinded on the reviewer's authorisation (`docs/unblind/unblind-201.yml`, ADR 0032): the package uses the real arms. The structure follows the PHUSE
 cSDRG template, as the guide of FJF-2026-301 (`studies/301/csdrg.qmd`), which this guide
 follows wherever the two studies agree. The data are simulated and the sponsor is fictional.
 :::
@@ -63,11 +63,10 @@ listing.
 
 ### Blinding
 
-The database is locked (tag `dblock-201`, `docs/lock/dblock-201.yml`) but the study is not
-unblinded (ADR 0032). Until the reviewer authorises the unblinding, the arm of each subject in
-DM, SE and EX comes from a dummy assignment: the real arms shuffled within stratum with the
-public seed 201201 (ADR 0027). Every other variable is final. After an authorised unblinding
-the package is rebuilt by the same programs, and only the treatment variables change.
+The database is locked (tag `dblock-201`) and the reviewer authorised the unblinding
+(`docs/unblind/unblind-201.yml`, ADR 0032). The arm of each subject in DM, SE and EX is the real
+one. Before the unblinding, the same programs ran on a dummy assignment (the real arms shuffled
+within stratum with a public seed, ADR 0027); only the treatment variables changed.
 
 ## 4. Data conformance summary
 

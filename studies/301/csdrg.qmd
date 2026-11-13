@@ -6,8 +6,8 @@ format: html
 
 ::: {.callout-note}
 Written with the SDTM (F3 day 5) and completed with the clinical study report, after the
-database lock (tag `dblock-301`). The study is still blinded (ADR 0032): the package is the
-blinded one. The structure follows the PHUSE cSDRG template. The data are simulated and the
+database lock (tag `dblock-301`). The reviewer then authorised the unblinding
+(`docs/unblind/unblind-301.yml`, ADR 0032): the package uses the real arms. The structure follows the PHUSE cSDRG template. The data are simulated and the
 sponsor is fictional.
 :::
 
@@ -67,13 +67,10 @@ results stay as text (CR07), and an adverse event end date before its start is m
 
 ### Blinding
 
-The database is locked (tag `dblock-301`, `docs/lock/dblock-301.yml`) but the study is not
-unblinded: locking and unblinding are two decisions, and the pipeline uses the real
-assignment only after the reviewer authorises the unblinding (ADR 0032). Until then the arm of
-each subject in DM, SE and EX (ARMCD, ARM, ACTARMCD, ACTARM, EXTRT, EXDOSE) comes from a dummy
-assignment: the real arms shuffled within stratum with a public seed (ADR 0027). Every other
-variable is final. After an authorised unblinding the package is rebuilt by the same programs,
-and only the treatment variables change.
+The database is locked (tag `dblock-301`) and the reviewer authorised the unblinding
+(`docs/unblind/unblind-301.yml`, ADR 0032). The arm of each subject in DM, SE and EX is the real
+one. Before the unblinding, the same programs ran on a dummy assignment (the real arms shuffled
+within stratum with a public seed, ADR 0027); only the treatment variables changed.
 
 ## 4. Data conformance summary
 

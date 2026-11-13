@@ -6,8 +6,8 @@ format: html
 
 ::: {.callout-note}
 Written with the clinical study report, after the database lock (tag `dblock-201`). The study
-is still blinded (ADR 0032): the counts here are of the locked data and do not depend on the
-arms. The structure follows the PHUSE ADRG template, as the guide of FJF-2026-301
+was then unblinded on the reviewer's authorisation (`docs/unblind/unblind-201.yml`, ADR 0032).
+The counts here are of the locked data and do not depend on the arms. The structure follows the PHUSE ADRG template, as the guide of FJF-2026-301
 (`studies/301/adrg.qmd`), which this guide follows wherever the two studies agree. The data are
 simulated and the sponsor is fictional.
 :::
@@ -56,9 +56,9 @@ described in its guide (section 3). What differs:
   counted as severe (ASEVIMFL).
 - **Worst laboratory value**: 17 patients have no chemistry value on treatment after baseline,
   so no worst value.
-- **Blinding**: the database is locked but the study is not unblinded (ADR 0032). The
-  treatment variables (TRT01P, TRT01A, TRTP, TRTA and their numeric codes) are a dummy
-  assignment (ADR 0027): every result by dose is a check of the programs, not a study result.
+- **Blinding**: the database is locked and the reviewer authorised the unblinding (ADR 0032).
+  The treatment variables (TRT01P, TRT01A, TRTP, TRTA and their numeric codes) are the real
+  ones. Before the unblinding the same programs ran on a dummy assignment (ADR 0027).
 - **ECG**: as in FJF-2026-301, the ECG is not in the study database, so there is no ECG
   analysis dataset.
 
