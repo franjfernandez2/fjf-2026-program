@@ -198,5 +198,39 @@ derive_advs_301 <- function(sdtm, adsl, protocol, spec) {
     ADT = adam_date(vs$VSDTC), AVAL = vs$VSSTRESN, VISITNUM = vs$VISITNUM, SRCDOM = "VS", SRCVAR = "VSSTRESN",
     SRCSEQ = vs$VSSEQ
   )
-  adam_conform(safety_bds_301(obs, adsl, protocol), spec, "ADVS")
+  out <- safety_bds_301(obs, adsl, protocol)
+  out$PCHG <- ifelse(out$PARAMCD == "WEIGHT" & !is.na(out$CHG) & out$BASE > 0, 100 * out$CHG / out$BASE, NA)
+  limits <- vital_sign_criteria_301(out, spec$vital_sign_limits)
+  out[names(limits)] <- limits
+  adam_conform(out, spec, "ADVS")
+}
+
+#' Values outside the predefined limits of SAP SF4 (`vital_sign_limits` of the ADaM
+#' specification): CRIT1 for a high value or a weight increase, CRIT2 for a low value or a
+#' weight decrease. Evaluated on post-baseline records with a value; empty otherwise.
+#'
+#' @param d ADVS records with PARAMCD, AVAL, ABLFL, ADT and PCHG.
+#' @param limits The `vital_sign_limits` section of the specification.
+#' @return A data frame with CRIT1, CRIT1FL, CRIT2 and CRIT2FL.
+vital_sign_criteria_301 <- function(d, limits) {
+  out <- data.frame(
+    CRIT1 = rep(NA_character_, nrow(d)), CRIT1FL = NA_character_, CRIT2 = NA_character_, CRIT2FL = NA_character_
+  )
+  post <- is.na(d$ABLFL) & !is.na(d$CHG)
+  for (p in names(limits)) {
+    l <- limits[[p]]
+    i <- post & d$PARAMCD == p
+    if (p == "WEIGHT") {
+      out$CRIT1[i] <- sprintf("Increase >= %g%% from baseline", l$increase_pct)
+      out$CRIT2[i] <- sprintf("Decrease >= %g%% from baseline", l$decrease_pct)
+      out$CRIT1FL[i] <- ifelse(d$PCHG[i] >= l$increase_pct, "Y", "N")
+      out$CRIT2FL[i] <- ifelse(d$PCHG[i] <= -l$decrease_pct, "Y", "N")
+    } else {
+      out$CRIT1[i] <- sprintf("%s >= %g %s", p, l$high, l$unit)
+      out$CRIT2[i] <- sprintf("%s <= %g %s", p, l$low, l$unit)
+      out$CRIT1FL[i] <- ifelse(d$AVAL[i] >= l$high, "Y", "N")
+      out$CRIT2FL[i] <- ifelse(d$AVAL[i] <= l$low, "Y", "N")
+    }
+  }
+  out
 }

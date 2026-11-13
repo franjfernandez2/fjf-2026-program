@@ -441,7 +441,7 @@ list(
   # Second programming of ADaM, from the SDTM files written above.
   tar_target(adam_301_qc, {
     sdtm_301_files
-    qc_adam_301("data/sdtm/301", protocol_301)
+    qc_adam_301("data/sdtm/301", protocol_301, adam_301_spec$vital_sign_limits)
   }),
   tar_target(adam_301_qc_comparison, compare_adam_301(adam_301, adam_301_qc)),
   tar_target(adam_301_qc_check, stopifnot(all(adam_301_qc_comparison$clean))),

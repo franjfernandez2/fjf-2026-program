@@ -62,6 +62,13 @@ per-protocol set for a deviation.
   worst value for the chemistry tests.
 - **Blinding**: until the lock, the arms are a dummy assignment (ADR 0027). The datasets are
   rebuilt with the real assignment after the lock, with the same programs.
+- **Vital signs outside limits** (ADVS.CRIT1FL, CRIT2FL): the SAP names them but does not
+  give them. The reviewer set them before the lock: systolic ≥ 160 or ≤ 90 mmHg, diastolic
+  ≥ 100 or ≤ 50 mmHg, pulse ≥ 120 or ≤ 50 beats/min, weight ±7% from baseline (ADR 0028).
+- **Missing AE severity** counts as severe in ASEV, flagged by ASEVIMFL (CR09; 4 events).
+- **Last dose**: the disposition page's last-dose date is the end of treatment; for 129
+  patients whose last bottle ends earlier, that bottle runs until it (CR10). This enters
+  compliance.
 
 ## 4. Data conformance
 
@@ -78,13 +85,12 @@ production on all datasets.
 | ADEFF | BDS | HbA1c and weight by analysis visit | PARAMCD, AVISITN, ANL01FL, ANL02FL, CRIT1FL |
 | ADTTE | BDS | 600 | TTRESC (FAS), TTHYPO23 (SAF) |
 | ADEX | Other | 300 | TRTDURD, TRTDURY, COMPLPCT |
-| ADAE | OCCDS | 400 | TRTEMFL, ASTDT, ASTDTF |
+| ADAE | OCCDS | 400 | TRTEMFL, ASTDT, ASTDTF, ASEV |
 | ADHYPO | OCCDS | 45 | HYPOLVL, ONTRTFL, PRERESFL |
 | ADLB | BDS | 10,808 | BASE, BNRIND, ANRIND, WORSTFL |
-| ADVS | BDS | 9,848 | BASE, CHG, ANL01FL |
+| ADVS | BDS | 9,848 | BASE, CHG, PCHG, ANL01FL, CRIT1FL, CRIT2FL |
 
-## 6. Open points before the lock
+## 6. Decisions taken before the lock
 
-- The SAP's "predefined limits" for vital signs (SF4) are not defined. They must be fixed
-  before unblinding, or the table reports change from baseline only.
-- CDISC CORE has not been run on SDTM or ADaM yet.
+All are listed in ADR 0028, with who took them. CDISC CORE was run on SDTM (`conformance.md`);
+it has no published ADaM rules.

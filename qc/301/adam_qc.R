@@ -12,13 +12,34 @@ qa_first <- function(id, date) {
   v
 }
 
+# SF4 limits: CRIT1FL high (or weight up by the limit, in %), CRIT2FL low (or weight down).
+qa_vs_flags <- function(x, limits) {
+  x$PCHG <- NA_real_
+  x$CRIT1FL <- NA_character_
+  x$CRIT2FL <- NA_character_
+  ev <- is.na(x$ABLFL) & !is.na(x$CHG)
+  for (p in names(limits)) {
+    k <- which(ev & x$PARAMCD == p)
+    if (p == "WEIGHT") {
+      x$PCHG[k] <- x$CHG[k] / x$BASE[k] * 100
+      x$CRIT1FL[k] <- c("N", "Y")[1 + (x$PCHG[k] >= limits[[p]]$increase_pct)]
+      x$CRIT2FL[k] <- c("N", "Y")[1 + (x$PCHG[k] <= -limits[[p]]$decrease_pct)]
+    } else {
+      x$CRIT1FL[k] <- c("N", "Y")[1 + (x$AVAL[k] >= limits[[p]]$high)]
+      x$CRIT2FL[k] <- c("N", "Y")[1 + (x$AVAL[k] <= limits[[p]]$low)]
+    }
+  }
+  x
+}
+
 #' Second programming of ADaM for FJF-2026-301.
 #'
 #' @param dir Folder of the SDTM XPT files.
 #' @param protocol The protocol design (visits, primary week).
+#' @param limits The `vital_sign_limits` of the ADaM specification (SAP SF4).
 #' @return Named list with the QC versions of ADSL, ADEFF, ADTTE, ADAE, ADHYPO, ADLB, ADVS,
 #'   each with the variables compared.
-qc_adam_301 <- function(dir, protocol) {
+qc_adam_301 <- function(dir, protocol, limits) {
   rd <- function(d) as.data.frame(haven::read_xpt(file.path(dir, paste0(tolower(d), ".xpt"))))
   dm <- rd("DM")
   ds <- rd("DS")
@@ -210,7 +231,7 @@ qc_adam_301 <- function(dir, protocol) {
   }
   list(
     ADSL = adsl, ADEFF = adeff, ADTTE = adtte, ADAE = adae, ADHYPO = adhypo,
-    ADLB = bds(lb, "LB", TRUE), ADVS = bds(vs, "VS", FALSE)
+    ADLB = bds(lb, "LB", TRUE), ADVS = qa_vs_flags(bds(vs, "VS", FALSE), limits)
   )
 }
 
