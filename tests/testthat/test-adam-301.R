@@ -99,9 +99,9 @@ test_that("ADEFF imputes a missing HbA1c baseline with the stratum mean", {
 test_that("ADEFF flags records after rescue and after treatment", {
   s1 <- hba1c[hba1c$USUBJID == adsl$USUBJID[1] & hba1c$AVISITN > 0, ]
   # Rescue on 2028-05-02, study day 105: weeks 16 to 26 are after it.
-  expect_identical(s1$PRERESFL, c("Y", "Y", "Y", "N", "N", "N"))
+  expect_identical(s1$PRERESFL, c("Y", "Y", "Y", NA, NA, NA))
   s3 <- hba1c[hba1c$USUBJID == adsl$USUBJID[2], ]
-  expect_true(all(s3$ONTRTFL == "N"))
+  expect_true(all(is.na(s3$ONTRTFL)))
 })
 
 test_that("the per-protocol set needs the week-26 HbA1c on treatment and before rescue", {
@@ -133,4 +133,5 @@ test_that("the analysis input of ADEFF has the columns the efficacy models read"
   expect_identical(nrow(d), 12L)
   needed <- c("USUBJID", "ARMCD", "STRATUM", "BASE", "AVISITN", "AVISIT", "CHG", "ONTRTFL", "PRERESFL")
   expect_true(all(needed %in% names(d)))
+  expect_true(all(d$ONTRTFL %in% c("Y", "N") & d$PRERESFL %in% c("Y", "N")))
 })

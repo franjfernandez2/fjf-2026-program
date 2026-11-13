@@ -423,5 +423,24 @@ list(
       write_adam_dataset(adam_301_advs, adam_301_spec, "ADVS", "data/adam/301")
     ),
     format = "file"
+  ),
+  tar_target(
+    adam_301,
+    list(
+      ADSL = adam_301_adsl, ADEFF = adam_301_adeff, ADTTE = adam_301_adtte, ADEX = adam_301_adex,
+      ADAE = adam_301_adae, ADHYPO = adam_301_adhypo, ADLB = adam_301_adlb, ADVS = adam_301_advs
+    )
+  ),
+  # Second programming of ADaM, from the SDTM files written above.
+  tar_target(adam_301_qc, {
+    sdtm_301_files
+    qc_adam_301("data/sdtm/301", protocol_301)
+  }),
+  tar_target(adam_301_qc_comparison, compare_adam_301(adam_301, adam_301_qc)),
+  tar_target(adam_301_qc_check, stopifnot(all(adam_301_qc_comparison$clean))),
+  tar_target(
+    adam_301_define,
+    write_adam_define(adam_301, adam_301_spec, "data/adam/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
+    format = "file"
   )
 )

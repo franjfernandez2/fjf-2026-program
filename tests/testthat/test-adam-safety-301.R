@@ -47,7 +47,7 @@ test_that("ADAE flags events from the first dose to 14 days after the last", {
   expect_identical(adae$TRTEMFL, c("Y", "Y", "Y"))
   a <- adsl
   a$TRTEDT <- as.Date("2028-02-20")
-  expect_identical(derive_adae_301(sdtm, a, adam_spec)$TRTEMFL, c("Y", "Y", "N"))
+  expect_identical(derive_adae_301(sdtm, a, adam_spec)$TRTEMFL, c("Y", "Y", NA))
 })
 
 test_that("ADHYPO keeps the level, glucose and the analysis flags", {
@@ -77,7 +77,7 @@ test_that("ADLB baseline is the last value on or before the first dose", {
 
 test_that("ADLB worst value is the one furthest outside its range", {
   d <- adlb[adlb$PARAMCD == "HBA1C", ]
-  expect_identical(sum(!is.na(adlb$WORSTFL[adlb$ONTRTFL == "N"])), 0L)
+  expect_identical(sum(!is.na(adlb$WORSTFL[is.na(adlb$ONTRTFL)])), 0L)
   expect_false(anyDuplicated(adlb[!is.na(adlb$WORSTFL), c("USUBJID", "PARAMCD")]) > 0)
   expect_identical(nrow(d), 3L)
 })
@@ -87,4 +87,34 @@ test_that("ADVS leaves height out and derives the baseline", {
   s <- advs[advs$PARAMCD == "SYSBP", ]
   expect_identical(s$BASE, c(135, 135))
   expect_identical(s$ABLFL, c(NA, "Y"))
+})
+
+test_that("the ADaM define.xml describes every dataset and variable", {
+  path <- write_adam_define(
+    list(ADSL = adsl, ADEX = adex, ADAE = adae, ADHYPO = adhypo, ADLB = adlb, ADVS = advs, ADTTE = adtte),
+    adam_spec, withr::local_tempfile(fileext = ".xml"), "2028-01-01T00:00:00"
+  )
+  x <- xml2::read_xml(path)
+  ns <- xml2::xml_ns(x)
+  groups <- xml2::xml_attr(xml2::xml_find_all(x, "//d1:ItemGroupDef", ns), "Name")
+  expect_identical(groups, purrr::map_chr(adam_spec$datasets, "name"))
+  n_vars <- sum(purrr::map_int(adam_spec$datasets, \(d) length(d$variables)))
+  expect_length(xml2::xml_find_all(x, "//d1:ItemDef", ns), n_vars)
+  date <- xml2::xml_find_first(x, "//d1:ItemDef[@OID='IT.ADSL.RANDDT']", ns)
+  expect_identical(xml2::xml_attr(date, "DataType"), "integer")
+  expect_identical(xml2::xml_attr(date, "def:DisplayFormat", ns), "DATE9.")
+})
+
+test_that("the ADaM second programming agrees with production and catches a difference", {
+  dir <- withr::local_tempdir()
+  sdtm_spec <- yaml::read_yaml(file.path(root, "docs", "specs", "sdtm-301.yml"))
+  for (d in names(sdtm)) write_sdtm_domain(sdtm[[d]], sdtm_spec, d, dir)
+  adeff <- add_pps_301(adsl0, derive_adeff_301(sdtm, adsl0, protocol, adam_spec), protocol)$adeff
+  production <- list(
+    ADSL = adsl, ADEFF = adeff, ADTTE = adtte, ADAE = adae, ADHYPO = adhypo, ADLB = adlb, ADVS = advs
+  )
+  qc <- qc_adam_301(dir, protocol)
+  expect_true(all(compare_adam_301(production, qc)$clean))
+  production$ADAE$TRTEMFL[1] <- NA
+  expect_false(compare_adam_301(production, qc)$clean[4])
 })

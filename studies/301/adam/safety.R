@@ -21,10 +21,10 @@ safety_subject_301 <- function(usubjid, adsl) {
 #' @param date Dates of the records.
 #' @param trtsdt,trtedt First and last dose dates of each record's subject.
 #' @param after_first If TRUE, the first-dose day itself is excluded (it holds the baseline).
-#' @return "Y" or "N".
+#' @return "Y" or NA (record-level flags are Y or null).
 on_treatment_301 <- function(date, trtsdt, trtedt, after_first = FALSE) {
   start <- if (after_first) date > trtsdt else date >= trtsdt
-  ifelse(!is.na(date) & !is.na(trtsdt) & start & date <= trtedt + 7, "Y", "N")
+  ifelse(!is.na(date) & !is.na(trtsdt) & start & date <= trtedt + 7, "Y", NA)
 }
 
 #' Derive ADEX of FJF-2026-301 (SAP SF5).
@@ -83,7 +83,7 @@ derive_adae_301 <- function(sdtm, adsl, spec) {
   out$ASTDY <- adam_study_day(out$ASTDT, out$RANDDT)
   out$AENDY <- adam_study_day(out$AENDT, out$RANDDT)
   emergent <- !is.na(out$TRTSDT) & out$ASTDT >= out$TRTSDT & out$ASTDT <= out$TRTEDT + 14
-  out$TRTEMFL <- ifelse(emergent %in% TRUE, "Y", "N")
+  out$TRTEMFL <- ifelse(emergent %in% TRUE, "Y", NA)
   adam_conform(out[order(out$USUBJID, out$AESEQ), ], spec, "ADAE")
 }
 
@@ -107,7 +107,7 @@ derive_adhypo_301 <- function(sdtm, adsl, spec) {
   out$ADT <- adam_date(ce$CESTDTC)
   out$ADY <- adam_study_day(out$ADT, out$RANDDT)
   out$ONTRTFL <- on_treatment_301(out$ADT, out$TRTSDT, out$TRTEDT)
-  out$PRERESFL <- ifelse(is.na(out$RESCDT) | out$ADT <= out$RESCDT, "Y", "N")
+  out$PRERESFL <- ifelse(is.na(out$RESCDT) | out$ADT <= out$RESCDT, "Y", NA)
   adam_conform(out[order(out$USUBJID, out$CESEQ), ], spec, "ADHYPO")
 }
 
@@ -173,7 +173,7 @@ derive_adlb_301 <- function(sdtm, adsl, protocol, spec) {
   score <- ifelse(
     out$ANRIND %in% "HIGH", out$AVAL / out$ANRHI, ifelse(out$ANRIND %in% "LOW", out$ANRLO / out$AVAL, 0)
   )
-  cand <- which(out$ONTRTFL == "Y")
+  cand <- which(out$ONTRTFL %in% "Y")
   cand <- cand[order(key[cand], -score[cand], -as.numeric(out$ADT[cand]))]
   out$WORSTFL <- NA_character_
   out$WORSTFL[cand[!duplicated(key[cand])]] <- "Y"
