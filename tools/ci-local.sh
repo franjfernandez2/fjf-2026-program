@@ -11,7 +11,8 @@
 # The CDISC pilot files are copied from the working copy when present (the CI cache), else
 # the pipeline downloads and verifies them. Everything is removed at the end.
 #
-# Note: on a commit with a database lock file the pipeline uses the real treatment arms.
+# The pipeline uses the real treatment arms only on a commit with both a database lock and an
+# unblinding authorisation (ADR 0032); otherwise the data stay blinded.
 set -euo pipefail
 
 ref=HEAD

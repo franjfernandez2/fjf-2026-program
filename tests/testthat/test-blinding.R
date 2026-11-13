@@ -29,3 +29,31 @@ test_that("only a lock file with status locked counts as a lock", {
   yaml::write_yaml(list(status = "locked"), path)
   expect_true(database_locked(path))
 })
+
+test_that("a locked study stays blinded until the reviewer authorises unblinding", {
+  dir <- withr::local_tempdir()
+  expect_false(unblinding_authorised("301", root = dir))
+  dir.create(file.path(dir, "docs", "lock"), recursive = TRUE)
+  yaml::write_yaml(list(status = "locked"), lock_file("301", root = dir))
+  expect_false(unblinding_authorised("301", root = dir))
+  dir.create(file.path(dir, "docs", "unblind"), recursive = TRUE)
+  yaml::write_yaml(list(status = "draft"), unblind_file("301", root = dir))
+  expect_false(unblinding_authorised("301", root = dir))
+  yaml::write_yaml(list(status = "authorised"), unblind_file("301", root = dir))
+  expect_true(unblinding_authorised("301", root = dir))
+  expect_false(unblinding_authorised("201", root = dir))
+})
+
+test_that("an authorisation without a lock does not unblind", {
+  dir <- withr::local_tempdir()
+  dir.create(file.path(dir, "docs", "unblind"), recursive = TRUE)
+  yaml::write_yaml(list(status = "authorised"), unblind_file("201", root = dir))
+  expect_false(unblinding_authorised("201", root = dir))
+})
+
+test_that("no study of the repository is authorised for unblinding", {
+  # Remove this test in the same change as the reviewer's authorisation (ADR 0032).
+  root <- test_path("..", "..")
+  expect_false(unblinding_authorised("301", root = root))
+  expect_false(unblinding_authorised("201", root = root))
+})
