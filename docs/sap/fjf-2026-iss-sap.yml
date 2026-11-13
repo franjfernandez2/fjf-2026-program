@@ -1,0 +1,79 @@
+# Statistical analysis plan of the integrated safety analysis (ISS) of FJF-2026, by treatment.
+# Written on 2026-11-13, after both databases were locked and the reviewer authorised the
+# unblinding, but before any result with the real arms was read (ADR 0034). The git history
+# of this file is the evidence of that order. Any analysis added after the results are read
+# is labelled post hoc.
+
+study: FJF-2026 integrated safety
+studies: ["201", "301"]
+status: draft for the reviewer's review
+
+pools:
+  - id: PC
+    label: Placebo-controlled pool
+    definition: >-
+      Every patient of the safety sets of FJF-2026-201 (12 weeks) and FJF-2026-301 (26 weeks),
+      by treatment actually taken. Both studies are randomised, double-blind and
+      placebo-controlled in the same population (ADR 0005), so they are pooled directly.
+    columns:
+      - {id: PBO, label: Placebo, from: "201 placebo + 301 placebo"}
+      - {id: FJF5, label: FJF-2026 5 mg, from: "201"}
+      - {id: FJF10, label: FJF-2026 10 mg, from: "201"}
+      - {id: FJF20, label: FJF-2026 20 mg, from: "201 + 301"}
+      - {id: FJF40, label: FJF-2026 40 mg, from: "201"}
+      - {id: FJFALL, label: FJF-2026 all doses, from: "201 + 301"}
+
+measures:
+  - id: M1
+    label: Incidence
+    method: Patients with at least one event, n (%), within each column.
+  - id: M2
+    label: Exposure-adjusted incidence rate
+    method: >-
+      Patients with at least one event per 100 patient-years of exposure (ADEX.TRTDURY). The
+      main measure for comparing columns, because the studies have different lengths and the
+      20 mg column draws more on the longer study than the placebo column does in proportion.
+  - id: M3
+    label: Event rate
+    method: Events per 100 patient-years of exposure.
+
+analyses:
+  - id: I1
+    label: Overview of treatment-emergent adverse events
+    method: >-
+      M1 and M2 for any TEAE, related, severe, serious, leading to discontinuation, leading to
+      interruption and fatal, by column. FJF-2026 20 mg against placebo: risk difference
+      stratified by study (Mantel-Haenszel weights) with a 95% confidence interval.
+  - id: I2
+    label: Adverse events by system organ class and preferred term
+    method: >-
+      M1, M2 and M3 by column. For preferred terms with an incidence of 2% or more in any
+      FJF-2026 column: the study-stratified risk difference of FJF-2026 20 mg against placebo
+      with a 95% confidence interval.
+  - id: I3
+    label: Hypoglycaemia
+    method: >-
+      Episodes by level, as M1 and M3, on treatment. Level 2 or 3 episodes, FJF-2026 20 mg
+      against placebo: rate ratio from a negative binomial model with treatment and study as
+      factors and the log of exposure as offset, with a 95% confidence interval.
+  - id: I4
+    label: Dose-response of safety
+    method: >-
+      Within FJF-2026-201 only (the one study with every dose): M1 of any TEAE, of TEAE
+      leading to discontinuation and of level 2 or 3 hypoglycaemia by dose, shown against dose
+      without a test.
+  - id: I5
+    label: Liver safety
+    method: >-
+      Patients with peak ALT or AST above 3 times the upper limit of normal and peak total
+      bilirubin above 2 times, on treatment (potential Hy's law cases), by column, with a
+      listing of every such patient; eDISH plot by column.
+  - id: I6
+    label: Exposure
+    method: Patients, patient-years and days on study drug by column.
+
+principles:
+  - The analyses are descriptive; confidence intervals are not adjusted for multiplicity and no p-value is a test of a hypothesis.
+  - Each study keeps its own derivations (ADaM of each study); the pool stacks the ADaM datasets, it does not derive them again.
+  - Safety is analysed by treatment actually taken (TRT01A), as in each study.
+  - The integrated tables are made by the FJF-2026-301 safety programs where they exist, and checked by a second programming.
