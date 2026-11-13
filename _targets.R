@@ -328,10 +328,11 @@ list(
   # pipeline uses a dummy assignment, the real arms shuffled within strata with a public seed.
   tar_target(sdtm_301_spec_file, "docs/specs/sdtm-301.yml", format = "file"),
   tar_target(sdtm_301_spec, yaml::read_yaml(sdtm_301_spec_file)),
-  tar_target(dblock_301, database_locked(lock_file("301")), cue = tar_cue(mode = "always")),
+  # Real arms only after the lock AND the reviewer's unblinding authorisation (ADR 0032).
+  tar_target(unblinded_301, unblinding_authorised("301"), cue = tar_cue(mode = "always")),
   tar_target(
     assignment_301,
-    assignment_in_use(raw_data[["301"]]$randomisation, dblock_301, sdtm_301_spec$blinding_seed)
+    assignment_in_use(raw_data[["301"]]$randomisation, unblinded_301, sdtm_301_spec$blinding_seed)
   ),
   tar_target(sdtm_301_dm, map_dm_301(raw_data[["301"]], assignment_301, protocol_301, sdtm_301_spec)),
   tar_target(sdtm_301_se, map_se_301(sdtm_301_dm, protocol_301, sdtm_301_spec)),
@@ -412,10 +413,11 @@ list(
   # its own database lock, as FJF-2026-301 (ADR 0027).
   tar_target(sdtm_201_spec_file, "docs/specs/sdtm-201.yml", format = "file"),
   tar_target(sdtm_201_spec, yaml::read_yaml(sdtm_201_spec_file)),
-  tar_target(dblock_201, database_locked(lock_file("201")), cue = tar_cue(mode = "always")),
+  # Real arms only after the lock AND the reviewer's unblinding authorisation (ADR 0032).
+  tar_target(unblinded_201, unblinding_authorised("201"), cue = tar_cue(mode = "always")),
   tar_target(
     assignment_201,
-    assignment_in_use(raw_data[["201"]]$randomisation, dblock_201, sdtm_201_spec$blinding_seed)
+    assignment_in_use(raw_data[["201"]]$randomisation, unblinded_201, sdtm_201_spec$blinding_seed)
   ),
   tar_target(sdtm_201_dm, map_dm_301(raw_data[["201"]], assignment_201, protocol_201, sdtm_201_spec)),
   tar_target(sdtm_201_se, map_se_301(sdtm_201_dm, protocol_201, sdtm_201_spec)),
@@ -554,7 +556,7 @@ list(
   tar_target(tlf_201_tables, tables_201(adam_201, tlf_201_analysis, outputs_201)),
   tar_target(
     tlf_201_files,
-    write_tlf_201(tlf_201_tables, adam_201, tlf_201_analysis, outputs_201, dblock_201, "studies/201/output/tlf"),
+    write_tlf_201(tlf_201_tables, adam_201, tlf_201_analysis, outputs_201, unblinded_201, "studies/201/output/tlf"),
     format = "file"
   ),
   tar_target(tlf_201_qc, qc_tlf_201(adam_201, tlf_201_analysis)),
@@ -645,7 +647,7 @@ list(
   tar_target(tlf_301_tables, tables_301(adam_301, tlf_301_analysis, outputs_301)),
   tar_target(
     tlf_301_files,
-    write_tlf_301(tlf_301_tables, adam_301, tlf_301_analysis, outputs_301, dblock_301, "studies/301/output/tlf"),
+    write_tlf_301(tlf_301_tables, adam_301, tlf_301_analysis, outputs_301, unblinded_301, "studies/301/output/tlf"),
     format = "file"
   ),
   tar_target(tlf_301_qc, qc_tlf_301(adam_301, tlf_301_analysis)),

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Locks the database of a study (ADR 0027): writes docs/lock/dblock-<study>.yml, commits it
-# and tags the commit dblock-<study>. From then on the pipeline uses the real treatment
-# assignment, and programs, specifications and cleaning rules are frozen by the tag.
+# and tags the commit dblock-<study>. Programs, specifications and cleaning rules are frozen
+# by the tag. Locking does not unblind: the pipeline keeps the dummy assignment until the
+# reviewer also authorises unblinding (docs/unblind/unblind-<study>.yml, ADR 0032).
 #
 # Only the reviewer runs it. It refuses unless:
 #   - the working tree is clean, on main, and main equals origin/main;
