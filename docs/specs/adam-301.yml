@@ -6,6 +6,8 @@
 
 study: FJF-2026-301
 adamig: "1.3"
+# CDISC ADaM terminology the package is checked against (P21, CORE), declared in define.xml.
+ct: "2024-03-29"
 
 datasets:
   - name: ADSL

@@ -39,6 +39,12 @@ write_adam_define <- function(datasets, spec, path, created) {
   xml2::xml_add_child(std, "def:Standard",
     OID = "STD.ADAMIG", Name = "ADaMIG", Type = "IG", Version = spec$adamig, Status = "Final"
   )
+  if (!is.null(spec$ct)) {
+    xml2::xml_add_child(std, "def:Standard",
+      OID = "STD.CT.ADAM", Name = "CDISC/NCI", Type = "CT", PublishingSet = "ADaM", Version = spec$ct,
+      Status = "Final"
+    )
+  }
   required <- c("STUDYID", "USUBJID", "PARAMCD", "PARAM", "AVAL", "SUBJID", "SITEID", "TRT01P")
   items <- list()
   methods <- list()

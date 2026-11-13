@@ -129,6 +129,12 @@ write_sdtm_define <- function(datasets, spec, path, created) {
   xml2::xml_add_child(std, "def:Standard",
     OID = "STD.SDTMIG", Name = "SDTMIG", Type = "IG", Version = spec$sdtmig, Status = "Final"
   )
+  if (!is.null(spec$ct)) {
+    xml2::xml_add_child(std, "def:Standard",
+      OID = "STD.CT.SDTM", Name = "CDISC/NCI", Type = "CT", PublishingSet = "SDTM", Version = spec$ct,
+      Status = "Final"
+    )
+  }
   items <- list()
   methods <- list()
   for (d in spec$domains) {

@@ -6,8 +6,7 @@ terminology 2024-03-29, by [`tools/run-p21-sdtm.sh`](../../tools/run-p21-sdtm.sh
 stays local (`studies/301/output/p21`, ignored by git). The data were blinded: the arms are
 the dummy assignment of [ADR 0027](../../docs/adr/0027-blinded-data-review-and-lock.md).
 
-CDISC CORE was not run on this package: its engine is a third-party download that is not on
-this machine, and it is left for day 9, before the lock.
+CDISC CORE was also run (day 11; see *CDISC CORE* below).
 
 ## What changed after the first run
 
@@ -102,3 +101,51 @@ uses base R and none of the production helpers:
 `compare_adam_301()` compares the two with diffdf, and the target `adam_301_qc_check` stops
 the pipeline on any difference. On the blinded data all seven datasets agree on the first
 run: 300 + 2,400 + 600 + 400 + 45 + 10,808 + 9,848 records.
+
+# CDISC CORE
+
+CDISC CORE v1.0.0 (`core-mac-apple-silicon.zip` from the official release of
+`cdisc-org/cdisc-rules-engine`, SHA-256 checked against the release, kept outside the
+repository) was run with its published rules by
+[`tools/run-core-study.sh`](../../tools/run-core-study.sh). Both define.xml files now name the
+CDISC terminology version in `def:Standards`. CORE takes it from there when the define is
+Define-XML 2.1, and P21 still finds no define issue.
+
+- **SDTMIG 3.4**: 562 rules. 346 passed, 146 did not apply, and 42 failed inside CORE
+  ("rule execution error"; CORE's own problem, not the data's). 28 reported issues.
+- **ADaMIG 1.3**: CORE v1.0.0 has no published ADaM rules ("No rules were selected"). Only
+  draft rules exist, which the F1 benchmark showed are not a conformance check. ADaM rests on
+  P21 and the second programming.
+
+## SDTM issues CORE reports
+
+| Domain | Rule | Records | Explanation |
+| --- | --- | ---: | --- |
+| all | CORE-000510 | 1 per domain | "Split dataset name is not 3 or 4 characters": no dataset is split. A false positive. |
+| SUPPAE, SUPPCE | CORE-000206 | 2, 68 | IDVARVAL not found in the parent. Every IDVARVAL matches its --SEQ (checked), so this is a false positive. |
+| SUPPDM | CORE-002056, CORE-002084 | 600 | "Trial design datasets missing", "Missing Define-XML". Both are present; a false positive on a SUPP-- dataset. |
+| SV | CORE-000544 | 2,991 | SVSEQ not unique. SV has no --SEQ in SDTMIG 3.4. |
+| AE | CORE-000024, CORE-000334 | 400, 1 | No MedDRA codes (licence), as P21 SD0057. |
+| AE | CORE-000266 | 19 | No seriousness criteria, as P21 SD0009. |
+| AE | CORE-000659 | 4 | As P21 SD1333 (CR08 events, end date in SUPPAE). |
+| AE | CORE-002034 | 400 | No AETRTEM: treatment emergence is derived once, in ADAE.TRTEMFL. |
+| AE, CM, DA | CORE-000701 | 17, 303, 15 | EPOCH empty: partial dates (AE), background metformin started before consent (CM), records outside every element. |
+| CE | CORE-000196 | 45 | As P21 SD1039. |
+| CM | CORE-002006, CORE-002077 | 2, 1 | CMENDTC/CMENDY empty, as P21 SD1078. |
+| DA | CORE-000774 | 15 | Bottles not returned (DASTAT = NOT DONE): the CRF has no reason field. |
+| DM | CORE-000356, CORE-002030 | 448, 3 | Screen failures have no demography page (P21 SD0002); no deaths (SD1149). |
+| DS | CORE-000161 | 5 | As P21 SD1274. |
+| EX | CORE-000757 | 1,611 | EXDECOD absent: the treatment has no dictionary code (fictional drug), and there is no FA. |
+| IE, TA, TV, SUPP-- | CORE-002006, CORE-002030 | 1 each | Expected or permissible variable present and empty (IEDY of screening failures, TATRANS, TV.ARMCD, QEVAL, SUPPDM IDVAR). Allowed by the IG. |
+| TS | CORE-000152, -000483, -000550, -000728, -000735, -000852, -001082 | 1-3 | TSVAL1 (title over 200 characters), and no UNII or MED-RT for the fictional drug, as in P21. |
+
+## Two findings for a decision before the lock
+
+- **SE boundaries (CORE-000352, 594 records).** Each element ends the day before the next
+  starts. SDTMIG asks that an element's SEENDTC equal the next element's SESTDTC. Changing it
+  moves the boundary day's EPOCH, so SE, EPOCH in eight domains, and the SDTM second
+  programming change together.
+- **Last dose (CORE-000238, 129 patients).** RFXENDTC is the last-dose date of the disposition
+  page. For 129 patients it is 1-8 days after the end of their last returned bottle (return
+  date minus 1). The two CRF sources disagree. It is a data query, not a programming error,
+  and it affects compliance (ADSL.COMPLPCT) and so the per-protocol set.
