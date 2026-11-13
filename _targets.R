@@ -562,6 +562,23 @@ list(
   tar_target(tlf_201_qc, qc_tlf_201(adam_201, tlf_201_analysis)),
   tar_target(tlf_201_qc_comparison, compare_tlf_301(tlf_201_tables, tlf_201_qc)),
   tar_target(tlf_201_qc_check, stopifnot(tlf_201_qc_comparison$clean)),
+  # Clinical study report (studies/201/csr.qmd), blinded until the unblinding (ADR 0032).
+  tar_target(csr_201_qmd, "studies/201/csr.qmd", format = "file"),
+  tar_target(csr_201_data, list(
+    unblinded = unblinded_201, protocol = protocol_201, estimands = estimands_201, sap = sap_201_content,
+    outputs = outputs_201, sample_size = sample_size_201, oc = dry_run_201_oc, tables = tlf_201_tables,
+    files = tlf_201_files, analysis = analysis_201, cui = analysis_201_cui, adsl = adam_201_adsl,
+    qc = csr_qc_summary(sdtm_201_qc_comparison, adam_201_qc_comparison, tlf_201_qc_comparison),
+    raw_quality = raw_quality[raw_quality$study == "201", ]
+  )),
+  tar_target(csr_201_file,
+    {
+      tlf_201_qc_check
+      csr_201_qmd
+      render_csr("studies/201/csr.qmd", "studies/201/output/csr", csr_201_data)
+    },
+    format = "file"
+  ),
   tar_target(adam_301_spec_file, "docs/specs/adam-301.yml", format = "file"),
   tar_target(adam_301_spec, yaml::read_yaml(adam_301_spec_file)),
   tar_target(adam_301_adsl_base, derive_adsl_301(sdtm_301, protocol_301, adam_301_spec)),
@@ -653,6 +670,24 @@ list(
   tar_target(tlf_301_qc, qc_tlf_301(adam_301, tlf_301_analysis)),
   tar_target(tlf_301_qc_comparison, compare_tlf_301(tlf_301_tables, tlf_301_qc)),
   tar_target(tlf_301_qc_check, stopifnot(tlf_301_qc_comparison$clean)),
+  # Clinical study report (studies/301/csr.qmd). Blinded until the unblinding is authorised
+  # (ADR 0032); it is rendered again, with the same text, when the outputs change.
+  tar_target(csr_301_qmd, "studies/301/csr.qmd", format = "file"),
+  tar_target(csr_301_data, list(
+    unblinded = unblinded_301, protocol = protocol_301, estimands = estimands_301, sap = sap_301_content,
+    outputs = outputs_301, sample_size = sample_size_301, oc = dry_run_301_oc_summary, tables = tlf_301_tables,
+    files = tlf_301_files, analysis = tlf_301_analysis, adsl = adam_301_adsl,
+    qc = csr_qc_summary(sdtm_301_qc_comparison, adam_301_qc_comparison, tlf_301_qc_comparison),
+    raw_quality = raw_quality[raw_quality$study == "301", ]
+  )),
+  tar_target(csr_301_file,
+    {
+      tlf_301_qc_check
+      csr_301_qmd
+      render_csr("studies/301/csr.qmd", "studies/301/output/csr", csr_301_data)
+    },
+    format = "file"
+  ),
   tar_target(
     adam_301_define,
     write_adam_define(adam_301, adam_301_spec, "data/adam/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
