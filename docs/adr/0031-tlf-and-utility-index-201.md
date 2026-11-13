@@ -38,3 +38,10 @@ database lock, so that nothing depends on the real results.
 - The outputs and the index are fixed before the lock; after it only the arms change.
 - The index is relative to the doses studied: it ranks doses, it does not measure benefit.
 - The outputs file is not part of the frozen SAP; changing it after the lock needs an ADR.
+
+## Note on the lock of FJF-2026-201
+
+`docs/lock/dblock-201.yml` (tag `dblock-201`, 2026-11-13) names ADR 0028 in its `decisions`
+field: `tools/lock-database.sh` then wrote that ADR for every study. The decisions taken
+before the lock of FJF-2026-201 are ADR 0030 and this ADR. The lock file is left as written;
+the script now names each study's own ADRs.

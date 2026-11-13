@@ -34,3 +34,6 @@ used them:
   database lock does not depend on CI, since `tools/lock-database.sh` runs its own checks.
 - If the minutes run out, CI stops until the cycle resets (with a $0 budget, nothing is
   charged); local checks in Docker stand in for it, as they did for this change.
+- `tools/ci-local.sh [<commit>]` runs the workflow's steps locally on a fresh clone, from
+  scratch, with its own throwaway database. While the minutes are used up it is the check of
+  record before a milestone (a lock, unblinding, a release), and the pull request says so.
