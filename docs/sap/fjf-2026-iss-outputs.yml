@@ -1,0 +1,62 @@
+# Tables of the blinded pooled safety review of FJF-2026-201 and FJF-2026-301 (ADR 0033).
+# The two studies are pooled over their treatment arms: the columns are the studies and all
+# patients, never an arm, so the tables carry no information on FJF-2026 against placebo and
+# can be made while both studies stay blinded (ADR 0032). Each table is the safety program of
+# FJF-2026-301 named under `source`, run on the pooled datasets. The integrated safety
+# analysis by treatment (FJF-2026 against placebo) needs the unblinding and its own plan.
+
+study: FJF-2026 integrated safety, blinded pooled review
+adam_datasets: [ADSL, ADAE, ADHYPO, ADLB, ADVS, ADEX]
+studies: ["201", "301"]
+pooled_label: All patients
+
+outputs:
+  - id: T-ISS-1
+    type: table
+    title: Demographic and baseline characteristics, pooled over arms
+    population: FAS
+    source: T-14.1.2
+    adam: [ADSL.AGE, ADSL.AGEGR1, ADSL.SEX, ADSL.RACE, ADSL.BMIBL, ADSL.WEIGHTBL, ADSL.HBA1CBL, ADSL.STRATAR]
+    program: studies/iss/tlf/iss.R
+  - id: T-ISS-2
+    type: table
+    title: Exposure to study drug, pooled over arms
+    population: SAF
+    source: T-14.3.6
+    adam: [ADEX.TRTDURD, ADEX.TRTDURY, ADEX.COMPLPCT]
+    program: studies/iss/tlf/iss.R
+  - id: T-ISS-3
+    type: table
+    title: Overview of treatment-emergent adverse events, pooled over arms
+    population: SAF
+    source: T-14.3.1
+    adam: [ADAE.TRTEMFL, ADAE.AEREL, ADAE.ASEV, ADAE.AESER, ADAE.AEACN, ADAE.AEOUT]
+    program: studies/iss/tlf/iss.R
+  - id: T-ISS-4
+    type: table
+    title: Treatment-emergent adverse events by system organ class and preferred term, pooled over arms
+    population: SAF
+    source: T-14.3.2
+    adam: [ADAE.AEBODSYS, ADAE.AEDECOD, ADAE.TRTEMFL, ADEX.TRTDURY]
+    program: studies/iss/tlf/iss.R
+  - id: T-ISS-5
+    type: table
+    title: Hypoglycaemia by level, pooled over arms
+    population: SAF
+    source: T-14.3.3
+    adam: [ADHYPO.HYPOLVL, ADHYPO.ONTRTFL, ADEX.TRTDURY]
+    program: studies/iss/tlf/iss.R
+  - id: T-ISS-6
+    type: table
+    title: Laboratory shifts from baseline to the worst value on treatment, pooled over arms
+    population: SAF
+    source: T-14.3.4
+    adam: [ADLB.PARAMCD, ADLB.BNRIND, ADLB.ANRIND, ADLB.WORSTFL]
+    program: studies/iss/tlf/iss.R
+  - id: T-ISS-7
+    type: table
+    title: Vital signs and body weight, change from baseline, pooled over arms
+    population: SAF
+    source: T-14.3.5
+    adam: [ADVS.PARAMCD, ADVS.AVISIT, ADVS.BASE, ADVS.CHG, ADVS.CRIT1FL, ADVS.CRIT2FL]
+    program: studies/iss/tlf/iss.R

@@ -1,0 +1,78 @@
+---
+title: "FJF-2026-201: Clinical Study Data Reviewer's Guide"
+subtitle: "SDTM tabulation datasets, SDTMIG 3.4"
+format: html
+---
+
+::: {.callout-note}
+Written with the clinical study report, after the database lock (tag `dblock-201`). The study
+is still blinded (ADR 0032): the package is the blinded one. The structure follows the PHUSE
+cSDRG template, as the guide of FJF-2026-301 (`studies/301/csdrg.qmd`), which this guide
+follows wherever the two studies agree. The data are simulated and the sponsor is fictional.
+:::
+
+## 1. Introduction
+
+The package holds the SDTM datasets of FJF-2026-201, a 12-week, randomised, double-blind,
+placebo-controlled, parallel-group, dose-finding phase II study of FJF-2026 5, 10, 20 and 40 mg
+added to metformin in adults with type 2 diabetes. Datasets are SAS transport v5 files,
+described by `define.xml` (Define-XML 2.1). Standards: SDTM 2.0, SDTMIG 3.4, CDISC SDTM
+terminology 2024-03-29.
+
+The datasets are made by the SDTM programs of FJF-2026-301 with this study's protocol
+(`docs/protocols/fjf-2026-201.yml`) and specification (`docs/specs/sdtm-201.yml`), and the same
+cleaning rules (`docs/specs/cleaning-rules.yml`); see ADR 0030. No program is specific to this
+study.
+
+## 2. Protocol description
+
+Five arms, 1:1:1:1:1, stratified by screening HbA1c (≤ 8.5%, > 8.5%): placebo and FJF-2026 5,
+10, 20 and 40 mg, each added to metformin, double-dummy (two tablets a day for every patient).
+Screening (2 weeks), treatment (12 weeks), follow-up (2 weeks). The visits are at screening,
+randomisation and weeks 2, 4, 8, 12 and 14. The trial design is in TA, TE, TV, TI and TS; each
+subject's path is in SE.
+
+## 3. Subject data description
+
+### Domains
+
+The domains and their content are those of FJF-2026-301 (its guide, section 3):
+
+| Dataset | Records | Notes |
+| --- | ---: | --- |
+| DM | 575 | 475 randomised and 100 screen failures (ARMNRS = SCREEN FAILURE). |
+| DS | 2,100 | Protocol milestones and disposition events. |
+| IE | 100 | Screen failures only, from the criterion recorded on the CRF. |
+| SV | 3,311 | Unscheduled visits numbered after the previous planned visit (+ 0.1). |
+| SE | 1,518 | Screening, treatment, follow-up; EPOCH of every other domain comes from SE. |
+| EX, DA | 1,350; 2,700 | One EX record per bottle; tablet counts in DA. |
+| CM | 492 | Background therapy and rescue medication (CMCAT). |
+| AE, SUPPAE | 409; 6 | SUPPAE.AEENRAW holds end dates set aside by rule CR08. |
+| CE, SUPPCE | 30; 60 | Hypoglycaemic events: ADA level in CESCAT; glucose and assistance in SUPPCE. |
+| LB, VS | 13,454; 11,976 | Standard units by fixed factors; height from the screening demography page. |
+
+TS states the phase (PHASE II TRIAL), the primary objective (the dose-response and the dose to
+take forward) and two secondary objectives (robustness of the dose-response, safety by dose).
+
+### Coding dictionaries, data not collected, cleaning rules
+
+As in FJF-2026-301: the project's reduced dictionary in place of MedDRA and WHODrug (no codes),
+COUNTRY, seriousness criteria and the demography of screen failures not collected, and the
+cleaning rules CR01 to CR08 applied in SDTM, every touched record listed in the data-issues
+listing.
+
+### Blinding
+
+The database is locked (tag `dblock-201`, `docs/lock/dblock-201.yml`) but the study is not
+unblinded (ADR 0032). Until the reviewer authorises the unblinding, the arm of each subject in
+DM, SE and EX comes from a dummy assignment: the real arms shuffled within stratum with the
+public seed 201201 (ADR 0027). Every other variable is final. After an authorised unblinding
+the package is rebuilt by the same programs, and only the treatment variables change.
+
+## 4. Data conformance summary
+
+Pinnacle 21 Community 2304.3 (SDTM-IG 3.4, FDA) reports 19 rules, all among those FJF-2026-301
+reports and explains; no rule is new. CDISC CORE v1.0.0 reports the same 26 rules as for
+FJF-2026-301. The second programming of FJF-2026-301 (`qc/301/sdtm_qc.R`), run on this study's
+raw data, agrees with production in all ten domains it covers. Details are in
+`studies/201/conformance.md`.

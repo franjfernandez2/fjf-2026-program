@@ -8,6 +8,7 @@ programs <- c(
     pattern = "[.]R$", full.names = TRUE
   ),
   list.files(file.path(project_root, "studies", "201", c("analysis", "tlf")), pattern = "[.]R$", full.names = TRUE),
+  list.files(file.path(project_root, "studies", "iss", "tlf"), pattern = "[.]R$", full.names = TRUE),
   list.files(file.path(project_root, "qc", c("benchmark", "301", "201")), pattern = "[.]R$", full.names = TRUE),
   list.files(file.path(project_root, "studies", "benchmark", c("tlf", "compare")), pattern = "[.]R$", full.names = TRUE)
 )

@@ -1,12 +1,14 @@
 ---
-title: "FJF-2026-301: Clinical Study Data Reviewer's Guide (draft)"
+title: "FJF-2026-301: Clinical Study Data Reviewer's Guide"
 subtitle: "SDTM tabulation datasets, SDTMIG 3.4"
 format: html
 ---
 
 ::: {.callout-note}
-Draft written with the SDTM (F3 day 5). It is completed with the CSR on day 14. The structure
-follows the PHUSE cSDRG template. The data are simulated and the sponsor is fictional.
+Written with the SDTM (F3 day 5) and completed with the clinical study report, after the
+database lock (tag `dblock-301`). The study is still blinded (ADR 0032): the package is the
+blinded one. The structure follows the PHUSE cSDRG template. The data are simulated and the
+sponsor is fictional.
 :::
 
 ## 1. Introduction
@@ -65,12 +67,17 @@ results stay as text (CR07), and an adverse event end date before its start is m
 
 ### Blinding
 
-Until the database lock (tag `dblock-301`, ADR 0027), the arm of each subject in DM, SE and EX
-comes from a dummy assignment: the real arms shuffled within stratum with a public seed. This
-guide is updated after the lock.
+The database is locked (tag `dblock-301`, `docs/lock/dblock-301.yml`) but the study is not
+unblinded: locking and unblinding are two decisions, and the pipeline uses the real
+assignment only after the reviewer authorises the unblinding (ADR 0032). Until then the arm of
+each subject in DM, SE and EX (ARMCD, ARM, ACTARMCD, ACTARM, EXTRT, EXDOSE) comes from a dummy
+assignment: the real arms shuffled within stratum with a public seed (ADR 0027). Every other
+variable is final. After an authorised unblinding the package is rebuilt by the same programs,
+and only the treatment variables change.
 
 ## 4. Data conformance summary
 
 Pinnacle 21 Community 2304.3 (SDTM-IG 3.4, FDA) reports no reject and no define.xml issue.
-Each remaining issue is explained in `studies/301/conformance.md`. CDISC CORE is to be run
-before the lock.
+CDISC CORE v1.0.0 (SDTMIG 3.4 published rules) was run before the lock. Each remaining issue
+of either tool is explained in `studies/301/conformance.md`. A second, independent programming
+(`qc/301/sdtm_qc.R`) agrees with production in every domain it covers.
