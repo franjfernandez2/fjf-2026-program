@@ -69,6 +69,9 @@ per-protocol set for a deviation.
 - **Last dose**: the disposition page's last-dose date is the end of treatment; for 129
   patients whose last bottle ends earlier, that bottle runs until it (CR10). This enters
   compliance.
+- **ECG**: the protocol schedules a 12-lead ECG at screening and week 26, but the ECG is not
+  in the study database (no EG domain), so there is no ECG analysis dataset. Table 14.3.5
+  says so.
 
 ## 4. Data conformance
 

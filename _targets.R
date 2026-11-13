@@ -20,6 +20,7 @@ tar_source("studies/301/sdtm")
 tar_source("qc/301")
 tar_source("studies/301/adam")
 tar_source("studies/301/analysis")
+tar_source("studies/301/tlf")
 
 list(
   # --- F0: environment smoke test ---
@@ -473,6 +474,28 @@ list(
       multiplicity_inputs_301(analysis_301_efficacy, analysis_301_secondary, sap_301_content), sap_301_content
     )
   ),
+  # Tables, figures and listings (docs/sap/fjf-2026-301-outputs.yml). Until the lock they show
+  # the dummy arms and say so (ADR 0027).
+  tar_target(
+    analysis_301_lsmeans,
+    analysis_lsmeans_301(
+      analysis_301_data, analysis_301_hba1c_draws, analysis_301_efficacy, analysis_301_secondary, sap_301_content,
+      protocol_301
+    )
+  ),
+  tar_target(tlf_301_analysis, list(
+    efficacy = analysis_301_efficacy, secondary = analysis_301_secondary, multiplicity = analysis_301_multiplicity,
+    lsmeans = analysis_301_lsmeans, sap = sap_301_content, protocol = protocol_301
+  )),
+  tar_target(tlf_301_tables, tables_301(adam_301, tlf_301_analysis, outputs_301)),
+  tar_target(
+    tlf_301_files,
+    write_tlf_301(tlf_301_tables, adam_301, tlf_301_analysis, outputs_301, dblock_301, "studies/301/output/tlf"),
+    format = "file"
+  ),
+  tar_target(tlf_301_qc, qc_tlf_301(adam_301, tlf_301_analysis)),
+  tar_target(tlf_301_qc_comparison, compare_tlf_301(tlf_301_tables, tlf_301_qc)),
+  tar_target(tlf_301_qc_check, stopifnot(tlf_301_qc_comparison$clean)),
   tar_target(
     adam_301_define,
     write_adam_define(adam_301, adam_301_spec, "data/adam/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
