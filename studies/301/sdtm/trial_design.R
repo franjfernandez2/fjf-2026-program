@@ -77,7 +77,13 @@ map_ti_301 <- function(protocol, spec) {
   sdtm_conform(cbind(STUDYID = spec$study, DOMAIN = "TI", criteria_301(protocol)), spec, "TI")
 }
 
+#' The study's number, e.g. "301", from the specification's study code.
+#' @param spec The SDTM specification.
+study_number <- function(spec) sub("^FJF-2026-", "", spec$study)
+
 #' TS: trial summary parameters. Values with CDISC terminology carry its code (CT 2024-03-29).
+#' What differs between studies (phase, trial types, objectives) is in the specification's
+#' `trial_summary`, so the same program serves FJF-2026-201.
 #' @inheritParams map_te_301
 #' @param dm The DM dataset, for the actual number of subjects and the study dates.
 #' @param planned_subjects Planned number of randomised subjects.
@@ -91,10 +97,11 @@ map_ts_301 <- function(protocol, spec, dm, planned_subjects, secondary) {
   # A parameter that cannot have a value in a fictional study: empty, with its null flavor.
   none <- function(code, name, nf) p(code, name, NA, nf = nf)
   randomised <- !is.na(dm$ARMCD)
+  s <- spec$trial_summary
   ts <- rbind(
     p("TITLE", "Trial Title", gsub("\\s+", " ", protocol$title)),
-    p("TPHASE", "Trial Phase Classification", "PHASE III TRIAL", "C15602", ct),
-    p("TTYPE", "Trial Type", c("EFFICACY", "SAFETY"), c("C49666", "C49667"), ct),
+    p("TPHASE", "Trial Phase Classification", s$phase$value, s$phase$code, ct),
+    p("TTYPE", "Trial Type", purrr::map_chr(s$types, "value"), purrr::map_chr(s$types, "code"), ct),
     p("STYPE", "Study Type", "INTERVENTIONAL", "C98388", ct),
     p("INTMODEL", "Intervention Model", "PARALLEL", "C82639", ct),
     p("INTTYPE", "Intervention Type", "DRUG", "C1909", ct),
@@ -118,16 +125,16 @@ map_ts_301 <- function(protocol, spec, dm, planned_subjects, secondary) {
     p("TRT", "Investigational Therapy or Treatment", "FJF-2026"),
     p("COMPTRT", "Comparative Treatment Name", "PLACEBO"),
     p("CURTRT", "Current Therapy or Treatment", "METFORMIN"),
-    p("OBJPRIM", "Trial Primary Objective", "Change in HbA1c from baseline to week 26, FJF-2026 20 mg against placebo"),
+    p("OBJPRIM", "Trial Primary Objective", s$objective_primary),
     p("OBJSEC", "Trial Secondary Objective", secondary),
-    p("OUTMSPRI", "Primary Outcome Measure", "Change from baseline in HbA1c at week 26"),
+    p("OUTMSPRI", "Primary Outcome Measure", s$primary_outcome),
     p("STOPRULE", "Study Stop Rules", "None: there is no interim analysis"),
     p("THERAREA", "Therapeutic Area", "Endocrinology"),
     p("PDPSTIND", "Pediatric Postmarket Study Indicator", "N", "C49487", ct),
     p("PDSTIND", "Pediatric Study Indicator", "N", "C49487", ct),
     p("PIPIND", "Pediatric Investigation Plan Indicator", "N", "C49487", ct),
     p("RDIND", "Rare Disease Indicator", "N", "C49487", ct),
-    p("DCUTDESC", "Data Cutoff Description", "Database lock (git tag dblock-301)"),
+    p("DCUTDESC", "Data Cutoff Description", sprintf("Database lock (git tag dblock-%s)", study_number(spec))),
     none("DCUTDTC", "Data Cutoff Date", "NAV"),
     none("REGID", "Registry Identifier", "NA"),
     none("PCLAS", "Pharmacologic Class", "NAV"),

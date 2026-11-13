@@ -405,6 +405,89 @@ list(
     write_sdtm_define(sdtm_301, sdtm_301_spec, "data/sdtm/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
     format = "file"
   ),
+  # --- FJF-2026-201: SDTM (F4), with the programs of FJF-2026-301 (ADR 0030). Blinded until
+  # its own database lock, as FJF-2026-301 (ADR 0027).
+  tar_target(sdtm_201_spec_file, "docs/specs/sdtm-201.yml", format = "file"),
+  tar_target(sdtm_201_spec, yaml::read_yaml(sdtm_201_spec_file)),
+  tar_target(dblock_201, database_locked(lock_file("201")), cue = tar_cue(mode = "always")),
+  tar_target(
+    assignment_201,
+    assignment_in_use(raw_data[["201"]]$randomisation, dblock_201, sdtm_201_spec$blinding_seed)
+  ),
+  tar_target(sdtm_201_dm, map_dm_301(raw_data[["201"]], assignment_201, protocol_201, sdtm_201_spec)),
+  tar_target(sdtm_201_se, map_se_301(sdtm_201_dm, protocol_201, sdtm_201_spec)),
+  tar_target(sdtm_201_suppdm, map_suppdm_301(raw_data[["201"]], sdtm_201_spec)),
+  tar_target(sdtm_201_ie, map_ie_301(raw_data[["201"]], sdtm_201_dm, protocol_201, sdtm_201_spec)),
+  tar_target(sdtm_201_ta, map_ta_301(protocol_201, sdtm_201_spec)),
+  tar_target(sdtm_201_te, map_te_301(protocol_201, sdtm_201_spec)),
+  tar_target(sdtm_201_tv, map_tv_301(protocol_201, sdtm_201_spec)),
+  tar_target(sdtm_201_ti, map_ti_301(protocol_201, sdtm_201_spec)),
+  tar_target(sdtm_201_ts, map_ts_301(
+    protocol_201, sdtm_201_spec, sdtm_201_dm, length(protocol_201$arms) * sample_size_201,
+    unlist(sdtm_201_spec$trial_summary$objective_secondary)
+  )),
+  tar_target(sdtm_201_ds, map_ds_301(raw_data[["201"]], assignment_201, sdtm_201_dm, sdtm_201_spec, sdtm_201_se)),
+  tar_target(sdtm_201_sv, map_sv_301(raw_data[["201"]], sdtm_201_dm, protocol_201, sdtm_201_spec)),
+  tar_target(
+    sdtm_201_ex, map_ex_301(raw_data[["201"]], assignment_201, sdtm_201_dm, protocol_201, sdtm_201_spec, sdtm_201_se)
+  ),
+  tar_target(sdtm_201_da, map_da_301(raw_data[["201"]], sdtm_201_dm, protocol_201, sdtm_201_spec, sdtm_201_se)),
+  tar_target(sdtm_201_cm, map_cm_301(raw_data[["201"]], sdtm_201_dm, coding_dictionary, sdtm_201_spec, sdtm_201_se)),
+  tar_target(sdtm_201_ae_supp, map_ae_301(
+    raw_data[["201"]], sdtm_201_dm, coding_dictionary, sdtm_201_spec,
+    sdtm_201_se
+  )),
+  tar_target(sdtm_201_ae, sdtm_201_ae_supp$ae),
+  tar_target(sdtm_201_suppae, sdtm_201_ae_supp$suppae),
+  tar_target(sdtm_201_lb_issues, map_lb_301(
+    raw_data[["201"]], raw_spec, sdtm_201_dm, protocol_201, sdtm_201_spec,
+    sdtm_201_se
+  )),
+  tar_target(sdtm_201_lb, sdtm_201_lb_issues$lb),
+  tar_target(sdtm_201_vs_issues, map_vs_301(
+    raw_data[["201"]], raw_spec, sdtm_201_dm, protocol_201, sdtm_201_spec,
+    sdtm_201_se
+  )),
+  tar_target(sdtm_201_vs, sdtm_201_vs_issues$vs),
+  tar_target(sdtm_201_ce_supp, map_ce_301(raw_data[["201"]], sdtm_201_dm, sdtm_201_spec, sdtm_201_se)),
+  tar_target(sdtm_201_ce, sdtm_201_ce_supp$ce),
+  tar_target(sdtm_201_suppce, sdtm_201_ce_supp$suppce),
+  tar_target(
+    sdtm_201_data_issues,
+    rbind(
+      sdtm_201_lb_issues$issues, sdtm_201_vs_issues$issues,
+      ex_issues_301(raw_data[["201"]], sdtm_201_dm, sdtm_201_spec)
+    )
+  ),
+  tar_target(
+    sdtm_201,
+    list(
+      DM = sdtm_201_dm, SUPPDM = sdtm_201_suppdm, DS = sdtm_201_ds, SV = sdtm_201_sv, EX = sdtm_201_ex,
+      DA = sdtm_201_da,
+      CM = sdtm_201_cm, AE = sdtm_201_ae, SUPPAE = sdtm_201_suppae, LB = sdtm_201_lb, VS = sdtm_201_vs,
+      CE = sdtm_201_ce, SUPPCE = sdtm_201_suppce, IE = sdtm_201_ie, SE = sdtm_201_se, TA = sdtm_201_ta,
+      TE = sdtm_201_te, TV = sdtm_201_tv, TI = sdtm_201_ti, TS = sdtm_201_ts
+    )[sdtm_domains(sdtm_201_spec)]
+  ),
+  tar_target(
+    sdtm_201_qc,
+    qc_sdtm_301(
+      file.path(dirname(raw_manifest_file), "201"), assignment_201, protocol_201, sdtm_201_spec, coding_dictionary
+    )
+  ),
+  tar_target(sdtm_201_qc_comparison, compare_sdtm_301(sdtm_201, sdtm_201_qc, sdtm_201_spec)),
+  # The double programming must agree; a difference stops the pipeline until it is explained.
+  tar_target(sdtm_201_qc_check, stopifnot("SDTM double programming differs" = all(sdtm_201_qc_comparison$clean))),
+  tar_target(
+    sdtm_201_files,
+    unlist(purrr::imap(sdtm_201, \(d, name) write_sdtm_domain(d, sdtm_201_spec, name, "data/sdtm/201"))),
+    format = "file"
+  ),
+  tar_target(
+    sdtm_201_define,
+    write_sdtm_define(sdtm_201, sdtm_201_spec, "data/sdtm/201/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
+    format = "file"
+  ),
   tar_target(adam_301_spec_file, "docs/specs/adam-301.yml", format = "file"),
   tar_target(adam_301_spec, yaml::read_yaml(adam_301_spec_file)),
   tar_target(adam_301_adsl_base, derive_adsl_301(sdtm_301, protocol_301, adam_301_spec)),

@@ -228,3 +228,24 @@ test_that("the XPT files keep the specification's labels, and define.xml describ
   aestdtc <- xml2::xml_find_first(doc, "//ItemDef[@OID='IT.AE.AESTDTC']")
   expect_identical(xml2::xml_attr(aestdtc, "DataType"), "partialDate")
 })
+
+test_that("TS takes what differs between studies from the specification", {
+  expect_identical(ts$TSVAL[ts$TSPARMCD == "TPHASE"], "PHASE III TRIAL")
+  expect_identical(ts$TSVAL[ts$TSPARMCD == "DCUTDESC"], "Database lock (git tag dblock-301)")
+  spec_201 <- yaml::read_yaml(file.path(root, "docs", "specs", "sdtm-201.yml"))
+  protocol_201 <- read_protocol(file.path(root, "docs", "protocols", "fjf-2026-201.yml"))
+  ts_201 <- map_ts_301(protocol_201, spec_201, dm, 475L, unlist(spec_201$trial_summary$objective_secondary))
+  expect_identical(ts_201$TSVAL[ts_201$TSPARMCD == "TPHASE"], "PHASE II TRIAL")
+  expect_identical(ts_201$TSVALCD[ts_201$TSPARMCD == "TPHASE"], "C15601")
+  expect_identical(ts_201$TSVAL[ts_201$TSPARMCD == "NARMS"], "5")
+  expect_identical(ts_201$TSVAL[ts_201$TSPARMCD == "DCUTDESC"], "Database lock (git tag dblock-201)")
+  expect_length(ts_201$TSVAL[ts_201$TSPARMCD == "OBJSEC"], 2L)
+})
+
+test_that("the two studies' SDTM specifications differ only where the studies differ", {
+  spec_201 <- yaml::read_yaml(file.path(root, "docs", "specs", "sdtm-201.yml"))
+  expect_identical(spec_201$domains, spec$domains)
+  expect_identical(spec_201$lab_tests, spec$lab_tests)
+  expect_identical(spec_201$vital_signs, spec$vital_signs)
+  expect_identical(spec_201$blinding_seed, 201201L)
+})
