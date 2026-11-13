@@ -22,6 +22,8 @@ tar_source("studies/301/adam")
 tar_source("studies/301/analysis")
 tar_source("studies/301/tlf")
 tar_source("studies/201/analysis")
+tar_source("studies/201/tlf")
+tar_source("qc/201")
 
 list(
   # --- F0: environment smoke test ---
@@ -538,6 +540,26 @@ list(
     analysis_data_201(adam_201_adeff, protocol_201)
   }),
   tar_target(analysis_201, analyse_201(analysis_201_data, sap_201_content, protocol_201)),
+  # Clinical utility index (X1, exploratory; ADR 0031).
+  tar_target(analysis_201_cui, clinical_utility_201(adam_201, analysis_201, sap_201_content)),
+  # Tables and figures (docs/sap/fjf-2026-201-outputs.yml). Until the lock they show the dummy
+  # arms and say so (ADR 0027).
+  tar_target(outputs_201_file, "docs/sap/fjf-2026-201-outputs.yml", format = "file"),
+  tar_target(outputs_201, read_outputs(outputs_201_file)),
+  tar_target(outputs_201_problems, check_outputs(outputs_201, sap_201_content)),
+  tar_target(tlf_201_analysis, {
+    stopifnot(length(outputs_201_problems) == 0)
+    list(mcpmod = analysis_201, cui = analysis_201_cui, sap = sap_201_content, protocol = protocol_201)
+  }),
+  tar_target(tlf_201_tables, tables_201(adam_201, tlf_201_analysis, outputs_201)),
+  tar_target(
+    tlf_201_files,
+    write_tlf_201(tlf_201_tables, adam_201, tlf_201_analysis, outputs_201, dblock_201, "studies/201/output/tlf"),
+    format = "file"
+  ),
+  tar_target(tlf_201_qc, qc_tlf_201(adam_201, tlf_201_analysis)),
+  tar_target(tlf_201_qc_comparison, compare_tlf_301(tlf_201_tables, tlf_201_qc)),
+  tar_target(tlf_201_qc_check, stopifnot(tlf_201_qc_comparison$clean)),
   tar_target(adam_301_spec_file, "docs/specs/adam-301.yml", format = "file"),
   tar_target(adam_301_spec, yaml::read_yaml(adam_301_spec_file)),
   tar_target(adam_301_adsl_base, derive_adsl_301(sdtm_301, protocol_301, adam_301_spec)),

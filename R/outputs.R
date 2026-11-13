@@ -6,13 +6,14 @@
 #' @return The parsed list.
 read_outputs <- function(path) yaml::read_yaml(path)
 
-#' SAP items that an output can implement: analysis sets, analyses, sensitivity, key
-#' secondary, safety, and the multiplicity and subgroup sections.
+#' SAP items that an output can implement: analysis sets, the primary analysis or analyses,
+#' sensitivity, key secondary, exploratory, safety, and the multiplicity and subgroup sections.
 #'
 #' @param sap The result of [read_sap()].
 #' @return A character vector of ids.
 sap_output_targets <- function(sap) {
-  items <- c(sap$analysis_sets, sap$analyses, sap$sensitivity, sap$secondary, sap$safety)
+  primary <- if (!is.null(sap$primary)) list(sap$primary)
+  items <- c(sap$analysis_sets, primary, sap$analyses, sap$sensitivity, sap$secondary, sap$exploratory, sap$safety)
   ids <- purrr::map_chr(items, "id")
   c(ids, if (!is.null(sap$multiplicity)) "multiplicity", if (!is.null(sap$subgroups)) "subgroups")
 }
@@ -21,7 +22,7 @@ sap_output_targets <- function(sap) {
 #'
 #' Every output has a unique id, a known population and SAP item, ADaM references of the
 #' form DATASET.VARIABLE with a declared dataset, and a program under studies/<study>/tlf/.
-#' Every analysis, sensitivity, key secondary and safety item, the multiplicity and the
+#' Every analysis, sensitivity, key secondary, exploratory and safety item, the multiplicity and the
 #' subgroups have at least one output.
 #'
 #' @param outputs The result of [read_outputs()].

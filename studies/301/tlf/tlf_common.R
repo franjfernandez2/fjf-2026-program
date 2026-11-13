@@ -125,7 +125,7 @@ tlf_table_301 <- function(id, outputs, columns, rows, footnotes = character()) {
   missing <- setdiff(names(columns), names(rows))
   for (k in missing) rows[[k]] <- ""
   list(
-    id = id, title = spec$title, population = spec$population, program = spec$program,
+    id = id, study = outputs$study, title = spec$title, population = spec$population, program = spec$program,
     columns = columns, rows = rows[, c("label", "indent", names(columns))], footnotes = footnotes
   )
 }
@@ -177,7 +177,7 @@ write_table_301 <- function(table, path, locked) {
     line(labels[r], vapply(keys, function(k) table$rows[[k]][r], ""))
   }, "")
   text <- c(
-    sprintf("FJF-2026-301%s%s", strrep(" ", max(1, total - 12 - nchar(table$id))), table$id),
+    sprintf("%s%s%s", table$study, strrep(" ", max(1, total - nchar(table$study) - nchar(table$id))), table$id),
     sprintf("Table %s: %s", sub("^T-", "", table$id), table$title),
     sprintf("Population: %s", population_label_301(table$population)),
     rule, header, rule, body, rule,
