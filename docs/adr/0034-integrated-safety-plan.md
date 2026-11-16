@@ -1,6 +1,6 @@
 # ADR 0034: Plan of the integrated safety analysis, written before the unblinded results
 
-- **Status:** Proposed (for the reviewer's review)
+- **Status:** Accepted (reviewer, 2026-11-16)
 - **Date:** 2026-11-13
 - **Decided by:** the reviewer (unblind through the documented process); plan proposed by the programmer
 
@@ -36,3 +36,11 @@ could be shaped by them.
 - The reviewer reviews and accepts the plan before its programs are written; it can be
   frozen with a tag (`iss-sap-v1.0`), as the study SAPs were.
 - Analyses that are not in this plan are labelled post hoc in the integrated report.
+
+## Update, 2026-11-16
+
+The reviewer accepted the plan without change, and it is frozen as version 1.0 with the tag
+`iss-sap-v1.0`. Its content is the one committed in 164da63 on 2026-11-13, before the unblinded
+results were read; only the version and status lines changed. The acceptance came after the
+unblinding, so the evidence that the plan was not shaped by the results is the date of that
+commit, kept on `main` by merging pull request 54 with a merge commit.

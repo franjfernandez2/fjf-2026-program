@@ -6,7 +6,8 @@
 
 study: FJF-2026 integrated safety
 studies: ["201", "301"]
-status: draft for the reviewer's review
+version: "1.0"
+status: Final, frozen with the tag iss-sap-v1.0 after the reviewer's acceptance (2026-11-16); content unchanged since 164da63 (2026-11-13)
 
 pools:
   - id: PC

@@ -1,6 +1,0 @@
-pkgload::load_all("simulator", quiet = TRUE)
-d <- read_design(".")
-tr <- planning_truth(d$assumptions)
-r <- simulate_study(d, tr, "301", 150, 123, keep_latent = TRUE)
-str(lapply(r$tables, nrow))
-print(head(r$tables$adverse_events, 8)); print(head(r$tables$hypoglycaemia)); l <- r$tables$lab_results; print(head(l[l$subject_id==l$subject_id[1],], 14))

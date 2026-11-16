@@ -1,6 +1,6 @@
 # ADR 0032: Locking the database does not unblind
 
-- **Status:** Proposed (for the reviewer's review)
+- **Status:** Accepted (reviewer, 2026-11-16)
 - **Date:** 2026-11-13
 - **Decided by:** the reviewer (keep the studies blinded); mechanism proposed by the programmer
 

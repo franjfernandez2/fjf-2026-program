@@ -1,6 +1,6 @@
 # ADR 0029: Continuous integration within the monthly Actions minutes
 
-- **Status:** Proposed (for the reviewer's review)
+- **Status:** Accepted (reviewer, 2026-11-16)
 - **Date:** 2026-11-13
 - **Decided by:** proposed by the programmer
 

@@ -1,6 +1,6 @@
 # ADR 0031: Tables, figures and clinical utility index of FJF-2026-201
 
-- **Status:** Proposed (for the reviewer's review)
+- **Status:** Accepted (reviewer, 2026-11-16)
 - **Date:** 2026-11-13
 - **Decided by:** proposed by the programmer
 

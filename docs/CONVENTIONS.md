@@ -16,6 +16,7 @@ Code, comments, documents, commits and pull requests are written in English. The
   2. Francisco Fernández approves it in writing in the pull request.
 - On GitHub's free plan, private repositories cannot enforce branch protection. Rule 2 is therefore a project rule, and the pull request history is its evidence.
 - Pull requests are merged with **squash and merge**, so that `main` has one commit per reviewed change.
+- Exception: when a commit is itself the evidence of an order of events, the pull request is merged with a **merge commit**, so that the commit and its date stay on `main`. So far: pull request 54 (the integrated safety plan, 164da63, written before the unblinded results) and pull request 55 (the reviewer's unblinding authorisation, 77910f1).
 
 ## Commits
 
@@ -38,7 +39,9 @@ A scope may name the study: `feat(301): MMRM primary analysis`.
 | Tag | Marks |
 | --- | --- |
 | `gate-0` … `gate-6` | Closure of each phase, after its gate criteria are met |
-| `sap-freeze-201`, `sap-freeze-301` | The frozen SAP of each study, before any data are generated |
+| `sap-201-v1.0`, `sap-301-v1.0` | The frozen SAP of each study, before any data are generated |
+| `iss-sap-v1.0` | The frozen plan of the integrated safety analysis |
+| `dblock-201`, `dblock-301` | The database lock of each study |
 
 A tag is never moved or deleted. If a frozen document must change, the change is a new, dated amendment.
 

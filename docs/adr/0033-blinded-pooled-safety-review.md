@@ -1,6 +1,6 @@
 # ADR 0033: Blinded pooled safety review of FJF-2026-201 and FJF-2026-301
 
-- **Status:** Proposed (for the reviewer's review)
+- **Status:** Accepted (reviewer, 2026-11-16)
 - **Date:** 2026-11-13
 - **Decided by:** the reviewer asked for the pending work that keeps the studies blinded; content proposed by the programmer
 

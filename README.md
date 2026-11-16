@@ -14,7 +14,7 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation, TLFs | Done; database locked (`dblock-301`) and unblinded |
 | F4 · Safety and phase II | Safety TLFs, MCP-Mod dose finding, clinical utility index; blinded pooled safety review | Done; database locked (`dblock-201`) and unblinded |
 | F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | Planned |
-| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety plan drafted |
+| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety plan frozen (`iss-sap-v1.0`) |
 
 ### Blinding
 
