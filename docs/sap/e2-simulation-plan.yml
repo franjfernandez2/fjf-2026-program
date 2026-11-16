@@ -1,0 +1,40 @@
+# Plan of extension E2: simulation study of the efficacy analyses of FJF-2026-301 under missing
+# data (ADR 0036). Committed before any result of the study is computed. Public seeds and
+# planning values only; the sealed truth and the simulator are never used (ADR 0018).
+
+study: E2
+status: draft for the reviewer's review
+seed: 301777
+trials_per_cell: 150
+imputations: 20
+truth:
+  per_arm: 20000
+  seed: 301778
+primary_visit: Week 26
+target: >-
+  Treatment-policy difference FJF-2026 20 mg minus placebo in the change of HbA1c at week 26 in
+  the full data: the difference of the mean of CHG_FULL.
+
+dropout:
+  # The share of patients who leave the study, calibrated within each trial.
+  rates:
+    - {id: R06, rate: 0.06, note: planning value of study_withdrawal}
+    - {id: R15, rate: 0.15, note: stress value, outside the truth range of the assumption}
+  mechanisms:
+    - {id: MCAR, baseline: 0.00, outcome: 0.00, arm: both, note: no dependence}
+    - {id: MAR, baseline: 1.00, outcome: 0.00, arm: both, note: baseline HbA1c, observed}
+    - {id: MNAR_MOD, baseline: 0.00, outcome: 0.75, arm: both, note: unobserved change at week 26}
+    - {id: MNAR_STR, baseline: 0.00, outcome: 1.50, arm: both, note: unobserved change at week 26}
+    - {id: MNAR_ACT, baseline: 0.00, outcome: 1.50, arm: active, note: only in FJF-2026 20 mg}
+
+analyses:
+  - {id: MMRM, label: MMRM on all observed values, function: fit_mmrm_301}
+  - {id: MI_J2R, label: Multiple imputation, jump to reference (A1), function: pooled_ancova_301}
+  - {id: MI_MAR, label: Multiple imputation, missing at random (S1), function: pooled_ancova_301}
+
+measures: [bias, empirical_sd, mean_se, coverage_95, power, monte_carlo_error]
+
+expectations:
+  - MCAR and MAR: all three analyses nearly unbiased, except jump to reference, which assumes the effect is lost on leaving.
+  - MNAR with worse patients leaving more: the two missing-at-random analyses overstate the benefit, more at 15%.
+  - MNAR in the active arm only: jump to reference is the conservative one.
