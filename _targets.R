@@ -730,6 +730,23 @@ list(
     tlf_iss_treatment_qc_comparison, compare_tlf_iss_treatment(tlf_iss_treatment_tables, tlf_iss_treatment_qc)
   ),
   tar_target(tlf_iss_treatment_qc_check, stopifnot(tlf_iss_treatment_qc_comparison$clean)),
+  # Traceability matrix (docs/traceability-matrix.csv): the benchmark rows are kept, the studies and the
+  # integrated safety analysis are written from their outputs specifications and comparisons.
+  tar_target(
+    traceability_matrix_file,
+    write_traceability(
+      rbind(
+        traceability_rows(outputs_301, "FJF-2026-301", "qc/301/tlf_qc.R", tlf_301_qc_comparison),
+        traceability_rows(outputs_201, "FJF-2026-201", "qc/201/tlf_qc.R", tlf_201_qc_comparison),
+        traceability_rows(outputs_iss, "FJF-2026 integrated safety", "", NULL, "ADR 0033"),
+        traceability_rows(
+          outputs_iss_treatment, "FJF-2026 integrated safety", "qc/iss/tlf_qc.R", tlf_iss_treatment_qc_comparison
+        )
+      ),
+      "docs/traceability-matrix.csv"
+    ),
+    format = "file"
+  ),
   tar_target(
     adam_301_define,
     write_adam_define(adam_301, adam_301_spec, "data/adam/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),

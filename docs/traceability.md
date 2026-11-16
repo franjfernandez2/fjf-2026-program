@@ -2,6 +2,8 @@
 
 [`traceability-matrix.csv`](traceability-matrix.csv) links every table, listing and figure to the plan that asked for it and the code that produced and checked it. A reviewer can start from any number in a report and follow it back to a line of the SAP.
 
+The matrix is written by the pipeline (target `traceability_matrix_file`) from the outputs specifications of the studies and the comparisons of their second programming; the benchmark rows are kept as they are. `qc_status` is `match` only where a second programming compared the output and found no difference, and `not started` where there is none (figures, and the tables the second programming does not cover): the matrix does not claim a check that was not made.
+
 The first rows are the four outputs of the benchmark (phase F1). Their "shell" is the published table in the pilot's study report, and their SAP sections are those of the pilot's own SAP, printed inside the same report. The programs are added from day 6 of F1. Until then the paths are planned, not written.
 
 | Column | Content | Example |
