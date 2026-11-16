@@ -13,15 +13,22 @@ long_table_qc_301 <- function(table) {
   rows <- table$rows
   section <- character(nrow(rows))
   current <- ""
+  parent <- ""
   for (i in seq_len(nrow(rows))) {
     if (rows$indent[i] == 0) current <- rows$label[i]
-    section[i] <- current
+    if (rows$indent[i] == 1) parent <- rows$label[i]
+    # Rows two levels down are placed under their heading and its parent heading.
+    section[i] <- if (rows$indent[i] >= 2) paste(current, parent, sep = " / ") else current
   }
   headers <- vapply(strsplit(table$columns, "|", fixed = TRUE), function(h) h[nzchar(h)][1], "")
+  # Each column is found by its first header line and by its key (for columns that share a header).
   out <- lapply(names(table$columns), function(k) {
-    data.frame(section = section, label = rows$label, column = headers[[k]], key = k, value = rows[[k]])
+    rbind(
+      data.frame(section = section, label = rows$label, column = headers[[k]], key = k, value = rows[[k]]),
+      data.frame(section = section, label = rows$label, column = k, key = k, value = rows[[k]])
+    )
   })
-  do.call(rbind, out)
+  unique(do.call(rbind, out))
 }
 
 #' An expected cell.
