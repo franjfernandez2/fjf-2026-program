@@ -31,3 +31,9 @@ stored assignments of both studies were the dummy ones.
   GitHub CI of 2026-12-01 and `tools/ci-local.sh` stay blinded.
 - This change must be merged before any pipeline run on a commit that has a lock file.
 - The blinding code changes after the lock; the analysis programs frozen by the tags do not.
+
+## Update, 2026-11-13
+
+The reviewer authorised the unblinding of both studies (commit 77910f1, written and pushed by
+the reviewer). The test that no study is authorised was removed in the next change, as
+decided above. From then on the pipeline, `tools/ci-local.sh` and CI use the real arms.

@@ -11,20 +11,21 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | F0 · Foundations | Repository, environment, database, CI and templates | Done (`gate-0`) |
 | F1 · Benchmark | Replication of the public CDISC pilot (CDISCPILOT01) | Done (`gate-1`) |
 | F2 · Design | Protocols, SAPs, table shells and the data simulator | Done (`gate-2`; SAPs frozen at `sap-201-v1.0`, `sap-301-v1.0`) |
-| F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation, TLFs | Done on blinded data; database locked (`dblock-301`) |
-| F4 · Safety and phase II | Safety TLFs, MCP-Mod dose finding, clinical utility index; blinded pooled safety review | Done on blinded data; database locked (`dblock-201`) |
+| F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation, TLFs | Done; database locked (`dblock-301`) and unblinded |
+| F4 · Safety and phase II | Safety TLFs, MCP-Mod dose finding, clinical utility index; blinded pooled safety review | Done; database locked (`dblock-201`) and unblinded |
 | F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | Planned |
-| F6 · Publication | Study reports, reviewer's guides, interactive app and website | In progress: clinical study reports and reviewer's guides (cSDRG, ADRG) of both studies done, blinded; the integrated safety by treatment waits for the unblinding, which the reviewer has not authorised |
+| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety plan drafted |
 
 ### Blinding
 
-Both databases are locked, and **both studies are still blinded**. Locking and unblinding are
-two decisions ([ADR 0032](docs/adr/0032-locking-does-not-unblind.md)): the pipeline uses the
-real treatment arms only when a study is locked **and** the reviewer has committed
-`docs/unblind/unblind-<study>.yml` with `status: authorised`. Until then every result by arm
-uses a dummy assignment (the real arms shuffled within stratum with a public seed,
-[ADR 0027](docs/adr/0027-blinded-data-review-and-lock.md)), and every output and report says
-so on its face. Nothing in this repository is a result of FJF-2026 against placebo.
+Both databases are locked and **both studies are unblinded**. Locking and unblinding were two
+decisions ([ADR 0032](docs/adr/0032-locking-does-not-unblind.md)): the pipeline uses the real
+treatment arms only when a study is locked **and** the reviewer has committed
+`docs/unblind/unblind-<study>.yml` with `status: authorised`. The order is in the history: the
+SAPs were frozen (`sap-*-v1.0`) before the data were generated, the programs were written and
+checked on a dummy assignment ([ADR 0027](docs/adr/0027-blinded-data-review-and-lock.md)), the
+databases were locked (`dblock-*`), and the reviewer then authorised the unblinding (commit
+`77910f1`). No frozen file or program changed after the unblinding.
 
 ### What the pipeline produces
 
@@ -32,7 +33,7 @@ so on its face. Nothing in this repository is a result of FJF-2026 against place
 | --- | --- | --- |
 | SDTM and ADaM packages with define.xml | `data/sdtm/<study>`, `data/adam/<study>` | Double-programmed; conformance notes in `studies/<study>/conformance.md` |
 | Tables and figures | `studies/<study>/output/tlf` | Traced to the SAP in `docs/sap/fjf-2026-<study>-outputs.yml`; tables double-programmed |
-| Clinical study reports (ICH E3) | `studies/<study>/output/csr` | From `studies/<study>/csr.qmd`; blinded, discussion pending the unblinding |
+| Clinical study reports (ICH E3) | `studies/<study>/output/csr` | From `studies/<study>/csr.qmd`; real arms |
 | Reviewer's guides (cSDRG, ADRG) | `studies/<study>/csdrg.qmd`, `adrg.qmd` | PHUSE templates |
 | Blinded pooled safety review | `studies/iss/output/tlf` | Columns are the studies, never an arm ([ADR 0033](docs/adr/0033-blinded-pooled-safety-review.md)) |
 

@@ -6,8 +6,9 @@ format: html
 
 ::: {.callout-note}
 Written with the ADaM (F3 day 9) and completed with the clinical study report, after the
-database lock (tag `dblock-301`). The study is still blinded (ADR 0032): the counts here are of
-the locked data and do not depend on the arms. The structure follows the PHUSE ADRG template.
+database lock (tag `dblock-301`). The reviewer then authorised the unblinding
+(`docs/unblind/unblind-301.yml`, ADR 0032). The counts here are of the locked data and do not
+depend on the arms. The structure follows the PHUSE ADRG template.
 The data are simulated and the sponsor is fictional.
 :::
 
@@ -25,7 +26,7 @@ table and figure to the variables it uses.
 
 See the cSDRG, section 2. The analysis sets are those of the SAP:
 
-| Set | Flag | Definition | Patients (blinded) |
+| Set | Flag | Definition | Patients |
 | --- | --- | --- | ---: |
 | Full analysis | FASFL | Randomised | 300 |
 | Safety | SAFFL | Randomised and dosed; by treatment taken | 300 |
@@ -47,7 +48,7 @@ per-protocol set for a deviation.
   on-treatment and pre-rescue flags are judged at the target day. The multiple-imputation
   models then see every scheduled visit.
 - **Baselines**: for efficacy, the last value on or before randomisation, with a missing
-  HbA1c baseline replaced by the stratum mean (BIMPFL; none on the blinded data). For safety
+  HbA1c baseline replaced by the stratum mean (BIMPFL; none). For safety
   (ADLB, ADVS), the last value on or before the first dose.
 - **Intercurrent events**:
   - ONTRTFL marks values on treatment (up to 7 days after the last dose).
@@ -61,11 +62,9 @@ per-protocol set for a deviation.
   a multiple of the limit crossed; if none is outside, the last on treatment. 33 patients
   stopped treatment before week 12, the first chemistry visit after baseline, so they have no
   worst value for the chemistry tests.
-- **Blinding**: the database is locked but the study is not unblinded (ADR 0032). The
-  treatment variables (TRT01P, TRT01A, TRTP, TRTA and their numeric codes) are a dummy
-  assignment (ADR 0027), and every result by arm is a check of the programs, not a study
-  result. After an authorised unblinding the datasets are rebuilt with the real assignment by
-  the same programs.
+- **Blinding**: the database is locked and the reviewer authorised the unblinding (ADR 0032).
+  The treatment variables (TRT01P, TRT01A, TRTP, TRTA and their numeric codes) are the real
+  ones. Before the unblinding the same programs ran on a dummy assignment (ADR 0027).
 - **Vital signs outside limits** (ADVS.CRIT1FL, CRIT2FL): the SAP names them but does not
   give them. The reviewer set them before the lock: systolic ≥ 160 or ≤ 90 mmHg, diastolic
   ≥ 100 or ≤ 50 mmHg, pulse ≥ 120 or ≤ 50 beats/min, weight ±7% from baseline (ADR 0028).
@@ -86,7 +85,7 @@ production on all datasets.
 
 ## 5. Datasets
 
-| Dataset | Class | Records (blinded) | Key variables |
+| Dataset | Class | Records | Key variables |
 | --- | --- | ---: | --- |
 | ADSL | Subject level | 300 | analysis sets, treatment dates, intercurrent-event dates, baselines |
 | ADEFF | BDS | HbA1c and weight by analysis visit | PARAMCD, AVISITN, ANL01FL, ANL02FL, CRIT1FL |
