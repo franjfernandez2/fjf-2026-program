@@ -1,0 +1,122 @@
+# Tables, listing and figures of the integrated safety analysis of FJF-2026 by treatment, and
+# their traceability. Each output names the analysis of the frozen plan it implements
+# (docs/sap/fjf-2026-iss-sap.yml, version 1.0, tag iss-sap-v1.0; ADR 0034), the ADaM variables
+# it reads and the program that makes it. The implementation choices the plan leaves open are in
+# ADR 0035. The blinded pooled review, with the studies as columns, is another specification
+# (docs/sap/fjf-2026-iss-outputs.yml, ADR 0033); its numbering (T-ISS-1 to T-ISS-7) continues here.
+#
+# `source` names the FJF-2026-301 program that makes the table unchanged, run on the pooled
+# datasets; an output without `source` has its own program.
+
+study: FJF-2026 integrated safety
+plan: docs/sap/fjf-2026-iss-sap.yml
+adam_datasets: [ADSL, ADAE, ADHYPO, ADLB, ADEX]
+studies: ["201", "301"]
+
+outputs:
+  - id: T-ISS-8
+    type: table
+    title: Exposure to study drug by treatment, placebo-controlled pool
+    population: SAF
+    sap: [I6]
+    source: T-14.3.6
+    adam: [ADEX.TRTDURD, ADEX.TRTDURY, ADEX.COMPLPCT]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Pool columns. Duration in days, total patient-years, compliance.
+  - id: T-ISS-9
+    type: table
+    title: Overview of treatment-emergent adverse events by treatment, placebo-controlled pool
+    population: SAF
+    sap: [I1]
+    adam: [ADAE.TRTEMFL, ADAE.AEREL, ADAE.ASEV, ADAE.AESER, ADAE.AEACN, ADAE.AEOUT, ADEX.TRTDURY]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Pool columns, each with n (%) and the exposure-adjusted incidence rate.
+  - id: T-ISS-10
+    type: table
+    title: Overview of treatment-emergent adverse events, FJF-2026 20 mg against placebo, stratified by study
+    population: SAF
+    sap: [I1]
+    adam: [ADAE.TRTEMFL, ADAE.AEREL, ADAE.ASEV, ADAE.AESER, ADAE.AEACN, ADAE.AEOUT, ADSL.STUDYID]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: n/N (%) of each arm in each study and pooled; Mantel-Haenszel risk difference with its 95% CI.
+  - id: T-ISS-11
+    type: table
+    title: Treatment-emergent adverse events by system organ class and preferred term, patients, by treatment
+    population: SAF
+    sap: [I2]
+    adam: [ADAE.AEBODSYS, ADAE.AEDECOD, ADAE.TRTEMFL, ADEX.TRTDURY]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Pool columns, each with n (%) and the exposure-adjusted incidence rate; sorted by frequency on all doses.
+  - id: T-ISS-12
+    type: table
+    title: Treatment-emergent adverse events by system organ class and preferred term, events, by treatment
+    population: SAF
+    sap: [I2]
+    adam: [ADAE.AEBODSYS, ADAE.AEDECOD, ADAE.TRTEMFL, ADEX.TRTDURY]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Pool columns, each with the events and the events per 100 patient-years; same order as T-ISS-11.
+  - id: T-ISS-13
+    type: table
+    title: Common treatment-emergent adverse events, FJF-2026 20 mg against placebo, stratified by study
+    population: SAF
+    sap: [I2]
+    adam: [ADAE.AEDECOD, ADAE.TRTEMFL, ADSL.STUDYID]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Preferred terms with an incidence of 2% or more in any FJF-2026 column; as T-ISS-10.
+  - id: T-ISS-14
+    type: table
+    title: Hypoglycaemia by level and treatment, placebo-controlled pool
+    population: SAF
+    sap: [I3]
+    source: T-14.3.3
+    adam: [ADHYPO.HYPOLVL, ADHYPO.ONTRTFL, ADEX.TRTDURY]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Pool columns, each with n (%), episodes and episodes per 100 patient-years.
+  - id: T-ISS-15
+    type: table
+    title: Level 2 or 3 hypoglycaemia, FJF-2026 20 mg against placebo, negative binomial model
+    population: SAF
+    sap: [I3]
+    adam: [ADHYPO.HYPOLVL, ADHYPO.ONTRTFL, ADEX.TRTDURY, ADSL.STUDYID]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Patients, episodes, patient-years and rate of each arm in each study and pooled; rate ratio with its 95% CI.
+  - id: T-ISS-16
+    type: table
+    title: Dose-response of safety in FJF-2026-201
+    population: SAF
+    sap: [I4]
+    adam: [ADAE.TRTEMFL, ADAE.AEACN, ADHYPO.HYPOLVL, ADHYPO.ONTRTFL, ADSL.TRT01A]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Doses of FJF-2026-201 in columns. n (%) of any TEAE, TEAE leading to discontinuation, level 2 or 3 hypoglycaemia.
+  - id: F-ISS-1
+    type: figure
+    title: Dose-response of safety in FJF-2026-201
+    population: SAF
+    sap: [I4]
+    adam: [ADAE.TRTEMFL, ADAE.AEACN, ADHYPO.HYPOLVL, ADHYPO.ONTRTFL, ADSL.TRT01AN]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Percentage of patients against dose, one line per measure of T-ISS-16. No test.
+  - id: T-ISS-17
+    type: table
+    title: Liver safety by treatment, placebo-controlled pool
+    population: SAF
+    sap: [I5]
+    adam: [ADLB.PARAMCD, ADLB.AVAL, ADLB.ANRHI, ADLB.ONTRTFL]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: Pool columns. Peak ALT or AST above 3 times the ULN, peak bilirubin above 2 times, and both.
+  - id: L-ISS-1
+    type: listing
+    title: Patients with peak ALT or AST above 3 times and peak total bilirubin above 2 times the upper limit of normal
+    population: SAF
+    sap: [I5]
+    adam: [ADLB.PARAMCD, ADLB.AVAL, ADLB.ANRHI, ADLB.ONTRTFL, ADSL.STUDYID, ADSL.TRT01A]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: One row per patient. Study, treatment and the three peaks as multiples of the ULN.
+  - id: F-ISS-2
+    type: figure
+    title: eDISH plot of peak ALT or AST against peak total bilirubin, by treatment
+    population: SAF
+    sap: [I5]
+    adam: [ADLB.PARAMCD, ADLB.AVAL, ADLB.ANRHI, ADLB.ONTRTFL]
+    program: studies/iss/tlf/iss_treatment.R
+    layout: One point per patient, coloured by treatment. Reference lines at 3 and 2 times the ULN.

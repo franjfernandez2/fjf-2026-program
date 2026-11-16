@@ -14,7 +14,7 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation, TLFs | Done; database locked (`dblock-301`) and unblinded |
 | F4 · Safety and phase II | Safety TLFs, MCP-Mod dose finding, clinical utility index; blinded pooled safety review | Done; database locked (`dblock-201`) and unblinded |
 | F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | Planned |
-| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety plan frozen (`iss-sap-v1.0`) |
+| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety by treatment programmed and double-programmed on its frozen plan (`iss-sap-v1.0`) |
 
 ### Blinding
 
@@ -36,6 +36,7 @@ databases were locked (`dblock-*`), and the reviewer then authorised the unblind
 | Clinical study reports (ICH E3) | `studies/<study>/output/csr` | From `studies/<study>/csr.qmd`; real arms |
 | Reviewer's guides (cSDRG, ADRG) | `studies/<study>/csdrg.qmd`, `adrg.qmd` | PHUSE templates |
 | Blinded pooled safety review | `studies/iss/output/tlf` | Columns are the studies, never an arm ([ADR 0033](docs/adr/0033-blinded-pooled-safety-review.md)) |
+| Integrated safety by treatment | `studies/iss/output/treatment` | Placebo-controlled pool of both studies, by dose taken; plan in `docs/sap/fjf-2026-iss-sap.yml`, outputs in `docs/sap/fjf-2026-iss-treatment-outputs.yml` ([ADR 0034](docs/adr/0034-integrated-safety-plan.md), [ADR 0035](docs/adr/0035-integrated-safety-implementation.md)); double-programmed |
 
 Outputs are rebuilt by the pipeline and are not versioned.
 
@@ -66,7 +67,7 @@ fjf-2026-program/
 │   ├── benchmark/   CDISC pilot replication
 │   ├── 201/         phase II
 │   ├── 301/         phase III
-│   └── iss/         integrated safety (blinded pooled review)
+│   └── iss/         integrated safety (blinded pooled review, and analysis by treatment)
 ├── qc/              independent second programming and comparisons
 ├── tools/           data generation, database lock, conformance runs, local CI
 ├── app/             interactive explorer (F6, not started)
