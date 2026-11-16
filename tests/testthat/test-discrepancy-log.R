@@ -27,10 +27,13 @@ test_that("the traceability matrix is well formed", {
 })
 
 test_that("traceability rows list every output, and claim a match only where a second programming compared it", {
+  output <- function(id, type, sap, adam) {
+    list(id = id, type = type, title = id, sap = sap, population = "SAF", adam = adam, program = "p.R")
+  }
   outputs <- list(outputs = list(
-    list(id = "T-1", type = "table", title = "A", sap = list("S1"), population = "SAF", adam = list("ADAE.AEDECOD", "ADSL.SAFFL"), program = "p.R"),
-    list(id = "T-2", type = "table", title = "B", sap = list("S1", "S2"), population = "SAF", adam = list("ADAE.X"), program = "p.R"),
-    list(id = "F-1", type = "figure", title = "C", sap = list("S2"), population = "SAF", adam = list(), program = "p.R")
+    output("T-1", "table", list("S1"), list("ADAE.AEDECOD", "ADSL.SAFFL")),
+    output("T-2", "table", list("S1", "S2"), list("ADAE.X")),
+    output("F-1", "figure", list("S2"), list())
   ))
   comparison <- list(cells = data.frame(id = c("T-1", "T-1", "T-2"), match = c(TRUE, TRUE, FALSE)))
   rows <- traceability_rows(outputs, "FJF-2026-999", "qc.R", comparison)
@@ -44,7 +47,11 @@ test_that("traceability rows list every output, and claim a match only where a s
 
 test_that("the traceability matrix of the programme has a row for each output of each study", {
   matrix <- utils::read.csv(here::here("docs", "traceability-matrix.csv"), colClasses = "character")
-  for (spec in c("fjf-2026-301-outputs.yml", "fjf-2026-201-outputs.yml", "fjf-2026-iss-outputs.yml", "fjf-2026-iss-treatment-outputs.yml")) {
+  specs <- c(
+    "fjf-2026-301-outputs.yml", "fjf-2026-201-outputs.yml", "fjf-2026-iss-outputs.yml",
+    "fjf-2026-iss-treatment-outputs.yml"
+  )
+  for (spec in specs) {
     ids <- purrr::map_chr(read_outputs(here::here("docs", "sap", spec))$outputs, "id")
     expect_true(all(ids %in% matrix$output_id), info = spec)
   }
