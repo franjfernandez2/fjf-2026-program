@@ -1,0 +1,83 @@
+---
+title: "Nota explicativa: fase F3, fase III (FJF-2026-301)"
+author: "Francisco Fernández"
+date: 2026-11-16
+---
+
+Esta nota cubre la F3: del dato crudo de la 301 a los ADaM, el análisis del SAP congelado, las tablas y figuras y el cierre de la base de datos (PR 30 a 46, más el cierre y el desciego, PR 51 y 55). Las preguntas de control están sin responder: son tuyas (ADR 0004). Al final están las puertas que faltan.
+
+# Qué se ha hecho
+
+| Pieza | Dónde vive | Pull request |
+|---|---|---|
+| Reglas de limpieza (CR01 a CR10) y paquetes de SDTM y tablas | `docs/specs/cleaning-rules.yml`, ADR 0026 | 30 |
+| Asignación ciega a un reparto falso y dominios DM, DS, SV | `studies/301/sdtm/`, ADR 0027 | 31 |
+| SDTM de exposición, medicación, acontecimientos adversos (EX, DA, CM, AE, SUPPAE) | `studies/301/sdtm/` | 32 |
+| SDTM de laboratorio, constantes y eventos (LB, VS, CE, SUPPCE) | `studies/301/sdtm/` | 33 |
+| Paquete SDTM: XPT, define.xml, Pinnacle 21 y segunda programación | `tools/run-p21-sdtm.sh`, `qc/301/sdtm_qc.R` | 34 |
+| Especificación ADaM y ADSL | `docs/specs/adam-301.yml`, `studies/301/adam/adsl.R` | 35 |
+| ADEFF, ADTTE y la población por protocolo | `studies/301/adam/adeff.R`, `adtte.R` | 36 |
+| ADaM de seguridad: ADEX, ADAE, ADHYPO, ADLB, ADVS | `studies/301/adam/safety.R` | 37 |
+| Segunda programación de ADaM, define.xml, Pinnacle 21 y guía ADRG | `qc/301/adam_qc.R`, `studies/301/adrg.qmd` | 38 |
+| Análisis del SAP sobre los datos del estudio | `studies/301/analysis/` | 39 |
+| CDISC CORE, y dos correcciones que salieron de él | `tools/run-core-study.sh`, `studies/301/conformance.md` | 40, 41, 42 |
+| Límites de constantes vitales (ADR 0028) y herramienta de cierre de la base | `tools/lock-database.sh`, ADR 0028 | 43 |
+| Presupuesto de minutos de CI | ADR 0029 | 45 |
+| Tablas y figuras de la 301, con segunda programación | `studies/301/tlf/`, `qc/301/tlf_qc.R` | 46 |
+| Cierre de la base de datos (etiqueta `dblock-301`) y desciego | `docs/lock/`, `docs/unblind/`, ADR 0032 | 51, 55 |
+
+# Por qué se ha hecho así
+
+- **El dato crudo no se toca** ([ADR 0026](../adr/0026-cleaning-rules-and-mapping.md)). Los errores que dejó pasar el EDC (duplicados, fechas parciales, visitas fuera de ventana, libras, metros, resultados como «<8», gravedad vacía) tienen una regla cada uno, con su motivo y la capa donde actúa. SDTM conserva lo recogido, ADaM imputa y marca cada imputación con una bandera. Sin un sitio al que preguntar, cada regla se decidió antes de mapear.
+- **Los duplicados conservan la primera entrada.** Una regla que eligiera entre duplicados distintos por verosimilitud habría elegido mirando el resultado.
+- **Las visitas de análisis salen de las ventanas del SAP**, así que no se descarta ninguna medida por llegar tarde.
+- **Todo se programó a ciegas** ([ADR 0027](../adr/0027-blinded-data-review-and-lock.md)). Hasta el cierre, el pipeline usa un reparto falso: los brazos reales barajados dentro de cada estrato con una semilla pública. Las tablas tienen la forma de las reales y no significan nada. Así, ningún arreglo de un programa se puede sospechar de seguir un resultado.
+- **El cierre es un fichero y una etiqueta.** `docs/lock/dblock-301.yml` lo escribe `tools/lock-database.sh`, que comprueba el árbol limpio y crea la etiqueta. Lo que depende del resultado queda congelado: cambiarlo después es una desviación.
+- **Cerrar no es desenmascarar** ([ADR 0032](../adr/0032-locking-does-not-unblind.md)). Con la regla inicial, el primer `tar_make()` tras el cierre, de cualquiera y también en la CI, habría usado los brazos reales. Se separaron las dos decisiones: el pipeline solo usa los brazos reales si la base está cerrada y tú has escrito `docs/unblind/unblind-301.yml` con `status: authorised`. Lo escribiste tú, en tu commit `77910f1`.
+- **Las decisiones de análisis que el SAP no cerraba se tomaron antes del cierre** ([ADR 0028](../adr/0028-pre-lock-analysis-decisions-301.md)): límites de constantes vitales, la última dosis tras el último bote (CR10), los bordes de los elementos de SE, las ventanas del peso, las fechas de inicio parciales y el peor valor de laboratorio.
+- **El análisis del SAP no se reescribió.** El pipeline convierte los ADaM a la forma que leía el ensayo en seco de la F2 y ejecuta las mismas funciones con las semillas del SAP. Lo que se probó en seco es lo que se ejecutó.
+- **Dos programaciones independientes en tres niveles.** SDTM (diez dominios), ADaM (siete conjuntos) y tablas (celda a celda) se vuelven a escribir en R base, sin los programas ni las funciones de apoyo de producción, y `diffdf` las compara. Una diferencia para el pipeline. Su límite sigue declarado: el mismo asistente escribió las dos.
+- **Resultado con los brazos reales:** H1 (cambio de HbA1c en la semana 26) se rechaza bajo el grafo; H2, H3 y H4 no (tabla T-14.2.7). La doble programación sigue limpia con los brazos reales.
+
+# Lo que salió mal y cómo se resolvió
+
+1. **Pinnacle 21 encontró fallos reales en el primer paso** (PR 34). Faltaban los dominios de diseño (TA, TE, TV, TI, TS) y SE, y EPOCH en todos. RFPENDTC era la fecha de la página de fin de estudio aunque había visitas posteriores; EXENDTC caía después de la última dosis; el eGFR usaba EGFR, que en la terminología de CDISC es otra cosa. Se corrigieron los programas, no se explicaron.
+2. **Un arreglo pisó una herramienta del benchmark** (PR 38). El ejecutor de Pinnacle 21 para ADaM de la F3 sobrescribió el del benchmark. Se restauró tal cual y el de los estudios tiene su propio nombre.
+3. **Las banderas por registro eran Y/N.** El ADaM-IG solo admite «Y» o vacío. Se cambiaron, y la entrada del análisis vuelve a convertir el vacío en «N» para las funciones de la F2.
+4. **CDISC CORE no tiene reglas ADaM publicadas** (PR 40), como ya pasó en el benchmark. En SDTM, 27 incidencias; casi todas son falsos positivos o lo mismo que Pinnacle 21, y cada una está explicada en `studies/301/conformance.md`. ADaM descansa en Pinnacle 21 y en la segunda programación.
+5. **CORE encontró dos cosas reales** (PR 41 y 42). Los elementos de SE terminaban el día antes de empezar el siguiente, y SDTMIG pide que coincidan (594 registros; EPOCH no cambió). Y en 129 pacientes la fecha de última dosis de la página de disposición era de 1 a 8 días posterior al fin del último bote. Decidiste, como gestor de datos y antes del cierre, que manda la fecha de disposición (CR10).
+6. **Gravedad vacía** (CR09). Cuatro acontecimientos sin gravedad cuentan como graves en ADAE, con bandera. Es conservador: no esconde seguridad.
+7. **Cuatro acontecimientos que terminan antes de empezar** (CR08). Se conserva la fecha recogida en SUPPAE y no se usa la duración.
+8. **El cierre habría desenmascarado.** Se vio al revisar el pipeline tras `dblock-301` y `dblock-201` (ADR 0032). El arreglo se fusionó antes de ejecutar nada con los brazos reales, y una prueba falla mientras haya un estudio autorizado sin que se haya quitado en el mismo cambio.
+9. **Los minutos gratuitos de GitHub se agotaron** (ADR 0029). La CI está pausada hasta el 1 de diciembre y la comprobación válida es `tools/ci-local.sh` sobre un clon limpio. Hay dos fallos de prueba conocidos que solo ocurren con la base de datos local ya cargada.
+10. **No se doble-programan SV, DA, los SUPP-- ni los dominios de diseño.** Copian una columna del crudo o del protocolo y sus pruebas los comprueban. Está dicho en los informes de conformidad.
+
+# Puerta 3: lo que falta, y es tuyo
+
+El plan detallado de la F3 está en la pestaña «Fase 3» del dossier, que no está en el repositorio; esta lista sale de lo que el repositorio ya demuestra.
+
+1. ~~SDTM y ADaM con doble programación limpia y sin incidencias sin explicar~~: hecho (con los brazos reales también).
+2. ~~Análisis del SAP, tablas y figuras con segunda programación~~: hecho.
+3. ~~Cierre de la base de datos~~: `dblock-301`, 2026-11-13. ~~Desciego autorizado~~: 2026-11-13.
+4. **Comparar las estimaciones con la verdad sellada.** Solo la puedes abrir tú, cuando des los análisis por finales (ADR 0018).
+5. **Discusión y conclusiones del informe de estudio.** El código dice que las escribe el equipo del estudio tras el desciego.
+6. ~~Aceptar los ADR 0029 a 0033~~: aceptados el 2026-11-16. **Revisar y aprobar por escrito las PR 30 a 46.**
+7. **Responder las preguntas de control de abajo sin mirar.**
+8. **Etiqueta `gate-3`.**
+
+# Preguntas de control
+
+Respóndelas en voz alta, sin mirar, como en una entrevista. Esta vez no hay respuestas escritas.
+
+1. ¿Por qué no se corrige el dato crudo, y dónde actúa cada regla de limpieza? ¿Qué pasa con dos duplicados que difieren? (ADR 0026)
+2. ¿Qué es la revisión ciega de datos y por qué se programó con un reparto falso? ¿Qué mantiene la forma de las tablas y qué pierde? (ADR 0027)
+3. ¿Por qué cerrar la base de datos no es desenmascarar? ¿Qué habría pasado con la regla inicial, y qué comprueba hoy el pipeline? (ADR 0032)
+4. Explica la diferencia entre `TRTEMFL`, `ONTRTFL` y `PRERESFL`. ¿Cómo se imputa la fecha de inicio parcial de un acontecimiento adverso y qué bandera lo deja a la vista? (ADR 0028)
+5. ¿Por qué la segunda programación de ADaM parte del SDTM en XPT y no de los objetos de producción? ¿Qué no cubre?
+6. ¿Qué es «jump to reference», y por qué el pipeline ejecuta las funciones de la F2 sin cambiarlas en vez de reescribirlas?
+7. CORE señaló los bordes de SE y la última dosis. ¿Por qué se arreglaron en el programa o con una regla en vez de dejarlos explicados? ¿Por qué se decidió antes del cierre?
+8. Con los brazos reales, H1 se rechaza y H2 a H4 no. ¿Cómo funciona el grafo de multiplicidad y qué significa que H2 tenga un p ajustado mayor que su p sin ajustar?
+
+# Respuestas
+
+Sin respuestas escritas: son tuyas. Las de F0, F1 y F2 las escribió el asistente a petición tuya, y consta como desviación de `docs/ai-assistance.md`. Para esta fase la regla se aplica entera.

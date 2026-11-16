@@ -1,0 +1,71 @@
+---
+title: "Nota explicativa: fase F4, fase II (FJF-2026-201) y seguridad"
+author: "Francisco Fernández"
+date: 2026-11-16
+---
+
+Esta nota cubre la F4: la fase II con MCP-Mod, su paquete de datos, las tablas de seguridad, el índice de utilidad clínica y la revisión ciega de seguridad agrupada (PR 47 a 53). El análisis de seguridad integrado por tratamiento (PR 54 y 57) es de la F6 y tiene su propio plan. Las preguntas de control están sin responder: son tuyas (ADR 0004).
+
+# Qué se ha hecho
+
+| Pieza | Dónde vive | Pull request |
+|---|---|---|
+| SDTM de la 201 con los programas de la 301 y su propia semilla ciega | `docs/specs/sdtm-201.yml`, ADR 0030 | 47 |
+| ADaM de la 201 y análisis MCP-Mod sobre los datos del estudio | `docs/specs/adam-201.yml`, `studies/201/analysis/data.R` | 48 |
+| Tablas, figuras e índice de utilidad clínica | `docs/sap/fjf-2026-201-outputs.yml`, `studies/201/tlf/`, ADR 0031 | 49 |
+| Cierre de la base de datos de la 201 (etiqueta `dblock-201`) | `docs/lock/dblock-201.yml` | directo en `main` |
+| CI en un clon limpio; los ficheros de cierre nombran los ADR de su estudio | `tools/ci-local.sh` | 50 |
+| Cerrar no desenmascara | ADR 0032 | 51 |
+| Informes de estudio (ICH E3) de la 301 y la 201 | `studies/<estudio>/csr.qmd` | 52 |
+| Guías del revisor (cSDRG, ADRG) y revisión ciega de seguridad agrupada | `studies/<estudio>/csdrg.qmd`, `studies/iss/`, ADR 0033 | 53 |
+| Desciego de las dos bases | `docs/unblind/` | 55 |
+
+# Por qué se ha hecho así
+
+- **La 201 reutiliza los programas de la 301** ([ADR 0030](../adr/0030-study-201-reuses-301-programs.md)). Los dos estudios tienen la misma capa cruda, la misma CRF y las mismas derivaciones, para poder agruparlos. Lo que cambia (brazos, visitas, ventanas, visita primaria y resúmenes de diseño) va en la especificación, no en el código. Un arreglo de un programa compartido arregla los dos estudios.
+- **La 201 tiene su propia ceguera, su propio cierre y su propia semilla falsa** (201201, elegida por ti). El reparto real solo entra con tu autorización.
+- **MCP-Mod sobre los datos del estudio, con el código de la F2 sin cambiar.** El SAP congelado define el análisis y el ensayo en seco lo probó. La estimación de cada dosis viene de un MMRM; el paso MCP contrasta cuatro modelos (lineal, Emax, Emax sigmoide, cuadrático) y el paso Mod ajusta el de menor AIC generalizado entre los significativos y lee la dosis objetivo. Estimando hipotético: valores en tratamiento y antes del rescate.
+- **Lo que no define el SAP de la 201 se fijó antes del cierre** ([ADR 0031](../adr/0031-tlf-and-utility-index-201.md)). Se congeló sin lista de salidas, así que catorce salidas y los detalles del índice de utilidad clínica se escribieron con datos ciegos, para que nada dependiera del resultado.
+- **El índice de utilidad clínica es exploratorio.** Combina el efecto en HbA1c (peso 0,7) y la proporción con acontecimientos que llevan a retirar el fármaco (peso 0,3), cada uno escalado a [0, 1] entre las dosis estudiadas. Ordena dosis; no mide beneficio.
+- **Las tablas de seguridad de la 201 son los programas de la 301** con pocas líneas por salida, y el pipeline las compara con la segunda programación de la 201.
+- **La revisión ciega de seguridad agrupada** ([ADR 0033](../adr/0033-blinded-pooled-safety-review.md)). Mientras los estudios seguían ciegos, se agruparon sobre todos los brazos y las columnas eran los estudios, nunca un brazo. Así se ve el tamaño de la base de seguridad, la exposición y las tasas globales sin revelar nada.
+- **Resultado con los brazos reales.** Hay señal dosis-respuesta con los cuatro modelos (p ajustados entre 0,0012 y 0,0167). Se elige el modelo cuadrático y la dosis objetivo es 20 mg: efecto ajustado de −0,38 puntos con 20 mg y −0,30 con 40 mg, así que la curva cuadrática se aplana y baja en la dosis alta. Los tres análisis (primario, promediado de modelos y todos los valores observados) coinciden en 20 mg. El índice de utilidad clínica da 0,80 a 20 mg y 0,74 a 40 mg.
+
+# Lo que salió mal y cómo se resolvió
+
+1. **La 201 hereda el cumplimiento de la 301, y mide mal.** Las columnas de la 201 muestran un cumplimiento medio de unos 186 %. La 201 es doble simulación y todos toman dos comprimidos al día, y la derivación de la 301 cuenta uno. No depende del brazo y ningún resultado de eficacia ni de seguridad de la 201 lo usa. El estudio está cerrado y desenmascarado, así que corregirlo es una decisión tuya y necesita su registro; no se ha tocado (ADR 0035, hallazgos).
+2. **Conformidad de la 201.** Pinnacle 21 da 19 reglas, todas entre las 20 de la 301, y ninguna nueva. CORE da las mismas 26 reglas que la 301, y sigue sin tener reglas ADaM.
+3. **El cierre desenmascaraba** (PR 51). Es el mismo problema que en la 301: cerrar `dblock-201` activaba los brazos reales en el siguiente `tar_make()`. Está en la nota de la F3.
+4. **El ensayo en seco de la 201 daba 20 mg solo el 46 % de las veces.** Se avisó en la F2: la 201 demuestra el efecto mejor que la dosis. Aquí sale 20 mg en los tres análisis, pero eso no quita que con otra semilla pudiera haber salido una dosis vecina.
+5. **Los minutos de CI de GitHub se agotaron.** Está en la nota de la F3 (ADR 0029): la comprobación válida es `tools/ci-local.sh`.
+6. **Las guías del revisor se escribieron con datos ciegos** y se retocaron tras el desciego (README y guías, commit `73f514e`), sin cambiar ningún programa.
+
+# Puerta 4: lo que falta, y es tuyo
+
+Como en la F3, el plan detallado de la F4 está en el dossier y no en el repositorio.
+
+1. ~~SDTM, ADaM, análisis y tablas de la 201 con segunda programación limpia~~: hecho.
+2. ~~Cierre de la base de datos de la 201~~: `dblock-201`, 2026-11-13. ~~Desciego~~: 2026-11-13.
+3. ~~Revisión ciega de seguridad agrupada~~: hecha (ADR 0033).
+4. **Aprobar por escrito las PR 47 a 53.** Los ADR 0030 a 0033 están aceptados desde el 2026-11-16.
+5. **Decidir qué hacer con el cumplimiento de la 201** (hallazgo 1).
+6. **Comparar las estimaciones con la verdad sellada**, incluida la curva dosis-respuesta de la 201. Solo tú puedes abrirla.
+7. **Responder las preguntas de control de abajo sin mirar.**
+8. **Etiqueta `gate-4`.**
+
+# Preguntas de control
+
+Respóndelas en voz alta, sin mirar, como en una entrevista. No hay respuestas escritas.
+
+1. ¿Qué ventaja y qué riesgo tiene que la 201 use los programas de la 301? ¿Dónde debe ir lo que difiere entre los dos estudios? (ADR 0030)
+2. En MCP-Mod, ¿qué decide el paso MCP y qué decide el paso Mod? ¿Por qué se usan cuatro modelos candidatos en vez de uno?
+3. ¿Cómo se define la dosis objetivo aquí? Con el modelo cuadrático, ¿por qué 40 mg da un efecto menor que 20 mg, y qué dirías a un clínico que pregunta si 40 mg es mejor?
+4. ¿Qué mide el índice de utilidad clínica, de dónde salen sus pesos y por qué es solo exploratorio? ¿Qué cambiaría si el peso de la seguridad fuera 0,5? (ADR 0031)
+5. ¿Por qué el estimando de la 201 es hipotético y el de la 301 es de política de tratamiento?
+6. ¿Qué es una revisión ciega agrupada y qué se puede aprender de ella sin revelar nada? ¿Por qué sus columnas son los estudios y nunca un brazo? (ADR 0033)
+7. La 201 muestra un cumplimiento del 186 %. ¿Cuál es la causa, por qué no afecta a los resultados y por qué no se corrigió sin más?
+8. El plan de seguridad integrada se escribió antes de leer los resultados con los brazos reales. ¿Cómo lo demuestra el historial, y qué análisis se etiquetaría como post hoc? (ADR 0034)
+
+# Respuestas
+
+Sin respuestas escritas: son tuyas.
