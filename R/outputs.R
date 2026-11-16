@@ -70,3 +70,49 @@ traceability_301 <- function(outputs) {
     )
   })
 }
+
+#' The rows of the traceability matrix for the outputs of one study or analysis.
+#'
+#' One row per output, in the columns of `docs/traceability-matrix.csv`. The shell of an output is
+#' its entry in the outputs specification, which fixes layout, population and variables. An output
+#' is `match` when its second programming exists and every cell it compared is equal, and
+#' `not started` when it has none (figures, and tables the second programming does not cover):
+#' the matrix does not claim a check that was not made.
+#'
+#' @param outputs The result of [read_outputs()].
+#' @param study Study as printed ("FJF-2026-301", ...).
+#' @param qc_program Path of the second programming of the study's tables.
+#' @param comparison The comparison of the second programming (`cells` with `id` and `match`), or NULL.
+#' @param plan What an output without a `sap` entry implements (the blinded pooled review: its ADR).
+#' @return A data frame in the columns of the matrix.
+traceability_rows <- function(outputs, study, qc_program, comparison = NULL, plan = "") {
+  compared <- if (is.null(comparison)) character() else unique(comparison$cells$id)
+  clean <- vapply(compared, function(id) all(comparison$cells$match[comparison$cells$id == id]), TRUE)
+  rows <- lapply(outputs$outputs, function(o) {
+    refs <- unlist(o$adam)
+    covered <- o$id %in% compared
+    data.frame(
+      output_id = o$id, study = study, type = o$type, title = o$title,
+      sap_section = if (length(o$sap) == 0) plan else paste(unlist(o$sap), collapse = "; "), population = o$population,
+      adam_datasets = paste(unique(sub("[.].*", "", refs)), collapse = "; "),
+      key_variables = paste(sub("^[A-Z]+[.]", "", refs), collapse = "; "),
+      program = o$program, qc_program = if (covered) qc_program else "",
+      qc_status = if (!covered) "not started" else if (clean[[o$id]]) "match" else "mismatch",
+      shell_id = o$id, stringsAsFactors = FALSE
+    )
+  })
+  do.call(rbind, rows)
+}
+
+#' Write the traceability matrix: the benchmark rows already in the file, then the rows given.
+#'
+#' @param rows Data frame in the columns of the matrix (studies and analyses of the programme).
+#' @param path Path of the CSV.
+#' @return The path.
+write_traceability <- function(rows, path) {
+  old <- if (file.exists(path)) utils::read.csv(path, colClasses = "character") else NULL
+  keep <- if (is.null(old)) NULL else old[old$study == "CDISCPILOT01", ]
+  out <- rbind(keep, rows[, names(rows) %in% names(keep) | is.null(keep)])
+  utils::write.csv(out, path, row.names = FALSE, na = "")
+  path
+}

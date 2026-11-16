@@ -21,7 +21,40 @@ test_that("the traceability matrix is well formed", {
     "output_id", "study", "type", "title", "sap_section", "population", "adam_datasets",
     "key_variables", "program", "qc_program", "qc_status", "shell_id"
   ))
-  expect_false(anyDuplicated(matrix$output_id) > 0)
+  expect_false(anyDuplicated(paste(matrix$study, matrix$output_id)) > 0)
   expect_true(all(matrix$type %in% c("table", "listing", "figure")))
   expect_true(all(matrix$qc_status %in% c("not started", "in progress", "match", "explained", "mismatch")))
+})
+
+test_that("traceability rows list every output, and claim a match only where a second programming compared it", {
+  output <- function(id, type, sap, adam) {
+    list(id = id, type = type, title = id, sap = sap, population = "SAF", adam = adam, program = "p.R")
+  }
+  outputs <- list(outputs = list(
+    output("T-1", "table", list("S1"), list("ADAE.AEDECOD", "ADSL.SAFFL")),
+    output("T-2", "table", list("S1", "S2"), list("ADAE.X")),
+    output("F-1", "figure", list("S2"), list())
+  ))
+  comparison <- list(cells = data.frame(id = c("T-1", "T-1", "T-2"), match = c(TRUE, TRUE, FALSE)))
+  rows <- traceability_rows(outputs, "FJF-2026-999", "qc.R", comparison)
+  expect_identical(rows$qc_status, c("match", "mismatch", "not started"))
+  expect_identical(rows$qc_program, c("qc.R", "qc.R", ""))
+  expect_identical(rows$adam_datasets[1], "ADAE; ADSL")
+  expect_identical(rows$key_variables[1], "AEDECOD; SAFFL")
+  expect_identical(rows$sap_section[2], "S1; S2")
+  expect_identical(traceability_rows(outputs, "X", "qc.R", NULL, "ADR 1")$qc_status, rep("not started", 3))
+})
+
+test_that("the traceability matrix of the programme has a row for each output of each study", {
+  matrix <- utils::read.csv(here::here("docs", "traceability-matrix.csv"), colClasses = "character")
+  specs <- c(
+    "fjf-2026-301-outputs.yml", "fjf-2026-201-outputs.yml", "fjf-2026-iss-outputs.yml",
+    "fjf-2026-iss-treatment-outputs.yml"
+  )
+  for (spec in specs) {
+    ids <- purrr::map_chr(read_outputs(here::here("docs", "sap", spec))$outputs, "id")
+    expect_true(all(ids %in% matrix$output_id), info = spec)
+  }
+  # A match needs a second programming.
+  expect_true(all(nzchar(matrix$qc_program[matrix$qc_status == "match"])))
 })
