@@ -1,6 +1,6 @@
 # ADR 0030: FJF-2026-201 uses the SDTM and ADaM programs of FJF-2026-301
 
-- **Status:** Proposed (for the reviewer's review)
+- **Status:** Accepted (reviewer, 2026-11-16)
 - **Date:** 2026-11-13
 - **Decided by:** proposed by the programmer
 
