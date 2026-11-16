@@ -4,7 +4,7 @@ Each package is one branch, one pull request and one fresh session. Give the ass
 
 Brief template: goal; read first; touch; do not touch; done when; check with; stop and ask if.
 
-## P1 · Traceability matrix of the studies
+## P1 · Traceability matrix of the studies (done, #60)
 
 - **Goal:** extend `docs/traceability-matrix.csv` (today only the benchmark) with every output of 301, 201 and the integrated safety analysis, generated from the outputs specifications, with `qc_status` from the second-programming comparisons.
 - **Read first:** `docs/traceability.md`, `R/outputs.R` (`traceability_301()`), `docs/sap/*-outputs.yml`.
@@ -13,7 +13,7 @@ Brief template: goal; read first; touch; do not touch; done when; check with; st
 - **Done when:** one row per output; a test fails if an output has no row or a `match` without a clean comparison.
 - **Stop and ask if:** a table has no second programming (state it, do not mark it `match`).
 
-## P2 · Extension E2: simulation study of MMRM and reference-based imputation under MNAR
+## P2 · Extension E2: simulation study of MMRM and reference-based imputation under MNAR (done)
 
 - **Goal:** bias, coverage and power of the treatment-policy analysis (rbmi, jump to reference) and the MMRM under missing-not-at-random dropout, on data generated from the **public planning values**, with public seeds (never the sealed truth, never `simulator/`).
 - **Read first:** ADR 0019 to 0021, `R/dry_run_301.R`, `R/efficacy_301.R`, `R/sample_size.R`, `docs/sap/fjf-2026-301-sap.yml`.
@@ -21,14 +21,14 @@ Brief template: goal; read first; touch; do not touch; done when; check with; st
 - **Done when:** a report with scenarios, estimands, Monte Carlo errors; plan written and committed before the results; tests.
 - **Stop and ask if:** a scenario needs a truth value that is not in the public assumptions.
 
-## P3 · Integrated safety report
+## P3 · Integrated safety report (done; the discussion is the reviewer's)
 
 - **Goal:** a Quarto report of the integrated safety analysis by treatment (tables, listing, figures of `studies/iss/output/treatment`), labelled, with the plan's principles and the post hoc rule. Draft of the discussion is marked as a draft for the reviewer.
 - **Read first:** ADR 0034 and 0035, `docs/sap/fjf-2026-iss-sap.yml`, `studies/301/csr.qmd`, `R/csr.R`.
 - **Touch:** `studies/iss/report.qmd`, `R/csr.R` helpers, `_targets.R`.
 - **Do not touch:** the plan, the tables' programs.
 
-## P4 · Interactive explorer (app/)
+## P4 · Interactive explorer (app/) (done: one static page; Shiny is not in the environment)
 
 - **Goal:** a Shiny app on aggregate, labelled results of both studies (efficacy by dose and estimand, safety by treatment), exportable as a static site. Only aggregate data, never patient rows.
 - **Read first:** `README.md` (app section), `studies/*/output/tlf`, ADR 0014.

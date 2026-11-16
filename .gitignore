@@ -59,3 +59,6 @@ _output/
 
 # --- Benchmark outputs: rebuilt by the pipeline; the rendered report page is CDISC material ---
 studies/*/output/
+
+# --- The explorer page is rebuilt by the pipeline ---
+app/output/
