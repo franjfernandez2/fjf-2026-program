@@ -39,3 +39,35 @@ test_that("a changed cell makes the comparison fail", {
   expect_true(compare_tlf_301(list("T-X" = table), expected)$clean)
   expect_false(compare_tlf_301(list("T-X" = table), qc_cell_301("T-X", "Any", "Any", "Placebo", "2 (100.0%)"))$clean)
 })
+
+test_that("the product-limit curve agrees with survival::survfit and starts at 1", {
+  set.seed(11)
+  time <- sample(1:40, 30, replace = TRUE)
+  event <- rbinom(30, 1, 0.5)
+  curve <- qc_km_curve(time, event)
+  fit <- survival::survfit(survival::Surv(time, event) ~ 1)
+  expect_equal(curve$time, c(0, fit$time))
+  expect_equal(curve$surv, c(1, fit$surv))
+})
+
+test_that("a figure's data are compared point by point and by number of points", {
+  expected <- data.frame(dose = c(0, 10, 20), est = c(0, -0.5, NA))
+  same <- qc_figure_compare("F-X", expected, expected, "dose")
+  expect_true(all(same$match))
+  changed <- expected
+  changed$est[2] <- -0.6
+  expect_false(all(qc_figure_compare("F-X", expected, changed, "dose")$match))
+  expect_false(all(qc_figure_compare("F-X", expected, expected[1:2, ], "dose")$match))
+  # Within the relative tolerance the values agree.
+  near <- expected
+  near$est[2] <- -0.5 * (1 + 1e-10)
+  expect_true(all(qc_figure_compare("F-X", expected, near, "dose")$match))
+})
+
+test_that("the data a figure plots are written next to it", {
+  plot <- ggplot2::ggplot(data.frame(x = 1:3, y = c(2, 4, 6), g = factor(c("a", "b", "a"))), ggplot2::aes(x, y)) +
+    ggplot2::geom_point()
+  path <- withr::local_tempfile(fileext = ".png")
+  out <- write_figure_data_301(plot, path)
+  expect_equal(utils::read.csv(out)$y, c(2, 4, 6))
+})

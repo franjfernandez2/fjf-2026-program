@@ -564,6 +564,8 @@ list(
   tar_target(tlf_201_qc, rbind(qc_tlf_201(adam_201, tlf_201_analysis), qc_tlf_201_more(adam_201))),
   tar_target(tlf_201_qc_comparison, compare_tlf_301(tlf_201_tables, tlf_201_qc)),
   tar_target(tlf_201_qc_check, stopifnot(tlf_201_qc_comparison$clean)),
+  tar_target(tlf_201_figures_qc, qc_figures_201(tlf_201_files, adam_201, tlf_201_analysis)),
+  tar_target(tlf_201_figures_qc_check, stopifnot(tlf_201_figures_qc$clean)),
   # Clinical study report (studies/201/csr.qmd), blinded until the unblinding (ADR 0032).
   tar_target(csr_201_qmd, "studies/201/csr.qmd", format = "file"),
   tar_target(csr_201_data, list(
@@ -672,6 +674,9 @@ list(
   tar_target(tlf_301_qc, rbind(qc_tlf_301(adam_301, tlf_301_analysis), qc_tlf_301_more(adam_301, tlf_301_analysis))),
   tar_target(tlf_301_qc_comparison, compare_tlf_301(tlf_301_tables, tlf_301_qc)),
   tar_target(tlf_301_qc_check, stopifnot(tlf_301_qc_comparison$clean)),
+  # Second programming of the figures: the data they plot (qc/301/figures_qc.R).
+  tar_target(tlf_301_figures_qc, qc_figures_301(tlf_301_files, adam_301, tlf_301_analysis)),
+  tar_target(tlf_301_figures_qc_check, stopifnot(tlf_301_figures_qc$clean)),
   # Clinical study report (studies/301/csr.qmd). Blinded until the unblinding is authorised
   # (ADR 0032); it is rendered again, with the same text, when the outputs change.
   tar_target(csr_301_qmd, "studies/301/csr.qmd", format = "file"),
@@ -734,6 +739,10 @@ list(
     tlf_iss_treatment_qc_comparison, compare_tlf_iss_treatment(tlf_iss_treatment_tables, tlf_iss_treatment_qc)
   ),
   tar_target(tlf_iss_treatment_qc_check, stopifnot(tlf_iss_treatment_qc_comparison$clean)),
+  tar_target(
+    tlf_iss_treatment_figures_qc, qc_figures_iss_treatment(tlf_iss_treatment_files, adam_201, adam_301)
+  ),
+  tar_target(tlf_iss_treatment_figures_qc_check, stopifnot(tlf_iss_treatment_figures_qc$clean)),
   # --- Extension E2 (ADR 0036): simulation study of the efficacy analyses under missing data. Planning
   # values and public seeds only; the plan (docs/sap/e2-simulation-plan.yml) was committed before the results.
   tar_target(e2_plan_file, "docs/sap/e2-simulation-plan.yml", format = "file"),
@@ -801,16 +810,19 @@ list(
     write_traceability(
       rbind(
         traceability_rows(
-          outputs_301, "FJF-2026-301", "qc/301/tlf_qc.R, qc/301/tlf_qc_more.R", tlf_301_qc_comparison
+          outputs_301, "FJF-2026-301", "qc/301/tlf_qc.R, qc/301/tlf_qc_more.R, qc/301/figures_qc.R",
+          combine_comparisons(tlf_301_qc_comparison, tlf_301_figures_qc)
         ),
         traceability_rows(
-          outputs_201, "FJF-2026-201", "qc/201/tlf_qc.R, qc/301/tlf_qc_more.R", tlf_201_qc_comparison
+          outputs_201, "FJF-2026-201", "qc/201/tlf_qc.R, qc/301/tlf_qc_more.R, qc/301/figures_qc.R",
+          combine_comparisons(tlf_201_qc_comparison, tlf_201_figures_qc)
         ),
         traceability_rows(
           outputs_iss, "FJF-2026 integrated safety", "qc/301/tlf_qc_more.R", tlf_iss_qc_comparison, "ADR 0033"
         ),
         traceability_rows(
-          outputs_iss_treatment, "FJF-2026 integrated safety", "qc/iss/tlf_qc.R", tlf_iss_treatment_qc_comparison
+          outputs_iss_treatment, "FJF-2026 integrated safety", "qc/iss/tlf_qc.R, qc/iss/figures_qc.R",
+          combine_comparisons(tlf_iss_treatment_qc_comparison, tlf_iss_treatment_figures_qc)
         )
       ),
       "docs/traceability-matrix.csv"
