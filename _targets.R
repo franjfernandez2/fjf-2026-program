@@ -25,6 +25,7 @@ tar_source("studies/201/analysis")
 tar_source("studies/201/tlf")
 tar_source("qc/201")
 tar_source("studies/iss/tlf")
+tar_source("qc/iss")
 
 list(
   # --- F0: environment smoke test ---
@@ -700,6 +701,35 @@ list(
   }),
   tar_target(tlf_iss_tables, tables_iss(adam_iss, outputs_iss)),
   tar_target(tlf_iss_files, write_tlf_iss(tlf_iss_tables, "studies/iss/output/tlf"), format = "file"),
+  # Integrated safety analysis by treatment (ADR 0034, ADR 0035): the placebo-controlled pool of
+  # the two studies, by dose actually taken. Its plan is frozen (tag iss-sap-v1.0). Until both
+  # studies are unblinded the arms are the dummy assignment and every output says so.
+  tar_target(sap_iss_file, "docs/sap/fjf-2026-iss-sap.yml", format = "file"),
+  tar_target(sap_iss, read_iss_sap(sap_iss_file)),
+  tar_target(outputs_iss_treatment_file, "docs/sap/fjf-2026-iss-treatment-outputs.yml", format = "file"),
+  tar_target(outputs_iss_treatment, read_outputs(outputs_iss_treatment_file)),
+  tar_target(outputs_iss_treatment_problems, check_iss_outputs(outputs_iss_treatment, sap_iss)),
+  tar_target(adam_iss_treatment, {
+    adam_201_qc_check
+    adam_301_qc_check
+    stopifnot(length(outputs_iss_treatment_problems) == 0)
+    pool_iss_treatment(list(`201` = adam_201, `301` = adam_301), sap_iss, unlist(outputs_iss_treatment$adam_datasets))
+  }),
+  tar_target(tlf_iss_treatment_tables, tables_iss_treatment(adam_iss_treatment, sap_iss, outputs_iss_treatment)),
+  tar_target(
+    tlf_iss_treatment_files,
+    write_tlf_iss_treatment(
+      tlf_iss_treatment_tables, adam_iss_treatment, sap_iss, outputs_iss_treatment,
+      unblinded_201 && unblinded_301, "studies/iss/output/treatment"
+    ),
+    format = "file"
+  ),
+  # The second programming must agree; a difference stops the pipeline until it is explained.
+  tar_target(tlf_iss_treatment_qc, qc_tlf_iss_treatment(adam_201, adam_301)),
+  tar_target(
+    tlf_iss_treatment_qc_comparison, compare_tlf_iss_treatment(tlf_iss_treatment_tables, tlf_iss_treatment_qc)
+  ),
+  tar_target(tlf_iss_treatment_qc_check, stopifnot(tlf_iss_treatment_qc_comparison$clean)),
   tar_target(
     adam_301_define,
     write_adam_define(adam_301, adam_301_spec, "data/adam/301/define.xml", format(Sys.time(), "%Y-%m-%dT%H:%M:%S")),
