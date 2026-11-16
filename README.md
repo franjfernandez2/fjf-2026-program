@@ -13,8 +13,8 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | F2 · Design | Protocols, SAPs, table shells and the data simulator | Done (`gate-2`; SAPs frozen at `sap-201-v1.0`, `sap-301-v1.0`) |
 | F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation, TLFs | Done; database locked (`dblock-301`) and unblinded |
 | F4 · Safety and phase II | Safety TLFs, MCP-Mod dose finding, clinical utility index; blinded pooled safety review | Done; database locked (`dblock-201`) and unblinded |
-| F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | Planned |
-| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety by treatment programmed and double-programmed on its frozen plan (`iss-sap-v1.0`) |
+| F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | E2 programmed and reported (plan `docs/sap/e2-simulation-plan.yml`, [ADR 0036](docs/adr/0036-e2-simulation-study-plan.md)); E1 waits for a SAS OnDemand account |
+| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety by treatment programmed, double-programmed and reported on its frozen plan (`iss-sap-v1.0`); interactive explorer built; website and publication pending |
 
 ### Blinding
 
@@ -37,6 +37,9 @@ databases were locked (`dblock-*`), and the reviewer then authorised the unblind
 | Reviewer's guides (cSDRG, ADRG) | `studies/<study>/csdrg.qmd`, `adrg.qmd` | PHUSE templates |
 | Blinded pooled safety review | `studies/iss/output/tlf` | Columns are the studies, never an arm ([ADR 0033](docs/adr/0033-blinded-pooled-safety-review.md)) |
 | Integrated safety by treatment | `studies/iss/output/treatment` | Placebo-controlled pool of both studies, by dose taken; plan in `docs/sap/fjf-2026-iss-sap.yml`, outputs in `docs/sap/fjf-2026-iss-treatment-outputs.yml` ([ADR 0034](docs/adr/0034-integrated-safety-plan.md), [ADR 0035](docs/adr/0035-integrated-safety-implementation.md)); double-programmed |
+| Integrated safety report | `studies/iss/output/report` | `studies/iss/report.qmd`; the discussion is the reviewer's |
+| E2 simulation study | `studies/e2/output` | Bias, coverage and power of the efficacy analyses under missing data; public seeds and planning values only |
+| Interactive explorer | `app/output/index.html` | One static page with aggregate results and its data embedded, hostable without a server |
 
 Outputs are rebuilt by the pipeline and are not versioned.
 
@@ -70,7 +73,7 @@ fjf-2026-program/
 │   └── iss/         integrated safety (blinded pooled review, and analysis by treatment)
 ├── qc/              independent second programming and comparisons
 ├── tools/           data generation, database lock, conformance runs, local CI
-├── app/             interactive explorer (F6, not started)
+├── app/             interactive explorer (static page, F6)
 └── tests/           unit tests
 ```
 

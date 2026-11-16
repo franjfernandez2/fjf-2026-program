@@ -730,6 +730,66 @@ list(
     tlf_iss_treatment_qc_comparison, compare_tlf_iss_treatment(tlf_iss_treatment_tables, tlf_iss_treatment_qc)
   ),
   tar_target(tlf_iss_treatment_qc_check, stopifnot(tlf_iss_treatment_qc_comparison$clean)),
+  # --- Extension E2 (ADR 0036): simulation study of the efficacy analyses under missing data. Planning
+  # values and public seeds only; the plan (docs/sap/e2-simulation-plan.yml) was committed before the results.
+  tar_target(e2_plan_file, "docs/sap/e2-simulation-plan.yml", format = "file"),
+  tar_target(e2_plan, read_e2_plan(e2_plan_file)),
+  tar_target(e2_cells_table, e2_cells(e2_plan)),
+  tar_target(
+    e2_truth_value, e2_truth(e2_plan$truth$per_arm, dry_run_301_pars, protocol_301, sap_301_content, e2_plan$truth$seed)
+  ),
+  tar_target(
+    e2_trials,
+    run_e2(
+      e2_plan, sample_size_301, dry_run_301_pars, protocol_301, sap_301_content,
+      cores = min(6L, parallel::detectCores())
+    )
+  ),
+  tar_target(e2_summary, summarise_e2(e2_trials, e2_truth_value, e2_cells_table)),
+  tar_target(
+    e2_report_data, list(plan = e2_plan, truth = e2_truth_value, summary = e2_summary, cells = e2_cells_table)
+  ),
+  tar_target(e2_report_qmd, "studies/e2/report.qmd", format = "file"),
+  tar_target(
+    e2_report,
+    {
+      e2_report_qmd
+      render_csr("studies/e2/report.qmd", "studies/e2/output", e2_report_data)
+    },
+    format = "file"
+  ),
+  # Report of the integrated safety analysis by treatment (studies/iss/report.qmd): the tables and figures above,
+  # embedded unchanged. It says whether the arms are the real ones or the dummy assignment.
+  tar_target(iss_report_qmd, "studies/iss/report.qmd", format = "file"),
+  tar_target(iss_report_data, list(
+    unblinded = unblinded_201 && unblinded_301, plan = sap_iss, outputs = outputs_iss_treatment,
+    tables = tlf_iss_treatment_tables, files = tlf_iss_treatment_files,
+    qc = data.frame(
+      level = "Tables and listing", units = sprintf("%d outputs", length(tlf_iss_treatment_tables)),
+      compared = sprintf("%d cells", nrow(tlf_iss_treatment_qc_comparison$cells)),
+      clean = isTRUE(tlf_iss_treatment_qc_comparison$clean)
+    )
+  )),
+  tar_target(
+    iss_report,
+    {
+      tlf_iss_treatment_qc_check
+      iss_report_qmd
+      render_csr("studies/iss/report.qmd", "studies/iss/output/report", iss_report_data)
+    },
+    format = "file"
+  ),
+  # Interactive explorer (app/): aggregate results of both studies and the integrated safety analysis in one
+  # static page with its data embedded, so that it can be hosted without a server.
+  tar_target(explorer_template, "app/template.html", format = "file"),
+  tar_target(
+    explorer_page,
+    write_explorer(
+      explorer_data(tlf_301_analysis, tlf_201_analysis, adam_iss_treatment, sap_iss, unblinded_201 && unblinded_301),
+      explorer_template, "app/output/index.html"
+    ),
+    format = "file"
+  ),
   # Traceability matrix (docs/traceability-matrix.csv): the benchmark rows are kept, the studies and the
   # integrated safety analysis are written from their outputs specifications and comparisons.
   tar_target(
