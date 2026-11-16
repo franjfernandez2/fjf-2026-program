@@ -39,3 +39,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0031](0031-tlf-and-utility-index-201.md) | Tables, figures and clinical utility index of FJF-2026-201 | Proposed |
 | [0032](0032-locking-does-not-unblind.md) | Locking the database does not unblind | Proposed |
 | [0033](0033-blinded-pooled-safety-review.md) | Blinded pooled safety review of FJF-2026-201 and FJF-2026-301 | Proposed |
+| [0034](0034-integrated-safety-plan.md) | Plan of the integrated safety analysis, written before the unblinded results | Proposed |
