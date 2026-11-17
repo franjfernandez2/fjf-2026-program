@@ -25,10 +25,8 @@ each dose of FJF-2026-201 at week 12. The dose chosen for phase III (20 mg) is t
    found a significant effect all the same: 142 patients per arm give power for -0.34 with a standard
    deviation near 0.9. This is what the truth range was built to allow, "as happens in real programmes".
 2. **A2 over-estimates by 0.13, about 1.3 standard errors.** One study cannot tell chance from bias, and the
-   interval holds the truth. The over-estimate goes the way E2 says to expect for the placebo arm of a
-   hypothetical estimand: patients who leave or need rescue are removed from the comparison, and the
-   remaining placebo patients do worse than the truth. E2 estimated that bias with the same method; the
-   observation here is one draw of it, not a measurement.
+   interval holds the truth. There is no way to say from one draw whether the method is biased here; E2 (`studies/e2`) measures the bias of the
+   MMRM and of the imputation methods under several dropout mechanisms, and this observation is one draw.
 3. **A1 sits close to the truth, which should not be read as validation.** A treatment-policy estimand is
    expected to be diluted by discontinuation and rescue, so it should be smaller than -0.34 in magnitude; it
    is -0.36. Part of this is chance. A1 and A2 answer different questions and the "truth" reported is the
