@@ -69,3 +69,7 @@ Respóndelas en voz alta, sin mirar, como en una entrevista. No hay respuestas e
 # Respuestas
 
 Sin respuestas escritas: son tuyas.
+
+# Actualización 2026-11-17
+
+El hallazgo 1 (cumplimiento del 186 %) se resolvió con el ADR 0037: la derivación cuenta los dos comprimidos al día del estudio de doble simulación y el cumplimiento es de un 93 %. Solo cambian las tablas que lo muestran; ningún resultado de eficacia ni de seguridad cambia.

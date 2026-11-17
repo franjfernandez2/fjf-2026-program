@@ -11,6 +11,12 @@ adamig: "1.3"
 # CDISC ADaM terminology the package is checked against (P21, CORE), declared in define.xml.
 ct: "2024-03-29"
 
+# Compliance is tablets taken over the tablets due. The study is double dummy: two tablets a day
+# (protocol FJF-2026-201, study treatment), so the tablets due are twice the days of use. The
+# FJF-2026-301 derivation counted one a day, which gave about 186% (ADR 0037, ADR 0035 finding).
+compliance:
+  tablets_per_day: 2
+
 # Limits for vital signs and weight outside predefined limits. The SAP of FJF-2026-201 takes
 # its safety analyses from the FJF-2026-301 SAP (SF4), so these are FJF-2026-301's (ADR 0028).
 # high: value at or above; low: value at or below; for WEIGHT, change from baseline in %.

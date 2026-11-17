@@ -94,3 +94,9 @@ analysis to the plan.
   which counts one tablet a day. The study is locked and unblinded, so the correction is the
   reviewer's decision and needs its own record; nothing is changed here. It does not depend on
   the treatment arm, and no efficacy or safety result uses compliance in FJF-2026-201.
+
+## Update 2026-11-17
+
+The compliance finding of FJF-2026-201 is resolved by [ADR 0037](0037-compliance-of-study-201.md): the
+derivation counts the two tablets a day of the double-dummy study, and the compliance is about 93%. The tables
+of this analysis that show it (T-ISS-2 and T-ISS-8) change; nothing else does.
