@@ -123,4 +123,4 @@ Every significant decision is recorded as an Architecture Decision Record in [do
 
 ## Licence
 
-To be decided before the repository is made public (gate 6). Until then, all rights reserved.
+Code: [MIT](LICENSE). Documents and simulated data: [CC BY 4.0](LICENSE-DOCS.md). The CDISC pilot data are not redistributed and keep their own terms. See [ADR 0038](docs/adr/0038-licence.md).

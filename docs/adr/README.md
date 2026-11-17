@@ -43,3 +43,4 @@ New records copy [0000-template.md](0000-template.md).
 | [0035](0035-integrated-safety-implementation.md) | Implementation of the integrated safety analysis by treatment | Accepted |
 | [0036](0036-e2-simulation-study-plan.md) | Plan of extension E2, a simulation study of the efficacy analyses under missing data | Accepted |
 | [0037](0037-compliance-of-study-201.md) | Compliance of FJF-2026-201 counts the two tablets a day | Accepted |
+| [0038](0038-licence.md) | Licence of the repository: MIT for code, CC BY 4.0 for documents and data | Accepted |
