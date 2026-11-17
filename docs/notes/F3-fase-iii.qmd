@@ -59,15 +59,15 @@ El plan detallado de la F3 está en la pestaña «Fase 3» del dossier, que no e
 1. ~~SDTM y ADaM con doble programación limpia y sin incidencias sin explicar~~: hecho (con los brazos reales también).
 2. ~~Análisis del SAP, tablas y figuras con segunda programación~~: hecho.
 3. ~~Cierre de la base de datos~~: `dblock-301`, 2026-11-13. ~~Desciego autorizado~~: 2026-11-13.
-4. **Comparar las estimaciones con la verdad sellada.** Solo la puedes abrir tú, cuando des los análisis por finales (ADR 0018).
+4. ~~Comparar las estimaciones con la verdad sellada~~: hecho el 2026-11-17 (`docs/recovery/`), con los seis intervalos conteniendo la verdad.
 5. **Discusión y conclusiones del informe de estudio.** El código dice que las escribe el equipo del estudio tras el desciego.
-6. ~~Aceptar los ADR 0029 a 0033~~: aceptados el 2026-11-16. **Revisar y aprobar por escrito las PR 30 a 46.**
-7. **Responder las preguntas de control de abajo sin mirar.**
+6. ~~Aceptar los ADR 0029 a 0033~~: aceptados el 2026-11-16. ~~Revisar y aprobar por escrito las PR 30 a 46~~: aprobadas el 2026-11-17.
+7. ~~Responder las preguntas de control de abajo~~: respondidas por el asistente a petición tuya (2026-11-17); conviene que las estudies y las rehagas en voz alta.
 8. **Etiqueta `gate-3`.**
 
 # Preguntas de control
 
-Respóndelas en voz alta, sin mirar, como en una entrevista. Esta vez no hay respuestas escritas.
+Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas de abajo las escribió el asistente a petición de Francisco (2026-11-17), con permiso expreso suyo, como en F0, F1 y F2: sirven para estudiarlas, no como prueba de que él las respondió sin mirar. Es una desviación de la regla de `docs/ai-assistance.md` y queda registrada.
 
 1. ¿Por qué no se corrige el dato crudo, y dónde actúa cada regla de limpieza? ¿Qué pasa con dos duplicados que difieren? (ADR 0026)
 2. ¿Qué es la revisión ciega de datos y por qué se programó con un reparto falso? ¿Qué mantiene la forma de las tablas y qué pierde? (ADR 0027)
@@ -80,4 +80,22 @@ Respóndelas en voz alta, sin mirar, como en una entrevista. Esta vez no hay res
 
 # Respuestas
 
-Sin respuestas escritas: son tuyas. Las de F0, F1 y F2 las escribió el asistente a petición tuya, y consta como desviación de `docs/ai-assistance.md`. Para esta fase la regla se aplica entera.
+::: {.callout-note collapse="true"}
+## Pulsa para ver las respuestas
+
+1. **No se corrige el dato crudo** porque es la evidencia de lo que recogió el EDC; si se editara, no se sabría qué se cambió ni por qué, y la capa que viene después ya no sería reproducible. Cada regla (CR01 a CR10) actúa en una capa: SDTM conserva lo recogido y solo lo normaliza (unidades, formatos), y ADaM imputa o deriva y marca cada imputación con una bandera. Dos duplicados que difieren: se conserva la **primera entrada**. Una regla que eligiera entre duplicados distintos por verosimilitud habría elegido mirando el resultado. (ADR 0026)
+
+2. **La revisión ciega de datos** es revisar y programar con los datos antes de conocer el brazo de cada paciente, para que ninguna decisión de limpieza o programa pueda seguir un resultado. Se programó con un reparto falso: los brazos reales barajados dentro de cada estrato con una semilla pública. Mantiene la **forma** de las tablas (columnas, filas, N, el comportamiento de los programas); pierde el **significado**: ninguna diferencia entre brazos quiere decir nada. (ADR 0027)
+
+3. **Cerrar es congelar los datos y los programas; desenmascarar es revelar los brazos reales.** Son dos decisiones. Con la regla inicial («base cerrada, brazos reales») el primer `tar_make()` tras el cierre, de cualquiera y también en la CI, habría usado los brazos reales sin que nadie lo hubiera decidido. Hoy el pipeline solo usa los reales si la base está cerrada **y** existe `docs/unblind/unblind-<estudio>.yml` con `status: authorised`, que escribe el revisor, y una prueba falla si hay un estudio autorizado sin que se haya quitado en el mismo cambio. (ADR 0032)
+
+4. **`TRTEMFL`** marca el acontecimiento adverso surgido con el tratamiento: empieza (ASTDT) en o después de la primera dosis y como máximo 14 días tras la última. **`ONTRTFL`** marca un registro en tratamiento: desde la primera dosis hasta 7 días después de la última. **`PRERESFL`** marca un registro previo al rescate: en o antes de la primera dosis de rescate, o sin rescate. Juntas definen la población del estimando hipotético (ANL02FL = ANL01FL, ONTRTFL, PRERESFL, con valor). Una fecha de inicio **parcial** se imputa a la primera dosis si el periodo la contiene y el acontecimiento no terminó antes; si no, al primer día del periodo. Lo deja a la vista **ASTDTF** («D» día imputado, «M» mes y día imputados). (ADR 0028)
+
+5. **Parte del SDTM en XPT** porque ese es el paquete que se entrega y se valida: así la segunda programación comprueba lo que de verdad sale, y no comparte con producción ni objetos ni funciones, que es lo que le da independencia. **No cubre** los dominios que copian una columna del crudo o del protocolo (SV, DA, SUPP-- y los de diseño), que se prueban con pruebas, y no corrige la limitación declarada: el mismo asistente escribió las dos programaciones.
+
+6. **«Jump to reference»** imputa los valores que faltan de un paciente que deja FJF-2026 como si desde ese momento fuera de placebo, condicionado a su historia previa: el efecto desaparece al salir. Es el análisis principal de política de tratamiento (A1). El pipeline ejecuta **las funciones de la F2 sin cambiarlas** porque lo que se probó en seco es lo que se ejecuta: reescribirlas habría dejado sin valor el ensayo en seco y habría abierto la duda de si el código cambió después de ver los datos.
+
+7. **Se arreglaron en el programa o con una regla** porque un hallazgo que se «explica» y se deja sigue siendo un dato que no sigue el estándar y que alguien tendrá que volver a explicar; arreglarlo es más barato y más defendible. **Se decidió antes del cierre** porque después un cambio es una desviación (ADR 0027), y porque decidir con los datos ciegos garantiza que la decisión no depende del resultado.
+
+8. **El grafo de multiplicidad** reparte un alfa unilateral de 0,025 con pruebas de Bonferroni ponderadas. Todo el alfa empieza en H1, el criterio principal; cuando H1 se rechaza, pasa la mitad a H2 y la mitad a H3, y estos lo pasan a los demás, de modo que no se pierde alfa y nada secundario se puede afirmar si H1 no se rechaza. Con los brazos reales, H1 se rechaza (p ajustado 0,0002) y H2, H3 y H4 no. **Que el p ajustado de H2 (0,2238) sea mayor que el p sin ajustar (0,1119)** es lo normal: el ajustado es el p dividido por la parte del alfa que esa hipótesis puede recibir (aquí 0,5), así que equivale al p que habría que comparar con 0,025 sin ajustar. El ajustado nunca es menor que el sin ajustar.
+:::
