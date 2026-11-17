@@ -1,6 +1,6 @@
 # ADR 0036: Plan of extension E2, a simulation study of the efficacy analyses under missing data
 
-- **Status:** Proposed (for the reviewer's review)
+- **Status:** Accepted (reviewer, 2026-11-17)
 - **Date:** 2026-11-16
 - **Decided by:** proposed by the programmer; the reviewer chose extension E2 in ADR 0002
 

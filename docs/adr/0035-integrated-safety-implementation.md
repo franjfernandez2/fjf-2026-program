@@ -1,6 +1,6 @@
 # ADR 0035: Implementation of the integrated safety analysis by treatment
 
-- **Status:** Proposed (for the reviewer's review)
+- **Status:** Accepted (reviewer, 2026-11-17)
 - **Date:** 2026-11-16
 - **Decided by:** proposed by the programmer
 
