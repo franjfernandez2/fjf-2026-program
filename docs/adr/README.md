@@ -40,4 +40,5 @@ New records copy [0000-template.md](0000-template.md).
 | [0032](0032-locking-does-not-unblind.md) | Locking the database does not unblind | Accepted |
 | [0033](0033-blinded-pooled-safety-review.md) | Blinded pooled safety review of FJF-2026-201 and FJF-2026-301 | Accepted |
 | [0034](0034-integrated-safety-plan.md) | Plan of the integrated safety analysis, written before the unblinded results | Accepted |
-| [0035](0035-integrated-safety-implementation.md) | Implementation of the integrated safety analysis by treatment | Proposed |
+| [0035](0035-integrated-safety-implementation.md) | Implementation of the integrated safety analysis by treatment | Accepted |
+| [0036](0036-e2-simulation-study-plan.md) | Plan of extension E2, a simulation study of the efficacy analyses under missing data | Accepted |
