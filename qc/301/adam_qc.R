@@ -37,9 +37,10 @@ qa_vs_flags <- function(x, limits) {
 #' @param dir Folder of the SDTM XPT files.
 #' @param protocol The protocol design (visits, primary week).
 #' @param limits The `vital_sign_limits` of the ADaM specification (SAP SF4).
+#' @param tablets_per_day Tablets due per day, for the compliance (2 in the double-dummy FJF-2026-201, ADR 0037).
 #' @return Named list with the QC versions of ADSL, ADEFF, ADTTE, ADAE, ADHYPO, ADLB, ADVS,
 #'   each with the variables compared.
-qc_adam_301 <- function(dir, protocol, limits) {
+qc_adam_301 <- function(dir, protocol, limits, tablets_per_day = 1) {
   rd <- function(d) as.data.frame(haven::read_xpt(file.path(dir, paste0(tolower(d), ".xpt"))))
   dm <- rd("DM")
   ds <- rd("DS")
@@ -60,7 +61,7 @@ qc_adam_301 <- function(dir, protocol, limits) {
   ok <- !is.na(amt("RETAMT")) & !is.na(ndays)
   taken <- rowsum((amt("DISPAMT") - amt("RETAMT"))[ok], ex$USUBJID[ok])
   used <- rowsum(ndays[ok], ex$USUBJID[ok])
-  complpct <- unname(round(100 * taken[, 1] / used[, 1], 1)[id])
+  complpct <- unname(round(100 * taken[, 1] / (tablets_per_day * used[, 1]), 1)[id])
 
   cm <- rd("CM")
   cm <- cm[cm$CMCAT == "RESCUE MEDICATION", ]

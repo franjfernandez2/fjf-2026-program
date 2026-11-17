@@ -20,7 +20,9 @@ derive_adsl_301 <- function(sdtm, protocol, spec) {
   study <- ds[!is.na(ds$DSSCAT) & ds$DSSCAT == "STUDY PARTICIPATION", ]
   randdt <- by_subject(rand, adam_date(rand$DSSTDTC))
 
-  # Compliance: over the bottles returned with a count, tablets taken over days of use.
+  # Compliance: over the bottles returned with a count, tablets taken over the tablets due: days of
+  # use times the tablets a day of the study (one unless the specification says otherwise, ADR 0037).
+  tablets_per_day <- if (is.null(spec$compliance$tablets_per_day)) 1 else spec$compliance$tablets_per_day
   ex <- sdtm$EX
   da <- sdtm$DA
   disp <- da$DASTRESN[da$DATESTCD == "DISPAMT"][match(ex$EXREFID, da$DAREFID[da$DATESTCD == "DISPAMT"])]
@@ -28,7 +30,7 @@ derive_adsl_301 <- function(sdtm, protocol, spec) {
   days <- as.numeric(adam_date(ex$EXENDTC) - adam_date(ex$EXSTDTC)) + 1
   use <- !is.na(ret) & !is.na(days)
   taken <- tapply((disp - ret)[use], ex$USUBJID[use], sum)
-  used <- tapply(days[use], ex$USUBJID[use], sum)
+  used <- tapply(days[use], ex$USUBJID[use], sum) * tablets_per_day
   compl <- round(100 * taken / used, 1)
 
   cm <- sdtm$CM[sdtm$CM$CMCAT == "RESCUE MEDICATION", ]
