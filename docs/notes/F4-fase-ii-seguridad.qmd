@@ -47,15 +47,15 @@ Como en la F3, el plan detallado de la F4 está en el dossier y no en el reposit
 1. ~~SDTM, ADaM, análisis y tablas de la 201 con segunda programación limpia~~: hecho.
 2. ~~Cierre de la base de datos de la 201~~: `dblock-201`, 2026-11-13. ~~Desciego~~: 2026-11-13.
 3. ~~Revisión ciega de seguridad agrupada~~: hecha (ADR 0033).
-4. **Aprobar por escrito las PR 47 a 53.** Los ADR 0030 a 0033 están aceptados desde el 2026-11-16.
-5. **Decidir qué hacer con el cumplimiento de la 201** (hallazgo 1).
-6. **Comparar las estimaciones con la verdad sellada**, incluida la curva dosis-respuesta de la 201. Solo tú puedes abrirla.
-7. **Responder las preguntas de control de abajo sin mirar.**
+4. ~~Aprobar por escrito las PR 47 a 53~~: aprobadas el 2026-11-17. Los ADR 0030 a 0033 están aceptados desde el 2026-11-16.
+5. ~~Decidir qué hacer con el cumplimiento de la 201~~: ADR 0037 (2026-11-17).
+6. ~~Comparar las estimaciones con la verdad sellada~~: hecho el 2026-11-17 (`docs/recovery/`); los seis intervalos contienen la verdad y la dosis elegida es la verdadera.
+7. ~~Responder las preguntas de control de abajo~~: respondidas por el asistente a petición tuya (2026-11-17); conviene que las estudies y las rehagas en voz alta.
 8. **Etiqueta `gate-4`.**
 
 # Preguntas de control
 
-Respóndelas en voz alta, sin mirar, como en una entrevista. No hay respuestas escritas.
+Respóndelas en voz alta, sin mirar, como en una entrevista. Las respuestas de abajo las escribió el asistente a petición de Francisco (2026-11-17), con permiso expreso suyo, como en F0, F1 y F2: sirven para estudiarlas, no como prueba de que él las respondió sin mirar. Es una desviación de la regla de `docs/ai-assistance.md` y queda registrada.
 
 1. ¿Qué ventaja y qué riesgo tiene que la 201 use los programas de la 301? ¿Dónde debe ir lo que difiere entre los dos estudios? (ADR 0030)
 2. En MCP-Mod, ¿qué decide el paso MCP y qué decide el paso Mod? ¿Por qué se usan cuatro modelos candidatos en vez de uno?
@@ -68,7 +68,25 @@ Respóndelas en voz alta, sin mirar, como en una entrevista. No hay respuestas e
 
 # Respuestas
 
-Sin respuestas escritas: son tuyas.
+::: {.callout-note collapse="true"}
+## Pulsa para ver las respuestas
+
+1. **Ventaja:** un arreglo de un programa compartido arregla los dos estudios, y los dos tienen la misma forma, lo que permite agruparlos. **Riesgo:** un supuesto de la 301 se cuela en la 201 sin que nadie lo vea, que es exactamente lo que pasó con el cumplimiento (la 301 cuenta un comprimido al día y la 201 toma dos). Lo que difiere entre estudios (brazos, visitas, ventanas, visita primaria y resúmenes de diseño) debe ir en **la especificación o el protocolo**, no en el código. (ADR 0030)
+
+2. **El paso MCP** decide si hay señal de dosis-respuesta: contrasta cuatro modelos candidatos con contrastes óptimos y control de multiplicidad. **El paso Mod** ajusta el modelo de menor AIC generalizado entre los significativos y lee de él la dosis objetivo. Se usan **cuatro modelos** porque la forma de la curva es desconocida: un solo modelo mal elegido pierde potencia o da una dosis equivocada, y cuatro dan robustez sin elegir antes de ver los datos.
+
+3. **Dosis objetivo:** la menor dosis con al menos el 80 % del efecto máximo y al menos 0,3 puntos mejor que placebo. Con el modelo cuadrático **40 mg da menos efecto que 20 mg** porque una parábola sube hasta un máximo y luego baja; es una propiedad de la forma, no un efecto del fármaco. Al clínico: «con estos datos 40 mg no es mejor que 20 mg; que sea peor no está demostrado, lo más probable es que la curva se aplane». (Y así fue: la verdad sellada tiene una curva casi plana de 20 a 40 mg.)
+
+4. **El índice de utilidad clínica** combina el efecto en HbA1c (peso 0,7) y la proporción con acontecimientos que llevan a retirar el fármaco (peso 0,3), cada uno escalado a [0, 1] entre las dosis estudiadas. Los pesos se fijaron en el SAP, antes de ver resultados, como juicio del equipo: no salen de datos. Es **exploratorio** porque ordena dosis con unos pesos arbitrarios y no mide beneficio real. Con peso de seguridad 0,5: 40 mg (0,72) pasa a 20 mg (0,67), y el placebo (0,50) supera a 5 y 10 mg: el orden depende de los pesos, y eso es lo que muestra que no se puede leer como una conclusión. (ADR 0031)
+
+5. **La 201 es de búsqueda de dosis**: la pregunta es qué hace el fármaco cada dosis, no qué pasa en la práctica, y el rescate y el abandono dificultarían separar dosis; por eso el estimando es hipotético (valores en tratamiento y antes del rescate). **La 301 es confirmatoria**: la pregunta que importa a reguladores y pagadores es qué pasa al asignar el fármaco y que los pacientes hagan lo que hacen, es decir, política de tratamiento.
+
+6. **Una revisión ciega agrupada** reúne los datos de seguridad de todos los brazos sin revelar a qué brazo pertenece cada uno. Permite conocer el tamaño de la base de seguridad, la exposición y las **tasas globales** (por ejemplo, si la frecuencia general de un acontecimiento es muy distinta de lo esperado). Sus columnas son los estudios y **nunca un brazo**, porque cualquier columna por brazo desenmascararía. (ADR 0033)
+
+7. **Causa:** la 201 es de doble simulación y todos toman dos comprimidos al día, y la derivación de la 301 divide por un comprimido al día, así que 93 % de cumplimiento real sale como 186 %. **No afecta a los resultados** porque no depende del brazo y ningún análisis de eficacia ni de seguridad de la 201 la usa. **No se corrigió sin más** porque el estudio estaba cerrado y desenmascarado: cambiarlo después es una desviación que necesita su registro y su evidencia. Se corrigió después con el ADR 0037, comparando antes y después todas las salidas: solo cambiaron las que muestran el cumplimiento.
+
+8. **El historial lo demuestra:** el plan (`iss-sap-v1.0`) se escribió en el commit 164da63 del 2026-11-13, antes de leer los resultados desenmascarados, y se conservó en `main` fusionando la PR 54 con un commit de fusión, que deja intacto el orden de los hechos; luego se aceptó y se etiquetó, pero solo cambiaron las líneas de versión y estado. **Sería post hoc** cualquier análisis que no esté en el plan (I1 a I6): otros términos preferentes, otros subgrupos o cortes, o un contraste elegido tras ver las tablas. Debe etiquetarse como tal. (ADR 0034)
+:::
 
 # Actualización 2026-11-17
 
