@@ -46,4 +46,4 @@ tools/ci-local.sh <commit>                                           # clean clo
 | Table layout helpers | `studies/301/tlf/tlf_common.R` (`tlf_table_301()`, `write_table_301()`) |
 | Work packages still open | `docs/briefs/README.md` |
 
-State of the programme at 2026-11-16: F0 to F4 programmed and both studies unblinded; the integrated safety analysis by treatment is programmed on its frozen plan (`iss-sap-v1.0`). Open and the reviewer's: gate tags 3 and 4, the sealed-truth comparison, the CSR discussions, the 201 compliance finding (ADR 0035), the licence and publication (gate 6).
+State of the programme at 2026-11-17: F0 to F4 programmed and both studies unblinded; the integrated safety analysis by treatment is programmed on its frozen plan (`iss-sap-v1.0`); E2 is programmed and reported; ADR 0035 and 0036 are accepted; every output has a second programming (the traceability matrix has none `not started`). Open and the reviewer's: gate tags 3 and 4, the sealed-truth comparison, the CSR discussions, the 201 compliance finding (ADR 0035), the licence and publication (gate 6).
