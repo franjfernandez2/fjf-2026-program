@@ -210,7 +210,22 @@ save_figure_301 <- function(plot, id, outputs, path, locked, footnotes = charact
     ggplot2::theme(plot.caption = ggplot2::element_text(hjust = 0), legend.position = "bottom")
   dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
   ggplot2::ggsave(path, plot, width = 9, height = 6, dpi = 150)
+  write_figure_data_301(plot, path)
   path
+}
+
+#' Write the data a figure plots next to it (same name, .csv), so that its second programming
+#' can compare the plotted values and not only the picture.
+#'
+#' @param plot The figure.
+#' @param path File of the figure (PNG).
+#' @return The path of the data file.
+write_figure_data_301 <- function(plot, path) {
+  data <- as.data.frame(plot$data)
+  data <- data[vapply(data, is.atomic, TRUE) | vapply(data, is.factor, TRUE)]
+  out <- sub("[.]png$", ".csv", path)
+  utils::write.csv(data, out, row.names = FALSE)
+  out
 }
 
 #' File name of an output, e.g. "t_14_1_1.txt".

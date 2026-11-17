@@ -32,7 +32,7 @@ databases were locked (`dblock-*`), and the reviewer then authorised the unblind
 | Output | Where | Notes |
 | --- | --- | --- |
 | SDTM and ADaM packages with define.xml | `data/sdtm/<study>`, `data/adam/<study>` | Double-programmed; conformance notes in `studies/<study>/conformance.md` |
-| Tables and figures | `studies/<study>/output/tlf` | Traced to the SAP in `docs/sap/fjf-2026-<study>-outputs.yml` and in `docs/traceability-matrix.csv`; the main tables are double-programmed (the matrix says which) |
+| Tables and figures | `studies/<study>/output/tlf` | Traced to the SAP in `docs/sap/fjf-2026-<study>-outputs.yml` and in `docs/traceability-matrix.csv`; every table, listing and figure has a second programming that compares the cells or the plotted data (`qc/`) |
 | Clinical study reports (ICH E3) | `studies/<study>/output/csr` | From `studies/<study>/csr.qmd`; real arms |
 | Reviewer's guides (cSDRG, ADRG) | `studies/<study>/csdrg.qmd`, `adrg.qmd` | PHUSE templates |
 | Blinded pooled safety review | `studies/iss/output/tlf` | Columns are the studies, never an arm ([ADR 0033](docs/adr/0033-blinded-pooled-safety-review.md)) |

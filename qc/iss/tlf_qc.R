@@ -256,6 +256,7 @@ qc_tlf_iss_treatment <- function(adam_201, adam_301) {
     both_label <- "Peak ALT or AST >3x ULN and peak total bilirubin >2x ULN"
     add("T-ISS-17", both_label, both_label, arm, count(cases))
   }
+  if (length(cases) == 0) add("L-ISS-1", "No records", "No records", "study", "")
   for (id in cases) {
     add("L-ISS-1", id, id, "study", saf$STUDY[saf$USUBJID == id])
     add("L-ISS-1", id, id, "bili", fmt_num(bili[[id]], 2))
