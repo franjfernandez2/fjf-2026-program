@@ -16,8 +16,8 @@ under the multiplicity graph (adjusted one-sided p=0.0002; T-14.2.7).
 The hypothetical estimand, values on treatment and before rescue, gave -0.47 (-0.68, -0.27) (T-14.2.2). The
 tipping point is 3.00 points of HbA1c added to the imputed values of the FJF-2026 arm, far outside any
 plausible shift (T-14.2.3). The treatment-policy effect is smaller than the hypothetical one, as expected
-when patients who stop or need rescue dilute it: 7.5% of the FJF-2026 arm and 11.3% of placebo had rescue
-by the analysis, and the discontinuation figures are in T-14.1.1.
+when patients who stop or need rescue dilute it: 6.7% of the FJF-2026 arm and 11.3% of placebo had rescue (T-14.2.6)
+, and the discontinuation figures are in T-14.1.1.
 
 **Key secondary.** Not rejected: responders below 7% (H2: 19.6% vs 17.0%, adjusted p=0.2238), body weight
 (H3, adjusted p=0.6529) and time to rescue (H4, hazard ratio 0.58, 95% CI 0.26 to 1.26, adjusted p=0.3366).
