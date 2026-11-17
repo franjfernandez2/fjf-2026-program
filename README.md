@@ -11,10 +11,10 @@ A simulated clinical development programme for an oral add-on to metformin in ad
 | F0 · Foundations | Repository, environment, database, CI and templates | Done (`gate-0`) |
 | F1 · Benchmark | Replication of the public CDISC pilot (CDISCPILOT01) | Done (`gate-1`) |
 | F2 · Design | Protocols, SAPs, table shells and the data simulator | Done (`gate-2`; SAPs frozen at `sap-201-v1.0`, `sap-301-v1.0`) |
-| F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation, TLFs | Done; database locked (`dblock-301`) and unblinded |
-| F4 · Safety and phase II | Safety TLFs, MCP-Mod dose finding, clinical utility index; blinded pooled safety review | Done; database locked (`dblock-201`) and unblinded |
+| F3 · Phase III | SDTM, ADaM, estimands, MMRM and reference-based multiple imputation, TLFs | Done (`gate-3`); database locked (`dblock-301`) and unblinded |
+| F4 · Safety and phase II | Safety TLFs, MCP-Mod dose finding, clinical utility index; blinded pooled safety review | Done (`gate-4`); database locked (`dblock-201`) and unblinded |
 | F5 · Extensions | E1 SAS replication; E2 missing-data simulation study | E2 programmed and reported (plan `docs/sap/e2-simulation-plan.yml`, [ADR 0036](docs/adr/0036-e2-simulation-study-plan.md)); E1 waits for a SAS OnDemand account |
-| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety by treatment programmed, double-programmed and reported on its frozen plan (`iss-sap-v1.0`); interactive explorer built; website and publication pending |
+| F6 · Publication | Unblinding, study reports, reviewer's guides, integrated safety, interactive app and website | In progress: both studies unblinded; clinical study reports and reviewer's guides (cSDRG, ADRG) done; integrated safety by treatment programmed, double-programmed and reported on its frozen plan (`iss-sap-v1.0`); interactive explorer built; sealed-truth comparison done (`docs/recovery/`); repository public under MIT and CC BY 4.0 ([ADR 0038](docs/adr/0038-licence.md)); website and E1 pending |
 
 ### Blinding
 
